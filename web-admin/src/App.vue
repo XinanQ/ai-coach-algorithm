@@ -1,5 +1,5 @@
 <template>
-  <router-view v-if="isLoginPage" />
+  <router-view v-if="isPublicPage" />
   <MainLayout v-else />
 </template>
 
@@ -10,5 +10,5 @@ import MainLayout from './layouts/MainLayout.vue'
 
 const route = useRoute()
 
-const isLoginPage = computed(() => route.path === '/login')
+const isPublicPage = computed(() => Boolean(route.meta?.public))
 </script>

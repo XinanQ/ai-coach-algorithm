@@ -5,7 +5,7 @@
         <h1>每日上报</h1>
         <p>员工选择项目与指标，填写完成数量，必要时上传附件。</p>
       </div>
-      <span class="badge">Demo 表单</span>
+      <span class="badge">上报表单</span>
     </header>
 
     <section class="grid grid-2">

@@ -1,7 +1,7 @@
-import { authenticateDemoUser } from '../auth/permissions'
+import { authenticateUser } from '../auth/permissions'
 
 export async function login(username, password) {
-  const user = authenticateDemoUser(username, password)
+  const user = authenticateUser(username, password)
 
   if (!user) {
     throw new Error('账号或密码错误')

@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 import Login from '../views/Login.vue'
+import ForgotPassword from '../views/ForgotPassword.vue'
 import Dashboard from '../views/Dashboard.vue'
 import Organization from '../views/Organization.vue'
 import Users from '../views/Users.vue'
@@ -11,7 +12,7 @@ import Decompose from '../views/Decompose.vue'
 import Report from '../views/Report.vue'
 import Rankings from '../views/Rankings.vue'
 import Forbidden from '../views/Forbidden.vue'
-import { canAccessRoute, getCurrentUser, getDefaultPath } from '../auth/permissions'
+import { canAccessRoute, getCurrentUser, getDefaultPath, isLoggedIn } from '../auth/permissions'
 
 const routes = [
   {
@@ -20,7 +21,17 @@ const routes = [
   },
   {
     path: '/login',
-    component: Login
+    component: Login,
+    meta: {
+      public: true
+    }
+  },
+  {
+    path: '/forgot-password',
+    component: ForgotPassword,
+    meta: {
+      public: true
+    }
   },
   {
     path: '/403',
@@ -111,18 +122,19 @@ const router = createRouter({
 })
 
 router.beforeEach((to) => {
-  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true'
+  const isPublicRoute = Boolean(to.meta?.public)
+  const hasSession = isLoggedIn()
   const currentUser = getCurrentUser()
 
-  if (to.path !== '/login' && !isLoggedIn) {
+  if (!isPublicRoute && !hasSession) {
     return '/login'
   }
 
-  if (to.path === '/login' && isLoggedIn) {
+  if (isPublicRoute && hasSession) {
     return getDefaultPath(currentUser)
   }
 
-  if (to.path !== '/login' && to.path !== '/403' && !canAccessRoute(to, currentUser)) {
+  if (!isPublicRoute && to.path !== '/403' && !canAccessRoute(to, currentUser)) {
     return '/403'
   }
 })

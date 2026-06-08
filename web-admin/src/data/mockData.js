@@ -216,21 +216,14 @@ export const organizations = [
                 id: 'th',
                 name: '天河支行',
                 level: '支行',
-                manager: '魏然',
+                manager: '周杰',
                 children: [
                   {
                     id: 'th-1',
                     name: '体育西网点',
                     level: '网点',
-                    manager: '杜鹏',
-                    staffCount: 11
-                  },
-                  {
-                    id: 'th-2',
-                    name: '珠江新城网点',
-                    level: '网点',
-                    manager: '梁洁',
-                    staffCount: 9
+                    manager: '许一鸣',
+                    staffCount: 8
                   }
                 ]
               }
@@ -244,134 +237,58 @@ export const organizations = [
 
 export const users = [
   {
-    id: 1,
+    id: 'admin',
+    username: 'admin',
+    password: 'admin123',
+    name: '总行管理员',
+    role: 'admin',
+    orgId: 'hq',
+    orgName: '总行'
+  },
+  {
+    id: 'js_admin',
+    username: 'js_admin',
+    password: 'js123',
+    name: '王敏',
+    role: 'province_admin',
+    orgId: 'js',
+    orgName: '江苏省行'
+  },
+  {
+    id: 'nj_admin',
+    username: 'nj_admin',
+    password: 'nj123',
+    name: '李伟',
+    role: 'city_admin',
+    orgId: 'nj',
+    orgName: '南京市行'
+  },
+  {
+    id: 'gl_admin',
+    username: 'gl_admin',
+    password: 'gl123',
     name: '张三',
-    email: 'zhangsan@example.com',
-    position: '客户经理',
-    level: '员工',
-    organization: '鼓楼营业室',
+    role: 'branch_admin',
+    orgId: 'gl',
+    orgName: '鼓楼支行'
+  },
+  {
+    id: 'employee',
+    username: 'employee',
+    password: 'emp123',
+    name: '张三',
+    role: 'employee',
     orgId: 'a-branch',
-    isNew: false,
-    workType: '外勤',
-    isAdmin: false,
-    joinedProject: true
+    orgName: '鼓楼营业室'
   },
   {
-    id: 2,
-    name: '李四',
-    email: 'lisi@example.com',
-    position: '柜员',
-    level: '员工',
-    organization: '鼓楼营业室',
-    orgId: 'a-branch',
-    isNew: true,
-    workType: '内勤',
-    isAdmin: false,
-    joinedProject: true
-  },
-  {
-    id: 3,
-    name: '王五',
-    email: 'wangwu@example.com',
-    position: '客户经理',
-    level: '员工',
-    organization: '湖南路网点',
-    orgId: 'b-branch',
-    isNew: false,
-    workType: '外勤',
-    isAdmin: false,
-    joinedProject: true
-  },
-  {
-    id: 4,
-    name: '赵琳',
-    email: 'zhaolin@example.com',
-    position: '网点主任',
-    level: '网点',
-    organization: '鼓楼营业室',
-    orgId: 'a-branch',
-    isNew: false,
-    workType: '内勤',
-    isAdmin: true,
-    joinedProject: true
-  },
-  {
-    id: 5,
-    name: '陈晨',
-    email: 'chenchen@example.com',
-    position: '网点主任',
-    level: '网点',
-    organization: '湖南路网点',
-    orgId: 'b-branch',
-    isNew: false,
-    workType: '内勤',
-    isAdmin: true,
-    joinedProject: true
-  },
-  {
-    id: 6,
-    name: '周宁',
-    email: 'zhouning@example.com',
-    position: '客户经理',
-    level: '员工',
-    organization: '中央路网点',
-    orgId: 'c-branch',
-    isNew: true,
-    workType: '外勤',
-    isAdmin: false,
-    joinedProject: true
-  },
-  {
-    id: 7,
-    name: '孙悦',
-    email: 'sunyue@example.com',
-    position: '柜员',
-    level: '员工',
-    organization: '珠江路网点',
-    orgId: 'xw-1',
-    isNew: false,
-    workType: '内勤',
-    isAdmin: false,
-    joinedProject: false
-  },
-  {
-    id: 8,
-    name: '吴迪',
-    email: 'wudi@example.com',
-    position: '客户经理',
-    level: '员工',
-    organization: '新街口网点',
-    orgId: 'xw-2',
-    isNew: false,
-    workType: '外勤',
-    isAdmin: false,
-    joinedProject: true
-  },
-  {
-    id: 9,
-    name: '郑雪',
-    email: 'zhengxue@example.com',
-    position: '客户经理',
-    level: '员工',
-    organization: '夫子庙网点',
-    orgId: 'qh-1',
-    isNew: true,
-    workType: '外勤',
-    isAdmin: false,
-    joinedProject: true
-  },
-  {
-    id: 10,
-    name: '唐琳',
-    email: 'tanglin@example.com',
-    position: '网点主任',
-    level: '网点',
-    organization: '平江路网点',
-    orgId: 'gusu-1',
-    isNew: false,
-    workType: '内勤',
-    isAdmin: true,
-    joinedProject: true
+    id: 'gz_employee',
+    username: 'gz_employee',
+    password: 'gz123',
+    name: '许一鸣',
+    role: 'employee',
+    orgId: 'th-1',
+    orgName: '体育西网点'
   }
 ]
 
@@ -525,7 +442,7 @@ export const decompositionRows = [
     indicator: '定期存款',
     totalTask: 1000,
     allocated: 300,
-    currentAllocation: 320,
+    currentAllocation: 420,
     unit: '万元'
   },
   {
@@ -533,105 +450,28 @@ export const decompositionRows = [
     target: '湖南路网点',
     level: '网点',
     indicator: '定期存款',
-    totalTask: 1000,
-    allocated: 400,
-    currentAllocation: 360,
+    totalTask: 800,
+    allocated: 250,
+    currentAllocation: 380,
     unit: '万元'
   },
   {
     id: 3,
-    target: '中央路网点',
+    target: '夫子庙网点',
     level: '网点',
     indicator: '定期存款',
-    totalTask: 1000,
-    allocated: 300,
-    currentAllocation: 320,
+    totalTask: 900,
+    allocated: 280,
+    currentAllocation: 350,
     unit: '万元'
   }
 ]
 
 export const decompositionPlans = [
   {
-    id: 'spring-2026-head',
+    id: 'spring-2026-nj',
     projectId: 'spring-2026',
-    ownerRole: 'head_admin',
-    originType: 'created',
-    receivedFrom: '',
-    currentOrganization: '总行',
-    currentOrgId: 'hq',
-    currentLevel: '总行',
-    nextLevel: '省行',
-    status: '已分解',
-    targets: [
-      {
-        id: 'js',
-        target: '江苏省行',
-        level: '省行',
-        indicators: [
-          { indicatorId: 1, indicator: '定期存款', totalTask: 18000, allocated: 12000, currentAllocation: 6000, unit: '万元' },
-          { indicatorId: 2, indicator: '企业微信添加量', totalTask: 6000, allocated: 3800, currentAllocation: 1800, unit: '户' },
-          { indicatorId: 3, indicator: '中国人寿 3 年期缴保险', totalTask: 2400, allocated: 1500, currentAllocation: 700, unit: '万元' }
-        ]
-      },
-      {
-        id: 'zj',
-        target: '浙江省行',
-        level: '省行',
-        indicators: [
-          { indicatorId: 1, indicator: '定期存款', totalTask: 18000, allocated: 9000, currentAllocation: 5200, unit: '万元' },
-          { indicatorId: 2, indicator: '企业微信添加量', totalTask: 6000, allocated: 3000, currentAllocation: 1600, unit: '户' },
-          { indicatorId: 3, indicator: '中国人寿 3 年期缴保险', totalTask: 2400, allocated: 1000, currentAllocation: 600, unit: '万元' }
-        ]
-      },
-      {
-        id: 'gd',
-        target: '广东省行',
-        level: '省行',
-        indicators: [
-          { indicatorId: 1, indicator: '定期存款', totalTask: 18000, allocated: 7000, currentAllocation: 4300, unit: '万元' },
-          { indicatorId: 2, indicator: '企业微信添加量', totalTask: 6000, allocated: 2600, currentAllocation: 1200, unit: '户' },
-          { indicatorId: 3, indicator: '中国人寿 3 年期缴保险', totalTask: 2400, allocated: 900, currentAllocation: 500, unit: '万元' }
-        ]
-      }
-    ]
-  },
-  {
-    id: 'spring-2026-province',
-    projectId: 'spring-2026',
-    ownerRole: 'province_admin',
-    originType: 'received',
-    receivedFrom: '总行',
-    currentOrganization: '江苏省行',
-    currentOrgId: 'js',
-    currentLevel: '省行',
-    nextLevel: '市行',
-    status: '待调整',
-    targets: [
-      {
-        id: 'nj',
-        target: '南京市行',
-        level: '市行',
-        indicators: [
-          { indicatorId: 1, indicator: '定期存款', totalTask: 6000, allocated: 4200, currentAllocation: 1600, unit: '万元' },
-          { indicatorId: 2, indicator: '企业微信添加量', totalTask: 1800, allocated: 1200, currentAllocation: 450, unit: '户' },
-          { indicatorId: 3, indicator: '中国人寿 3 年期缴保险', totalTask: 700, allocated: 420, currentAllocation: 180, unit: '万元' }
-        ]
-      },
-      {
-        id: 'sz',
-        target: '苏州市行',
-        level: '市行',
-        indicators: [
-          { indicatorId: 1, indicator: '定期存款', totalTask: 6000, allocated: 3000, currentAllocation: 1400, unit: '万元' },
-          { indicatorId: 2, indicator: '企业微信添加量', totalTask: 1800, allocated: 850, currentAllocation: 360, unit: '户' },
-          { indicatorId: 3, indicator: '中国人寿 3 年期缴保险', totalTask: 700, allocated: 280, currentAllocation: 120, unit: '万元' }
-        ]
-      }
-    ]
-  },
-  {
-    id: 'spring-2026-city',
-    projectId: 'spring-2026',
+    projectName: '2026 春季旺季营销项目',
     ownerRole: 'city_admin',
     originType: 'received',
     receivedFrom: '江苏省行',
@@ -646,9 +486,8 @@ export const decompositionPlans = [
         target: '鼓楼支行',
         level: '支行',
         indicators: [
-          { indicatorId: 1, indicator: '定期存款', totalTask: 1600, allocated: 850, currentAllocation: 520, unit: '万元' },
-          { indicatorId: 2, indicator: '企业微信添加量', totalTask: 450, allocated: 180, currentAllocation: 140, unit: '户' },
-          { indicatorId: 3, indicator: '中国人寿 3 年期缴保险', totalTask: 180, allocated: 80, currentAllocation: 55, unit: '万元' }
+          { indicatorId: 1, indicator: '定期存款', totalTask: 1200, allocated: 300, currentAllocation: 420, unit: '万元' },
+          { indicatorId: 2, indicator: '企业微信添加量', totalTask: 420, allocated: 120, currentAllocation: 130, unit: '户' }
         ]
       },
       {
@@ -656,51 +495,8 @@ export const decompositionPlans = [
         target: '玄武支行',
         level: '支行',
         indicators: [
-          { indicatorId: 1, indicator: '定期存款', totalTask: 1600, allocated: 700, currentAllocation: 420, unit: '万元' },
-          { indicatorId: 2, indicator: '企业微信添加量', totalTask: 450, allocated: 150, currentAllocation: 120, unit: '户' },
-          { indicatorId: 3, indicator: '中国人寿 3 年期缴保险', totalTask: 180, allocated: 60, currentAllocation: 45, unit: '万元' }
-        ]
-      },
-      {
-        id: 'qh',
-        target: '秦淮支行',
-        level: '支行',
-        indicators: [
-          { indicatorId: 1, indicator: '定期存款', totalTask: 1600, allocated: 650, currentAllocation: 360, unit: '万元' },
-          { indicatorId: 2, indicator: '企业微信添加量', totalTask: 450, allocated: 120, currentAllocation: 110, unit: '户' },
-          { indicatorId: 3, indicator: '中国人寿 3 年期缴保险', totalTask: 180, allocated: 55, currentAllocation: 40, unit: '万元' }
-        ]
-      }
-    ]
-  },
-  {
-    id: 'inclusive-2026-province',
-    projectId: 'inclusive-2026',
-    ownerRole: 'province_admin',
-    originType: 'created',
-    receivedFrom: '',
-    currentOrganization: '江苏省行',
-    currentOrgId: 'js',
-    currentLevel: '省行',
-    nextLevel: '市行',
-    status: '待分解',
-    targets: [
-      {
-        id: 'nj',
-        target: '南京市行',
-        level: '市行',
-        indicators: [
-          { indicatorId: 4, indicator: '小微客户电访', totalTask: 1200, allocated: 300, currentAllocation: 420, unit: '次' },
-          { indicatorId: 5, indicator: '贷记卡办理', totalTask: 420, allocated: 120, currentAllocation: 130, unit: '张' }
-        ]
-      },
-      {
-        id: 'sz',
-        target: '苏州市行',
-        level: '市行',
-        indicators: [
-          { indicatorId: 4, indicator: '小微客户电访', totalTask: 1200, allocated: 260, currentAllocation: 360, unit: '次' },
-          { indicatorId: 5, indicator: '贷记卡办理', totalTask: 420, allocated: 85, currentAllocation: 95, unit: '张' }
+          { indicatorId: 1, indicator: '定期存款', totalTask: 1100, allocated: 280, currentAllocation: 380, unit: '万元' },
+          { indicatorId: 2, indicator: '企业微信添加量', totalTask: 380, allocated: 100, currentAllocation: 110, unit: '户' }
         ]
       }
     ]
@@ -708,6 +504,7 @@ export const decompositionPlans = [
   {
     id: 'inclusive-2026-city',
     projectId: 'inclusive-2026',
+    projectName: '普惠金融客户拓展项目',
     ownerRole: 'city_admin',
     originType: 'received',
     receivedFrom: '江苏省行',
@@ -722,8 +519,8 @@ export const decompositionPlans = [
         target: '鼓楼支行',
         level: '支行',
         indicators: [
-          { indicatorId: 4, indicator: '小微客户电访', totalTask: 420, allocated: 160, currentAllocation: 110, unit: '次' },
-          { indicatorId: 5, indicator: '贷记卡办理', totalTask: 130, allocated: 45, currentAllocation: 35, unit: '张' }
+          { indicatorId: 4, indicator: '小微客户电访', totalTask: 1200, allocated: 160, currentAllocation: 110, unit: '次' },
+          { indicatorId: 5, indicator: '贷记卡办理', totalTask: 420, allocated: 120, currentAllocation: 130, unit: '张' }
         ]
       },
       {
@@ -731,260 +528,8 @@ export const decompositionPlans = [
         target: '玄武支行',
         level: '支行',
         indicators: [
-          { indicatorId: 4, indicator: '小微客户电访', totalTask: 420, allocated: 120, currentAllocation: 90, unit: '次' },
-          { indicatorId: 5, indicator: '贷记卡办理', totalTask: 130, allocated: 30, currentAllocation: 30, unit: '张' }
-        ]
-      }
-    ]
-  },
-  {
-    id: 'wealth-2026-city',
-    projectId: 'wealth-2026',
-    ownerRole: 'city_admin',
-    originType: 'received',
-    receivedFrom: '江苏省行',
-    currentOrganization: '南京市行',
-    currentOrgId: 'nj',
-    currentLevel: '市行',
-    nextLevel: '支行',
-    status: '部分下发',
-    targets: [
-      {
-        id: 'gl',
-        target: '鼓楼支行',
-        level: '支行',
-        indicators: [
-          { indicatorId: 6, indicator: '基金定投签约', totalTask: 520, allocated: 180, currentAllocation: 150, unit: '万元' },
-          { indicatorId: 7, indicator: '贵金属销售', totalTask: 170, allocated: 55, currentAllocation: 42, unit: '万元' }
-        ]
-      },
-      {
-        id: 'xw',
-        target: '玄武支行',
-        level: '支行',
-        indicators: [
-          { indicatorId: 6, indicator: '基金定投签约', totalTask: 520, allocated: 150, currentAllocation: 120, unit: '万元' },
-          { indicatorId: 7, indicator: '贵金属销售', totalTask: 170, allocated: 40, currentAllocation: 32, unit: '万元' }
-        ]
-      }
-    ]
-  },
-  {
-    id: 'spring-2026-branch',
-    projectId: 'spring-2026',
-    ownerRole: 'branch_admin',
-    originType: 'received',
-    receivedFrom: '南京市行',
-    currentOrganization: '鼓楼支行',
-    currentOrgId: 'gl',
-    currentLevel: '支行',
-    nextLevel: '网点',
-    status: '待提交',
-    targets: [
-      {
-        id: 'a-branch',
-        target: '鼓楼营业室',
-        level: '网点',
-        indicators: [
-          { indicatorId: 1, indicator: '定期存款', totalTask: 520, allocated: 260, currentAllocation: 160, unit: '万元' },
-          { indicatorId: 2, indicator: '企业微信添加量', totalTask: 140, allocated: 60, currentAllocation: 45, unit: '户' },
-          { indicatorId: 3, indicator: '中国人寿 3 年期缴保险', totalTask: 55, allocated: 20, currentAllocation: 15, unit: '万元' }
-        ]
-      },
-      {
-        id: 'b-branch',
-        target: '湖南路网点',
-        level: '网点',
-        indicators: [
-          { indicatorId: 1, indicator: '定期存款', totalTask: 520, allocated: 220, currentAllocation: 150, unit: '万元' },
-          { indicatorId: 2, indicator: '企业微信添加量', totalTask: 140, allocated: 45, currentAllocation: 40, unit: '户' },
-          { indicatorId: 3, indicator: '中国人寿 3 年期缴保险', totalTask: 55, allocated: 18, currentAllocation: 15, unit: '万元' }
-        ]
-      },
-      {
-        id: 'c-branch',
-        target: '中央路网点',
-        level: '网点',
-        indicators: [
-          { indicatorId: 1, indicator: '定期存款', totalTask: 520, allocated: 180, currentAllocation: 120, unit: '万元' },
-          { indicatorId: 2, indicator: '企业微信添加量', totalTask: 140, allocated: 35, currentAllocation: 30, unit: '户' },
-          { indicatorId: 3, indicator: '中国人寿 3 年期缴保险', totalTask: 55, allocated: 15, currentAllocation: 10, unit: '万元' }
-        ]
-      }
-    ]
-  },
-  {
-    id: 'inclusive-2026-branch',
-    projectId: 'inclusive-2026',
-    ownerRole: 'branch_admin',
-    originType: 'received',
-    receivedFrom: '南京市行',
-    currentOrganization: '鼓楼支行',
-    currentOrgId: 'gl',
-    currentLevel: '支行',
-    nextLevel: '网点',
-    status: '待分解',
-    targets: [
-      {
-        id: 'a-branch',
-        target: '鼓楼营业室',
-        level: '网点',
-        indicators: [
-          { indicatorId: 4, indicator: '小微客户电访', totalTask: 260, allocated: 80, currentAllocation: 70, unit: '次' },
-          { indicatorId: 5, indicator: '贷记卡办理', totalTask: 90, allocated: 25, currentAllocation: 22, unit: '张' }
-        ]
-      },
-      {
-        id: 'b-branch',
-        target: '湖南路网点',
-        level: '网点',
-        indicators: [
-          { indicatorId: 4, indicator: '小微客户电访', totalTask: 260, allocated: 70, currentAllocation: 65, unit: '次' },
-          { indicatorId: 5, indicator: '贷记卡办理', totalTask: 90, allocated: 20, currentAllocation: 20, unit: '张' }
-        ]
-      },
-      {
-        id: 'c-branch',
-        target: '中央路网点',
-        level: '网点',
-        indicators: [
-          { indicatorId: 4, indicator: '小微客户电访', totalTask: 260, allocated: 55, currentAllocation: 45, unit: '次' },
-          { indicatorId: 5, indicator: '贷记卡办理', totalTask: 90, allocated: 14, currentAllocation: 9, unit: '张' }
-        ]
-      }
-    ]
-  },
-  {
-    id: 'wealth-2026-branch',
-    projectId: 'wealth-2026',
-    ownerRole: 'branch_admin',
-    originType: 'received',
-    receivedFrom: '南京市行',
-    currentOrganization: '鼓楼支行',
-    currentOrgId: 'gl',
-    currentLevel: '支行',
-    nextLevel: '网点',
-    status: '部分下发',
-    targets: [
-      {
-        id: 'a-branch',
-        target: '鼓楼营业室',
-        level: '网点',
-        indicators: [
-          { indicatorId: 6, indicator: '基金定投签约', totalTask: 360, allocated: 120, currentAllocation: 90, unit: '万元' },
-          { indicatorId: 7, indicator: '贵金属销售', totalTask: 120, allocated: 35, currentAllocation: 28, unit: '万元' }
-        ]
-      },
-      {
-        id: 'b-branch',
-        target: '湖南路网点',
-        level: '网点',
-        indicators: [
-          { indicatorId: 6, indicator: '基金定投签约', totalTask: 360, allocated: 95, currentAllocation: 80, unit: '万元' },
-          { indicatorId: 7, indicator: '贵金属销售', totalTask: 120, allocated: 26, currentAllocation: 24, unit: '万元' }
-        ]
-      },
-      {
-        id: 'c-branch',
-        target: '中央路网点',
-        level: '网点',
-        indicators: [
-          { indicatorId: 6, indicator: '基金定投签约', totalTask: 360, allocated: 70, currentAllocation: 55, unit: '万元' },
-          { indicatorId: 7, indicator: '贵金属销售', totalTask: 120, allocated: 18, currentAllocation: 14, unit: '万元' }
-        ]
-      }
-    ]
-  },
-  {
-    id: 'spring-2026-outlet',
-    projectId: 'spring-2026',
-    ownerRole: 'outlet_admin',
-    originType: 'received',
-    receivedFrom: '鼓楼支行',
-    currentOrganization: '鼓楼营业室',
-    currentOrgId: 'a-branch',
-    currentLevel: '网点',
-    nextLevel: '员工',
-    status: '待分配到人',
-    targets: [
-      {
-        id: 'staff-1',
-        target: '张三',
-        targetUserId: 'employee',
-        level: '员工',
-        indicators: [
-          { indicatorId: 1, indicator: '定期存款', totalTask: 160, allocated: 50, currentAllocation: 55, unit: '万元' },
-          { indicatorId: 2, indicator: '企业微信添加量', totalTask: 45, allocated: 12, currentAllocation: 15, unit: '户' },
-          { indicatorId: 3, indicator: '中国人寿 3 年期缴保险', totalTask: 15, allocated: 5, currentAllocation: 4, unit: '万元' }
-        ]
-      },
-      {
-        id: 'staff-2',
-        target: '李四',
-        targetUserId: 'staff-lisi',
-        level: '员工',
-        indicators: [
-          { indicatorId: 1, indicator: '定期存款', totalTask: 160, allocated: 40, currentAllocation: 45, unit: '万元' },
-          { indicatorId: 2, indicator: '企业微信添加量', totalTask: 45, allocated: 10, currentAllocation: 12, unit: '户' },
-          { indicatorId: 3, indicator: '中国人寿 3 年期缴保险', totalTask: 15, allocated: 3, currentAllocation: 4, unit: '万元' }
-        ]
-      }
-    ]
-  },
-  {
-    id: 'inclusive-2026-outlet',
-    projectId: 'inclusive-2026',
-    ownerRole: 'outlet_admin',
-    originType: 'received',
-    receivedFrom: '鼓楼支行',
-    currentOrganization: '鼓楼营业室',
-    currentOrgId: 'a-branch',
-    currentLevel: '网点',
-    nextLevel: '员工',
-    status: '待分配到人',
-    targets: [
-      {
-        id: 'staff-1',
-        target: '张三',
-        targetUserId: 'employee',
-        level: '员工',
-        indicators: [
-          { indicatorId: 4, indicator: '小微客户电访', totalTask: 70, allocated: 20, currentAllocation: 25, unit: '次' },
-          { indicatorId: 5, indicator: '贷记卡办理', totalTask: 22, allocated: 5, currentAllocation: 8, unit: '张' }
-        ]
-      },
-      {
-        id: 'staff-2',
-        target: '李四',
-        targetUserId: 'staff-lisi',
-        level: '员工',
-        indicators: [
-          { indicatorId: 4, indicator: '小微客户电访', totalTask: 70, allocated: 15, currentAllocation: 20, unit: '次' },
-          { indicatorId: 5, indicator: '贷记卡办理', totalTask: 22, allocated: 4, currentAllocation: 5, unit: '张' }
-        ]
-      }
-    ]
-  },
-  {
-    id: 'wealth-2026-gz-outlet',
-    projectId: 'wealth-2026',
-    ownerRole: 'outlet_admin',
-    originType: 'received',
-    receivedFrom: '天河支行',
-    currentOrganization: '体育西网点',
-    currentOrgId: 'th-1',
-    currentLevel: '网点',
-    nextLevel: '员工',
-    status: '待分配到人',
-    targets: [
-      {
-        id: 'gz-staff-1',
-        target: '许一鸣',
-        targetUserId: 'gz_employee',
-        level: '员工',
-        indicators: [
-          { indicatorId: 6, indicator: '基金定投签约', totalTask: 180, allocated: 60, currentAllocation: 45, unit: '万元' },
-          { indicatorId: 7, indicator: '贵金属销售', totalTask: 70, allocated: 18, currentAllocation: 16, unit: '万元' }
+          { indicatorId: 4, indicator: '小微客户电访', totalTask: 1100, allocated: 140, currentAllocation: 95, unit: '次' },
+          { indicatorId: 5, indicator: '贷记卡办理', totalTask: 380, allocated: 100, currentAllocation: 85, unit: '张' }
         ]
       }
     ]
@@ -994,154 +539,311 @@ export const decompositionPlans = [
 export const reports = [
   {
     id: 1,
-    project: '2026 春季旺季营销项目',
-    indicator: '定期存款',
-    reporter: '张三',
-    organization: '鼓楼营业室',
-    orgId: 'a-branch',
-    reporterId: 'employee',
-    amount: 80,
-    unit: '万元',
-    points: 40,
-    reportedAt: '2026-03-10 09:20',
-    attachment: '已上传'
+    userId: 'employee',
+    userName: '张三',
+    userOrgId: 'a-branch',
+    userOrgName: '鼓楼营业室',
+    projectId: 'spring-2026',
+    projectName: '2026 春季旺季营销项目',
+    indicatorId: 1,
+    indicatorName: '定期存款',
+    indicatorUnit: '万元',
+    value: 120,
+    points: 60,
+    date: '2026-03-15',
+    status: 'approved',
+    attachment: null,
+    description: '完成定期存款任务120万元',
+    bigOrder: false,
+    bigOrderPoints: 0,
+    totalPoints: 60,
+    reviewer: 'gl_admin',
+    reviewTime: '2026-03-15 18:30',
+    reviewComment: '审核通过'
   },
   {
     id: 2,
-    project: '2026 春季旺季营销项目',
-    indicator: '企业微信添加量',
-    reporter: '李四',
-    organization: '鼓楼营业室',
-    orgId: 'a-branch',
-    reporterId: 'staff-lisi',
-    amount: 45,
-    unit: '户',
+    userId: 'employee',
+    userName: '张三',
+    userOrgId: 'a-branch',
+    userOrgName: '鼓楼营业室',
+    projectId: 'spring-2026',
+    projectName: '2026 春季旺季营销项目',
+    indicatorId: 2,
+    indicatorName: '企业微信添加量',
+    indicatorUnit: '户',
+    value: 45,
     points: 9,
-    reportedAt: '2026-03-10 10:10',
-    attachment: '不需要'
+    date: '2026-03-16',
+    status: 'pending',
+    attachment: null,
+    description: '添加企业微信客户45户',
+    bigOrder: false,
+    bigOrderPoints: 0,
+    totalPoints: 9,
+    reviewer: null,
+    reviewTime: null,
+    reviewComment: null
   },
   {
     id: 3,
-    project: '2026 春季旺季营销项目',
-    indicator: '中国人寿 3 年期缴保险',
-    reporter: '王五',
-    organization: '湖南路网点',
-    orgId: 'b-branch',
-    reporterId: 'staff-wangwu',
-    amount: 12,
-    unit: '万元',
-    points: 180,
-    reportedAt: '2026-03-10 11:30',
-    attachment: '已上传'
-  },
-  {
-    id: 4,
-    project: '普惠金融客户拓展项目',
-    indicator: '小微客户电访',
-    reporter: '吴迪',
-    organization: '新街口网点',
-    orgId: 'xw-2',
-    reporterId: 'staff-wudi',
-    amount: 96,
-    unit: '次',
-    points: 9.6,
-    reportedAt: '2026-04-08 15:20',
-    attachment: '不需要'
-  },
-  {
-    id: 5,
-    project: '财富客户资产提升项目',
-    indicator: '基金定投签约',
-    reporter: '郑雪',
-    organization: '夫子庙网点',
-    orgId: 'qh-1',
-    reporterId: 'staff-zhengxue',
-    amount: 38,
-    unit: '万元',
-    points: 152,
-    reportedAt: '2026-05-06 14:10',
-    attachment: '已上传'
-  },
-  {
-    id: 6,
-    project: '财富客户资产提升项目',
-    indicator: '贵金属销售',
-    reporter: '许一鸣',
-    organization: '体育西网点',
-    orgId: 'th-1',
-    reporterId: 'gz_employee',
-    amount: 16,
-    unit: '万元',
-    points: 128,
-    reportedAt: '2026-05-07 10:15',
-    attachment: '已上传'
+    userId: 'gz_employee',
+    userName: '许一鸣',
+    userOrgId: 'th-1',
+    userOrgName: '体育西网点',
+    projectId: 'wealth-2026',
+    projectName: '财富客户资产提升项目',
+    indicatorId: 7,
+    indicatorName: '贵金属销售',
+    indicatorUnit: '万元',
+    value: 25,
+    points: 200,
+    date: '2026-05-10',
+    status: 'approved',
+    attachment: 'sales_proof.pdf',
+    description: '销售贵金属产品25万元',
+    bigOrder: true,
+    bigOrderPoints: 50,
+    totalPoints: 250,
+    reviewer: 'th_admin',
+    reviewTime: '2026-05-10 19:00',
+    reviewComment: '审核通过，大单奖励50积分'
   }
 ]
 
-export const rankingRows = [
-  {
-    rank: 1,
-    name: '王五',
-    organization: '湖南路网点',
-    orgId: 'b-branch',
-    indicator: '保险销售',
-    achievement: '12 万元',
-    points: 180,
-    completionRate: 92
+export const employeeRankings = {
+  'spring-2026': {
+    1: [
+      { rank: 1, name: '王五', organization: '湖南路网点', orgId: 'b-branch', level: '员工', userId: 'employee', indicator: '定期存款', achievement: '120 万元', points: 60, completionRate: 95 },
+      { rank: 2, name: '张三', organization: '鼓楼营业室', orgId: 'a-branch', level: '员工', userId: 'employee', indicator: '定期存款', achievement: '110 万元', points: 55, completionRate: 88 },
+      { rank: 3, name: '李四', organization: '鼓楼营业室', orgId: 'a-branch', level: '员工', userId: 'employee', indicator: '定期存款', achievement: '95 万元', points: 47.5, completionRate: 82 },
+      { rank: 4, name: '郑雪', organization: '夫子庙网点', orgId: 'qh-1', level: '员工', userId: 'employee', indicator: '定期存款', achievement: '88 万元', points: 44, completionRate: 76 },
+      { rank: 5, name: '吴迪', organization: '新街口网点', orgId: 'xw-2', level: '员工', userId: 'employee', indicator: '定期存款', achievement: '75 万元', points: 37.5, completionRate: 70 }
+    ],
+    2: [
+      { rank: 1, name: '李四', organization: '鼓楼营业室', orgId: 'a-branch', level: '员工', userId: 'employee', indicator: '企业微信添加量', achievement: '65 户', points: 13, completionRate: 92 },
+      { rank: 2, name: '王五', organization: '湖南路网点', orgId: 'b-branch', level: '员工', userId: 'employee', indicator: '企业微信添加量', achievement: '58 户', points: 11.6, completionRate: 85 },
+      { rank: 3, name: '张三', organization: '鼓楼营业室', orgId: 'a-branch', level: '员工', userId: 'employee', indicator: '企业微信添加量', achievement: '52 户', points: 10.4, completionRate: 78 },
+      { rank: 4, name: '郑雪', organization: '夫子庙网点', orgId: 'qh-1', level: '员工', userId: 'employee', indicator: '企业微信添加量', achievement: '45 户', points: 9, completionRate: 72 },
+      { rank: 5, name: '吴迪', organization: '新街口网点', orgId: 'xw-2', level: '员工', userId: 'employee', indicator: '企业微信添加量', achievement: '38 户', points: 7.6, completionRate: 65 }
+    ],
+    3: [
+      { rank: 1, name: '王五', organization: '湖南路网点', orgId: 'b-branch', level: '员工', userId: 'employee', indicator: '中国人寿 3 年期缴保险', achievement: '25 万元', points: 375, completionRate: 94 },
+      { rank: 2, name: '张三', organization: '鼓楼营业室', orgId: 'a-branch', level: '员工', userId: 'employee', indicator: '中国人寿 3 年期缴保险', achievement: '22 万元', points: 330, completionRate: 88 },
+      { rank: 3, name: '李四', organization: '鼓楼营业室', orgId: 'a-branch', level: '员工', userId: 'employee', indicator: '中国人寿 3 年期缴保险', achievement: '18 万元', points: 270, completionRate: 82 },
+      { rank: 4, name: '郑雪', organization: '夫子庙网点', orgId: 'qh-1', level: '员工', userId: 'employee', indicator: '中国人寿 3 年期缴保险', achievement: '15 万元', points: 225, completionRate: 75 },
+      { rank: 5, name: '吴迪', organization: '新街口网点', orgId: 'xw-2', level: '员工', userId: 'employee', indicator: '中国人寿 3 年期缴保险', achievement: '12 万元', points: 180, completionRate: 68 }
+    ]
   },
-  {
-    rank: 2,
-    name: '张三',
-    organization: '鼓楼营业室',
-    orgId: 'a-branch',
-    userId: 'employee',
-    indicator: '定期存款',
-    achievement: '80 万元',
-    points: 40,
-    completionRate: 86
+  'inclusive-2026': {
+    4: [
+      { rank: 1, name: '吴迪', organization: '新街口网点', orgId: 'xw-2', level: '员工', userId: 'employee', indicator: '小微客户电访', achievement: '125 次', points: 12.5, completionRate: 96 },
+      { rank: 2, name: '张三', organization: '鼓楼营业室', orgId: 'a-branch', level: '员工', userId: 'employee', indicator: '小微客户电访', achievement: '118 次', points: 11.8, completionRate: 90 },
+      { rank: 3, name: '李四', organization: '鼓楼营业室', orgId: 'a-branch', level: '员工', userId: 'employee', indicator: '小微客户电访', achievement: '105 次', points: 10.5, completionRate: 84 },
+      { rank: 4, name: '王五', organization: '湖南路网点', orgId: 'b-branch', level: '员工', userId: 'employee', indicator: '小微客户电访', achievement: '92 次', points: 9.2, completionRate: 78 },
+      { rank: 5, name: '郑雪', organization: '夫子庙网点', orgId: 'qh-1', level: '员工', userId: 'employee', indicator: '小微客户电访', achievement: '85 次', points: 8.5, completionRate: 72 }
+    ],
+    5: [
+      { rank: 1, name: '张三', organization: '鼓楼营业室', orgId: 'a-branch', level: '员工', userId: 'employee', indicator: '贷记卡办理', achievement: '18 张', points: 108, completionRate: 93 },
+      { rank: 2, name: '王五', organization: '湖南路网点', orgId: 'b-branch', level: '员工', userId: 'employee', indicator: '贷记卡办理', achievement: '16 张', points: 96, completionRate: 87 },
+      { rank: 3, name: '李四', organization: '鼓楼营业室', orgId: 'a-branch', level: '员工', userId: 'employee', indicator: '贷记卡办理', achievement: '14 张', points: 84, completionRate: 81 },
+      { rank: 4, name: '吴迪', organization: '新街口网点', orgId: 'xw-2', level: '员工', userId: 'employee', indicator: '贷记卡办理', achievement: '12 张', points: 72, completionRate: 75 },
+      { rank: 5, name: '郑雪', organization: '夫子庙网点', orgId: 'qh-1', level: '员工', userId: 'employee', indicator: '贷记卡办理', achievement: '10 张', points: 60, completionRate: 68 }
+    ]
   },
-  {
-    rank: 3,
-    name: '李四',
-    organization: '鼓楼营业室',
-    orgId: 'a-branch',
-    indicator: '企业微信添加量',
-    achievement: '45 户',
-    points: 9,
-    completionRate: 72
-  },
-  {
-    rank: 4,
-    name: '郑雪',
-    organization: '夫子庙网点',
-    orgId: 'qh-1',
-    indicator: '基金定投签约',
-    achievement: '38 万元',
-    points: 152,
-    completionRate: 81
-  },
-  {
-    rank: 5,
-    name: '吴迪',
-    organization: '新街口网点',
-    orgId: 'xw-2',
-    indicator: '小微客户电访',
-    achievement: '96 次',
-    points: 9.6,
-    completionRate: 78
-  },
-  {
-    rank: 6,
-    name: '许一鸣',
-    organization: '体育西网点',
-    orgId: 'th-1',
-    userId: 'gz_employee',
-    indicator: '贵金属销售',
-    achievement: '16 万元',
-    points: 128,
-    completionRate: 84
+  'wealth-2026': {
+    6: [
+      { rank: 1, name: '郑雪', organization: '夫子庙网点', orgId: 'qh-1', level: '员工', userId: 'employee', indicator: '基金定投签约', achievement: '68 万元', points: 272, completionRate: 95 },
+      { rank: 2, name: '王五', organization: '湖南路网点', orgId: 'b-branch', level: '员工', userId: 'employee', indicator: '基金定投签约', achievement: '62 万元', points: 248, completionRate: 89 },
+      { rank: 3, name: '张三', organization: '鼓楼营业室', orgId: 'a-branch', level: '员工', userId: 'employee', indicator: '基金定投签约', achievement: '55 万元', points: 220, completionRate: 83 },
+      { rank: 4, name: '李四', organization: '鼓楼营业室', orgId: 'a-branch', level: '员工', userId: 'employee', indicator: '基金定投签约', achievement: '48 万元', points: 192, completionRate: 76 },
+      { rank: 5, name: '吴迪', organization: '新街口网点', orgId: 'xw-2', level: '员工', userId: 'employee', indicator: '基金定投签约', achievement: '42 万元', points: 168, completionRate: 70 }
+    ],
+    7: [
+      { rank: 1, name: '许一鸣', organization: '体育西网点', orgId: 'th-1', level: '员工', userId: 'gz_employee', indicator: '贵金属销售', achievement: '28 万元', points: 224, completionRate: 94 },
+      { rank: 2, name: '王五', organization: '湖南路网点', orgId: 'b-branch', level: '员工', userId: 'employee', indicator: '贵金属销售', achievement: '24 万元', points: 192, completionRate: 88 },
+      { rank: 3, name: '张三', organization: '鼓楼营业室', orgId: 'a-branch', level: '员工', userId: 'employee', indicator: '贵金属销售', achievement: '20 万元', points: 160, completionRate: 82 },
+      { rank: 4, name: '郑雪', organization: '夫子庙网点', orgId: 'qh-1', level: '员工', userId: 'employee', indicator: '贵金属销售', achievement: '16 万元', points: 128, completionRate: 75 },
+      { rank: 5, name: '李四', organization: '鼓楼营业室', orgId: 'a-branch', level: '员工', userId: 'employee', indicator: '贵金属销售', achievement: '14 万元', points: 112, completionRate: 68 }
+    ]
   }
-]
+}
+
+export const outletRankings = {
+  'spring-2026': {
+    1: [
+      { rank: 1, name: '湖南路网点', orgId: 'b-branch', level: '网点', indicator: '定期存款', achievement: '480 万元', points: 240, completionRate: 96 },
+      { rank: 2, name: '鼓楼营业室', orgId: 'a-branch', level: '网点', indicator: '定期存款', achievement: '440 万元', points: 220, completionRate: 90 },
+      { rank: 3, name: '夫子庙网点', orgId: 'qh-1', level: '网点', indicator: '定期存款', achievement: '380 万元', points: 190, completionRate: 84 },
+      { rank: 4, name: '新街口网点', orgId: 'xw-2', level: '网点', indicator: '定期存款', achievement: '320 万元', points: 160, completionRate: 78 },
+      { rank: 5, name: '珠江路网点', orgId: 'xh-1', level: '网点', indicator: '定期存款', achievement: '280 万元', points: 140, completionRate: 72 }
+    ],
+    2: [
+      { rank: 1, name: '鼓楼营业室', orgId: 'a-branch', level: '网点', indicator: '企业微信添加量', achievement: '280 户', points: 56, completionRate: 94 },
+      { rank: 2, name: '湖南路网点', orgId: 'b-branch', level: '网点', indicator: '企业微信添加量', achievement: '245 户', points: 49, completionRate: 88 },
+      { rank: 3, name: '夫子庙网点', orgId: 'qh-1', level: '网点', indicator: '企业微信添加量', achievement: '210 户', points: 42, completionRate: 82 },
+      { rank: 4, name: '新街口网点', orgId: 'xw-2', level: '网点', indicator: '企业微信添加量', achievement: '185 户', points: 37, completionRate: 76 },
+      { rank: 5, name: '珠江路网点', orgId: 'xh-1', level: '网点', indicator: '企业微信添加量', achievement: '160 户', points: 32, completionRate: 70 }
+    ],
+    3: [
+      { rank: 1, name: '湖南路网点', orgId: 'b-branch', level: '网点', indicator: '中国人寿 3 年期缴保险', achievement: '95 万元', points: 1425, completionRate: 95 },
+      { rank: 2, name: '鼓楼营业室', orgId: 'a-branch', level: '网点', indicator: '中国人寿 3 年期缴保险', achievement: '85 万元', points: 1275, completionRate: 89 },
+      { rank: 3, name: '夫子庙网点', orgId: 'qh-1', level: '网点', indicator: '中国人寿 3 年期缴保险', achievement: '72 万元', points: 1080, completionRate: 83 },
+      { rank: 4, name: '新街口网点', orgId: 'xw-2', level: '网点', indicator: '中国人寿 3 年期缴保险', achievement: '60 万元', points: 900, completionRate: 77 },
+      { rank: 5, name: '珠江路网点', orgId: 'xh-1', level: '网点', indicator: '中国人寿 3 年期缴保险', achievement: '48 万元', points: 720, completionRate: 71 }
+    ]
+  },
+  'inclusive-2026': {
+    4: [
+      { rank: 1, name: '新街口网点', orgId: 'xw-2', level: '网点', indicator: '小微客户电访', achievement: '520 次', points: 52, completionRate: 97 },
+      { rank: 2, name: '鼓楼营业室', orgId: 'a-branch', level: '网点', indicator: '小微客户电访', achievement: '480 次', points: 48, completionRate: 91 },
+      { rank: 3, name: '湖南路网点', orgId: 'b-branch', level: '网点', indicator: '小微客户电访', achievement: '425 次', points: 42.5, completionRate: 85 },
+      { rank: 4, name: '夫子庙网点', orgId: 'qh-1', level: '网点', indicator: '小微客户电访', achievement: '380 次', points: 38, completionRate: 79 },
+      { rank: 5, name: '珠江路网点', orgId: 'xh-1', level: '网点', indicator: '小微客户电访', achievement: '340 次', points: 34, completionRate: 73 }
+    ],
+    5: [
+      { rank: 1, name: '鼓楼营业室', orgId: 'a-branch', level: '网点', indicator: '贷记卡办理', achievement: '72 张', points: 432, completionRate: 94 },
+      { rank: 2, name: '湖南路网点', orgId: 'b-branch', level: '网点', indicator: '贷记卡办理', achievement: '64 张', points: 384, completionRate: 88 },
+      { rank: 3, name: '新街口网点', orgId: 'xw-2', level: '网点', indicator: '贷记卡办理', achievement: '56 张', points: 336, completionRate: 82 },
+      { rank: 4, name: '夫子庙网点', orgId: 'qh-1', level: '网点', indicator: '贷记卡办理', achievement: '48 张', points: 288, completionRate: 76 },
+      { rank: 5, name: '珠江路网点', orgId: 'xh-1', level: '网点', indicator: '贷记卡办理', achievement: '40 张', points: 240, completionRate: 70 }
+    ]
+  },
+  'wealth-2026': {
+    6: [
+      { rank: 1, name: '夫子庙网点', orgId: 'qh-1', level: '网点', indicator: '基金定投签约', achievement: '275 万元', points: 1100, completionRate: 96 },
+      { rank: 2, name: '湖南路网点', orgId: 'b-branch', level: '网点', indicator: '基金定投签约', achievement: '245 万元', points: 980, completionRate: 90 },
+      { rank: 3, name: '鼓楼营业室', orgId: 'a-branch', level: '网点', indicator: '基金定投签约', achievement: '215 万元', points: 860, completionRate: 84 },
+      { rank: 4, name: '新街口网点', orgId: 'xw-2', level: '网点', indicator: '基金定投签约', achievement: '185 万元', points: 740, completionRate: 78 },
+      { rank: 5, name: '珠江路网点', orgId: 'xh-1', level: '网点', indicator: '基金定投签约', achievement: '160 万元', points: 640, completionRate: 72 }
+    ],
+    7: [
+      { rank: 1, name: '体育西网点', orgId: 'th-1', level: '网点', indicator: '贵金属销售', achievement: '115 万元', points: 920, completionRate: 95 },
+      { rank: 2, name: '湖南路网点', orgId: 'b-branch', level: '网点', indicator: '贵金属销售', achievement: '98 万元', points: 784, completionRate: 89 },
+      { rank: 3, name: '鼓楼营业室', orgId: 'a-branch', level: '网点', indicator: '贵金属销售', achievement: '82 万元', points: 656, completionRate: 83 },
+      { rank: 4, name: '夫子庙网点', orgId: 'qh-1', level: '网点', indicator: '贵金属销售', achievement: '68 万元', points: 544, completionRate: 77 },
+      { rank: 5, name: '珠江路网点', orgId: 'xh-1', level: '网点', indicator: '贵金属销售', achievement: '55 万元', points: 440, completionRate: 71 }
+    ]
+  }
+}
+
+export const branchRankings = {
+  'spring-2026': {
+    1: [
+      { rank: 1, name: '鼓楼支行', orgId: 'gl', level: '支行', indicator: '定期存款', achievement: '1520 万元', points: 760, completionRate: 94 },
+      { rank: 2, name: '玄武支行', orgId: 'xw', level: '支行', indicator: '定期存款', achievement: '1380 万元', points: 690, completionRate: 88 },
+      { rank: 3, name: '秦淮支行', orgId: 'qh', level: '支行', indicator: '定期存款', achievement: '1250 万元', points: 625, completionRate: 82 },
+      { rank: 4, name: '姑苏支行', orgId: 'gusu', level: '支行', indicator: '定期存款', achievement: '1100 万元', points: 550, completionRate: 76 },
+      { rank: 5, name: '西湖支行', orgId: 'xh', level: '支行', indicator: '定期存款', achievement: '980 万元', points: 490, completionRate: 70 }
+    ],
+    2: [
+      { rank: 1, name: '鼓楼支行', orgId: 'gl', level: '支行', indicator: '企业微信添加量', achievement: '935 户', points: 187, completionRate: 93 },
+      { rank: 2, name: '玄武支行', orgId: 'xw', level: '支行', indicator: '企业微信添加量', achievement: '840 户', points: 168, completionRate: 87 },
+      { rank: 3, name: '秦淮支行', orgId: 'qh', level: '支行', indicator: '企业微信添加量', achievement: '755 户', points: 151, completionRate: 81 },
+      { rank: 4, name: '姑苏支行', orgId: 'gusu', level: '支行', indicator: '企业微信添加量', achievement: '680 户', points: 136, completionRate: 75 },
+      { rank: 5, name: '西湖支行', orgId: 'xh', level: '支行', indicator: '企业微信添加量', achievement: '610 户', points: 122, completionRate: 69 }
+    ],
+    3: [
+      { rank: 1, name: '鼓楼支行', orgId: 'gl', level: '支行', indicator: '中国人寿 3 年期缴保险', achievement: '275 万元', points: 4125, completionRate: 92 },
+      { rank: 2, name: '玄武支行', orgId: 'xw', level: '支行', indicator: '中国人寿 3 年期缴保险', achievement: '248 万元', points: 3720, completionRate: 86 },
+      { rank: 3, name: '秦淮支行', orgId: 'qh', level: '支行', indicator: '中国人寿 3 年期缴保险', achievement: '220 万元', points: 3300, completionRate: 80 },
+      { rank: 4, name: '姑苏支行', orgId: 'gusu', level: '支行', indicator: '中国人寿 3 年期缴保险', achievement: '195 万元', points: 2925, completionRate: 74 },
+      { rank: 5, name: '西湖支行', orgId: 'xh', level: '支行', indicator: '中国人寿 3 年期缴保险', achievement: '172 万元', points: 2580, completionRate: 68 }
+    ]
+  },
+  'inclusive-2026': {
+    4: [
+      { rank: 1, name: '玄武支行', orgId: 'xw', level: '支行', indicator: '小微客户电访', achievement: '1680 次', points: 168, completionRate: 96 },
+      { rank: 2, name: '鼓楼支行', orgId: 'gl', level: '支行', indicator: '小微客户电访', achievement: '1540 次', points: 154, completionRate: 90 },
+      { rank: 3, name: '秦淮支行', orgId: 'qh', level: '支行', indicator: '小微客户电访', achievement: '1400 次', points: 140, completionRate: 84 },
+      { rank: 4, name: '姑苏支行', orgId: 'gusu', level: '支行', indicator: '小微客户电访', achievement: '1260 次', points: 126, completionRate: 78 },
+      { rank: 5, name: '西湖支行', orgId: 'xh', level: '支行', indicator: '小微客户电访', achievement: '1140 次', points: 114, completionRate: 72 }
+    ],
+    5: [
+      { rank: 1, name: '鼓楼支行', orgId: 'gl', level: '支行', indicator: '贷记卡办理', achievement: '232 张', points: 1392, completionRate: 93 },
+      { rank: 2, name: '玄武支行', orgId: 'xw', level: '支行', indicator: '贷记卡办理', achievement: '208 张', points: 1248, completionRate: 87 },
+      { rank: 3, name: '秦淮支行', orgId: 'qh', level: '支行', indicator: '贷记卡办理', achievement: '184 张', points: 1104, completionRate: 81 },
+      { rank: 4, name: '姑苏支行', orgId: 'gusu', level: '支行', indicator: '贷记卡办理', achievement: '160 张', points: 960, completionRate: 75 },
+      { rank: 5, name: '西湖支行', orgId: 'xh', level: '支行', indicator: '贷记卡办理', achievement: '140 张', points: 840, completionRate: 69 }
+    ]
+  },
+  'wealth-2026': {
+    6: [
+      { rank: 1, name: '秦淮支行', orgId: 'qh', level: '支行', indicator: '基金定投签约', achievement: '875 万元', points: 3500, completionRate: 95 },
+      { rank: 2, name: '鼓楼支行', orgId: 'gl', level: '支行', indicator: '基金定投签约', achievement: '780 万元', points: 3120, completionRate: 89 },
+      { rank: 3, name: '玄武支行', orgId: 'xw', level: '支行', indicator: '基金定投签约', achievement: '695 万元', points: 2780, completionRate: 83 },
+      { rank: 4, name: '姑苏支行', orgId: 'gusu', level: '支行', indicator: '基金定投签约', achievement: '610 万元', points: 2440, completionRate: 77 },
+      { rank: 5, name: '西湖支行', orgId: 'xh', level: '支行', indicator: '基金定投签约', achievement: '540 万元', points: 2160, completionRate: 71 }
+    ],
+    7: [
+      { rank: 1, name: '海曙支行', orgId: 'hs', level: '支行', indicator: '贵金属销售', achievement: '365 万元', points: 2920, completionRate: 94 },
+      { rank: 2, name: '鼓楼支行', orgId: 'gl', level: '支行', indicator: '贵金属销售', achievement: '315 万元', points: 2520, completionRate: 88 },
+      { rank: 3, name: '玄武支行', orgId: 'xw', level: '支行', indicator: '贵金属销售', achievement: '275 万元', points: 2200, completionRate: 82 },
+      { rank: 4, name: '秦淮支行', orgId: 'qh', level: '支行', indicator: '贵金属销售', achievement: '240 万元', points: 1920, completionRate: 76 },
+      { rank: 5, name: '西湖支行', orgId: 'xh', level: '支行', indicator: '贵金属销售', achievement: '210 万元', points: 1680, completionRate: 70 }
+    ]
+  }
+}
+
+export const cityRankings = {
+  'spring-2026': {
+    1: [
+      { rank: 1, name: '南京市行', orgId: 'nj', level: '市行', indicator: '定期存款', achievement: '4150 万元', points: 2075, completionRate: 93 },
+      { rank: 2, name: '苏州市行', orgId: 'sz', level: '市行', indicator: '定期存款', achievement: '3780 万元', points: 1890, completionRate: 87 },
+      { rank: 3, name: '杭州市行', orgId: 'hz', level: '市行', indicator: '定期存款', achievement: '3420 万元', points: 1710, completionRate: 81 },
+      { rank: 4, name: '宁波市行', orgId: 'nb', level: '市行', indicator: '定期存款', achievement: '3050 万元', points: 1525, completionRate: 75 },
+      { rank: 5, name: '广州市行', orgId: 'gz', level: '市行', indicator: '定期存款', achievement: '2720 万元', points: 1360, completionRate: 69 }
+    ],
+    2: [
+      { rank: 1, name: '南京市行', orgId: 'nj', level: '市行', indicator: '企业微信添加量', achievement: '2530 户', points: 506, completionRate: 92 },
+      { rank: 2, name: '苏州市行', orgId: 'sz', level: '市行', indicator: '企业微信添加量', achievement: '2290 户', points: 458, completionRate: 86 },
+      { rank: 3, name: '杭州市行', orgId: 'hz', level: '市行', indicator: '企业微信添加量', achievement: '2060 户', points: 412, completionRate: 80 },
+      { rank: 4, name: '宁波市行', orgId: 'nb', level: '市行', indicator: '企业微信添加量', achievement: '1840 户', points: 368, completionRate: 74 },
+      { rank: 5, name: '广州市行', orgId: 'gz', level: '市行', indicator: '企业微信添加量', achievement: '1650 户', points: 330, completionRate: 68 }
+    ],
+    3: [
+      { rank: 1, name: '南京市行', orgId: 'nj', level: '市行', indicator: '中国人寿 3 年期缴保险', achievement: '743 万元', points: 11145, completionRate: 91 },
+      { rank: 2, name: '苏州市行', orgId: 'sz', level: '市行', indicator: '中国人寿 3 年期缴保险', achievement: '672 万元', points: 10080, completionRate: 85 },
+      { rank: 3, name: '杭州市行', orgId: 'hz', level: '市行', indicator: '中国人寿 3 年期缴保险', achievement: '605 万元', points: 9075, completionRate: 79 },
+      { rank: 4, name: '宁波市行', orgId: 'nb', level: '市行', indicator: '中国人寿 3 年期缴保险', achievement: '540 万元', points: 8100, completionRate: 73 },
+      { rank: 5, name: '广州市行', orgId: 'gz', level: '市行', indicator: '中国人寿 3 年期缴保险', achievement: '482 万元', points: 7230, completionRate: 67 }
+    ]
+  },
+  'inclusive-2026': {
+    4: [
+      { rank: 1, name: '南京市行', orgId: 'nj', level: '市行', indicator: '小微客户电访', achievement: '4620 次', points: 462, completionRate: 95 },
+      { rank: 2, name: '苏州市行', orgId: 'sz', level: '市行', indicator: '小微客户电访', achievement: '4180 次', points: 418, completionRate: 89 },
+      { rank: 3, name: '杭州市行', orgId: 'hz', level: '市行', indicator: '小微客户电访', achievement: '3760 次', points: 376, completionRate: 83 },
+      { rank: 4, name: '宁波市行', orgId: 'nb', level: '市行', indicator: '小微客户电访', achievement: '3350 次', points: 335, completionRate: 77 },
+      { rank: 5, name: '广州市行', orgId: 'gz', level: '市行', indicator: '小微客户电访', achievement: '3000 次', points: 300, completionRate: 71 }
+    ],
+    5: [
+      { rank: 1, name: '南京市行', orgId: 'nj', level: '市行', indicator: '贷记卡办理', achievement: '624 张', points: 3744, completionRate: 92 },
+      { rank: 2, name: '苏州市行', orgId: 'sz', level: '市行', indicator: '贷记卡办理', achievement: '560 张', points: 3360, completionRate: 86 },
+      { rank: 3, name: '杭州市行', orgId: 'hz', level: '市行', indicator: '贷记卡办理', achievement: '504 张', points: 3024, completionRate: 80 },
+      { rank: 4, name: '宁波市行', orgId: 'nb', level: '市行', indicator: '贷记卡办理', achievement: '448 张', points: 2688, completionRate: 74 },
+      { rank: 5, name: '广州市行', orgId: 'gz', level: '市行', indicator: '贷记卡办理', achievement: '400 张', points: 2400, completionRate: 68 }
+    ]
+  },
+  'wealth-2026': {
+    6: [
+      { rank: 1, name: '南京市行', orgId: 'nj', level: '市行', indicator: '基金定投签约', achievement: '2380 万元', points: 9520, completionRate: 94 },
+      { rank: 2, name: '苏州市行', orgId: 'sz', level: '市行', indicator: '基金定投签约', achievement: '2120 万元', points: 8480, completionRate: 88 },
+      { rank: 3, name: '杭州市行', orgId: 'hz', level: '市行', indicator: '基金定投签约', achievement: '1900 万元', points: 7600, completionRate: 82 },
+      { rank: 4, name: '宁波市行', orgId: 'nb', level: '市行', indicator: '基金定投签约', achievement: '1680 万元', points: 6720, completionRate: 76 },
+      { rank: 5, name: '广州市行', orgId: 'gz', level: '市行', indicator: '基金定投签约', achievement: '1500 万元', points: 6000, completionRate: 70 }
+    ],
+    7: [
+      { rank: 1, name: '广州市行', orgId: 'gz', level: '市行', indicator: '贵金属销售', achievement: '990 万元', points: 7920, completionRate: 93 },
+      { rank: 2, name: '南京市行', orgId: 'nj', level: '市行', indicator: '贵金属销售', achievement: '855 万元', points: 6840, completionRate: 87 },
+      { rank: 3, name: '苏州市行', orgId: 'sz', level: '市行', indicator: '贵金属销售', achievement: '750 万元', points: 6000, completionRate: 81 },
+      { rank: 4, name: '杭州市行', orgId: 'hz', level: '市行', indicator: '贵金属销售', achievement: '655 万元', points: 5240, completionRate: 75 },
+      { rank: 5, name: '宁波市行', orgId: 'nb', level: '市行', indicator: '贵金属销售', achievement: '570 万元', points: 4560, completionRate: 69 }
+    ]
+  }
+}
+
+export const rankingRows = employeeRankings['spring-2026'][1]
 
 export const dashboardStats = [
   { label: '项目总完成率', value: '86%', hint: '较序时进度领先 8%' },

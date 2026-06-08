@@ -5,7 +5,7 @@
       <h1>当前角色无权访问该页面</h1>
       <p>
         {{ currentUser?.roleName || '当前用户' }} 的数据范围是
-        {{ currentUser?.dataScope || '未获取' }}，请切换有权限的演示角色后再访问。
+        {{ currentUser?.dataScope || '未获取' }}，请切换有权限的角色后再访问。
       </p>
       <div class="toolbar">
         <router-link class="button primary" :to="defaultPath">返回可访问首页</router-link>

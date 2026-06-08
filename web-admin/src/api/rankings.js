@@ -1,4 +1,4 @@
-import { decompositionPlans, indicators, projects, rankingRows } from '../data/mockData'
+import { decompositionPlans, indicators, projects, employeeRankings, outletRankings, branchRankings, cityRankings } from '../data/mockData'
 import { isOrgInScope } from '../auth/orgScope'
 import { mockResolve } from './request'
 
@@ -19,13 +19,49 @@ export function getRankingOptions(user) {
   })
 }
 
-export function getRankings(user) {
+export function getRankings(user, level = 'employee', projectId = '', indicatorId = '') {
   if (!user) return mockResolve([])
 
-  const visibleRows =
-    user.role === 'employee'
-      ? rankingRows.filter((row) => row.userId === user.id)
-      : rankingRows.filter((row) => isOrgInScope(row.orgId, user.orgId))
+  let rankingData = {}
+  
+  switch (level) {
+    case 'employee':
+      rankingData = employeeRankings
+      break
+    case 'outlet':
+      rankingData = outletRankings
+      break
+    case 'branch':
+      rankingData = branchRankings
+      break
+    case 'city':
+      rankingData = cityRankings
+      break
+    default:
+      rankingData = employeeRankings
+  }
 
-  return mockResolve(visibleRows)
+  let data = []
+  
+  if (indicatorId) {
+    const targetIndicatorId = parseInt(indicatorId)
+    const indicator = indicators.find(ind => ind.id === targetIndicatorId)
+    if (indicator) {
+      const targetProjectId = indicator.projectId
+      data = rankingData[targetProjectId]?.[targetIndicatorId] || []
+      if (data.length === 0) {
+        console.log(`No data found for indicator ${indicatorId} in project ${targetProjectId}`)
+        console.log('Available projects:', Object.keys(rankingData))
+        console.log('Available indicators in project:', rankingData[targetProjectId] ? Object.keys(rankingData[targetProjectId]) : 'Project not found')
+      }
+    } else {
+      console.log(`Indicator ${indicatorId} not found`)
+      console.log('Available indicators:', indicators.map(ind => `${ind.id}: ${ind.name}`))
+    }
+  } else {
+    data = Object.values(rankingData).flatMap(projectData => Object.values(projectData).flat())
+  }
+
+  console.log(`Loaded ${data.length} ranking rows for level ${level}, indicator ${indicatorId}`)
+  return mockResolve(data)
 }
