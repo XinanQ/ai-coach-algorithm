@@ -48,6 +48,38 @@ function tempProjectStorePlugin() {
             return
           }
 
+          if (req.method === 'PUT') {
+            const requestUrl = new URL(req.url || '', 'http://localhost')
+            const projectId = requestUrl.searchParams.get('id')
+            if (!projectId) {
+              res.statusCode = 400
+              res.end(JSON.stringify({ message: 'Project id is required' }))
+              return
+            }
+
+            const attachment = parseMultipartFile(await readBuffer(req), req.headers['content-type'] || '')
+            if (!attachment) {
+              res.statusCode = 400
+              res.end(JSON.stringify({ message: 'No file found in request' }))
+              return
+            }
+
+            const projects = await readTempProjects()
+            const projectIndex = projects.findIndex((item) => item.id === projectId)
+            if (projectIndex === -1) {
+              res.statusCode = 404
+              res.end(JSON.stringify({ message: 'Project not found' }))
+              return
+            }
+
+            const nextProjects = projects.map((project, index) =>
+              index === projectIndex ? { ...project, attachment } : project
+            )
+            await fs.writeFile(tempProjectFile, JSON.stringify(nextProjects, null, 2), 'utf-8')
+            res.end(JSON.stringify({ filePath: tempProjectFile, project: nextProjects[projectIndex], projects: nextProjects }))
+            return
+          }
+
           if (req.method === 'DELETE') {
             const requestUrl = new URL(req.url || '', 'http://localhost')
             const projectId = requestUrl.searchParams.get('id')
@@ -104,6 +136,50 @@ function readBody(req) {
     req.on('end', () => resolve(body))
     req.on('error', reject)
   })
+}
+
+function readBuffer(req) {
+  return new Promise((resolve, reject) => {
+    const chunks = []
+    req.on('data', (chunk) => {
+      chunks.push(chunk)
+    })
+    req.on('end', () => resolve(Buffer.concat(chunks)))
+    req.on('error', reject)
+  })
+}
+
+function parseMultipartFile(bodyBuffer, contentType) {
+  const boundaryMatch = contentType.match(/boundary=(?:"([^"]+)"|([^;]+))/)
+  const boundary = boundaryMatch?.[1] || boundaryMatch?.[2]
+  if (!boundary) return null
+
+  const body = bodyBuffer.toString('binary')
+  const parts = body.split(`--${boundary}`)
+
+  for (const part of parts) {
+    if (!part.includes('Content-Disposition') || !part.includes('filename=')) continue
+
+    const headerEnd = part.indexOf('\r\n\r\n')
+    if (headerEnd === -1) continue
+
+    const headers = part.slice(0, headerEnd)
+    const filenameMatch = headers.match(/filename="([^"]+)"/)
+    const contentTypeMatch = headers.match(/Content-Type:\s*([^\r\n]+)/i)
+    const dataStart = headerEnd + 4
+    const dataEnd = part.lastIndexOf('\r\n')
+    const fileBuffer = Buffer.from(part.slice(dataStart, dataEnd > dataStart ? dataEnd : undefined), 'binary')
+
+    return {
+      filename: filenameMatch?.[1] || 'unknown',
+      contentType: contentTypeMatch?.[1] || 'application/octet-stream',
+      size: fileBuffer.length,
+      encoding: 'base64',
+      data: fileBuffer.toString('base64')
+    }
+  }
+
+  return null
 }
 
 // https://vite.dev/config/

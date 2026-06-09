@@ -85,7 +85,7 @@ export function getProjectIndicators(projectId) {
   return mockResolve(indicators.filter((indicator) => indicator.projectId === projectId))
 }
 
-export async function createProject(project, user) {
+export async function createProject(project, user, attachmentFile = null) {
   const payload = {
     ...project,
     id: project.id || `${user.orgId}-${Date.now()}`,
@@ -106,6 +106,25 @@ export async function createProject(project, user) {
     if (!response.ok) throw new Error('Cannot save temp project')
     const result = await response.json()
     setLocalTempProjects(result.projects || [])
+
+    if (attachmentFile) {
+      const formData = new FormData()
+      formData.append('file', attachmentFile)
+
+      const uploadResponse = await fetch(`/api/temp/projects?id=${encodeURIComponent(payload.id)}`, {
+        method: 'PUT',
+        body: formData
+      })
+
+      if (!uploadResponse.ok) {
+        console.warn('附件上传失败，但项目已创建成功。')
+      } else {
+        const uploadResult = await uploadResponse.json()
+        setLocalTempProjects(uploadResult.projects || [])
+        return uploadResult
+      }
+    }
+
     return result
   } catch {
     throw new Error('开发服务器临时存储不可用，请确认 npm run dev 正在运行。')

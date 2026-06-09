@@ -56,6 +56,17 @@
           项目说明
           <input v-model.trim="form.description" class="field" placeholder="说明项目目标和业务范围" />
         </label>
+        <div class="form-field full">
+          <div class="form-label">项目附件</div>
+          <div class="upload-section">
+            <input ref="fileInput" type="file" class="file-input" @change="handleFileChange" />
+            <button class="button" type="button" @click="triggerFileUpload">选择文件</button>
+            <span v-if="form.attachment" class="file-name">{{ form.attachment.name }}</span>
+            <button v-if="form.attachment" class="button danger-button" type="button" @click="clearAttachment">
+              清除
+            </button>
+          </div>
+        </div>
       </div>
 
       <div class="form-actions">
@@ -130,10 +141,31 @@ const form = reactive({
   description: '',
   startDate: '',
   endDate: '',
-  reportDeadline: '18:00',
+  reportDeadline: '00:00',
   attachmentRequired: false,
-  status: '未开始'
+  status: '未开始',
+  attachment: null
 })
+
+const fileInput = ref(null)
+
+function triggerFileUpload() {
+  fileInput.value?.click()
+}
+
+function handleFileChange(event) {
+  const [file] = event.target.files
+  if (file) {
+    form.attachment = file
+  }
+}
+
+function clearAttachment() {
+  form.attachment = null
+  if (fileInput.value) {
+    fileInput.value.value = ''
+  }
+}
 
 function resetForm({ keepMessage = false } = {}) {
   Object.assign(form, {
@@ -141,10 +173,14 @@ function resetForm({ keepMessage = false } = {}) {
     description: '',
     startDate: '',
     endDate: '',
-    reportDeadline: '18:00',
+    reportDeadline: '00:00',
     attachmentRequired: false,
-    status: '未开始'
+    status: '未开始',
+    attachment: null
   })
+  if (fileInput.value) {
+    fileInput.value.value = ''
+  }
   if (!keepMessage) message.value = ''
 }
 
@@ -171,7 +207,7 @@ async function saveProject() {
     return
   }
 
-  const result = await createProject({ ...form }, currentUser)
+  const result = await createProject({ ...form, attachment: undefined }, currentUser, form.attachment)
   await loadProjects()
   message.value = `项目已创建并保存到 ${result.filePath}。`
   messageType.value = 'success'
@@ -304,5 +340,27 @@ dd {
 
 .danger-button:hover {
   background: #fef2f2;
+}
+
+.upload-section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.file-input {
+  display: none;
+}
+
+.file-name {
+  color: #4b5563;
+  font-size: 14px;
+  word-break: break-all;
+}
+
+.form-label {
+  color: #374151;
+  font-size: 14px;
 }
 </style>
