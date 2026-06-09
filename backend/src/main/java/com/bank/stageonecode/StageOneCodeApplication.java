@@ -13,7 +13,9 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
         "com.indicator",
         "com.task",
         "com.performance",
-        "com.points"
+        "com.points",
+        "com.auth"
+
 })
 @EnableJpaRepositories(basePackages = {
         "com.organization",
@@ -22,7 +24,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
         "com.indicator",
         "com.task",
         "com.performance",
-        "com.points"
+        "com.points",
+        "com.auth"
 })
 public class StageOneCodeApplication {
 
