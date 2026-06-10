@@ -1,13 +1,36 @@
-import { authenticateUser } from '../auth/permissions'
+import { request } from './request'
+
+function normalizeLoginUser(loginData) {
+  return {
+    id: loginData.employeeId,
+    employeeId: loginData.employeeId,
+    employeeNo: loginData.employeeNo,
+    username: loginData.employeeNo,
+    name: loginData.name,
+    level: loginData.level,
+    isAdmin: loginData.isAdmin,
+    organizationId: loginData.organizationId,
+    orgId: loginData.organizationId,
+    isInProject: loginData.isInProject,
+
+    role: loginData.isAdmin ? 'admin' : 'employee'
+  }
+}
 
 export async function login(username, password) {
-  const user = authenticateUser(username, password)
+  const response = await request('/api/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({
+      employeeNo: username,
+      password
+    })
+  })
 
-  if (!user) {
-    throw new Error('账号或密码错误')
+  if (!response?.data) {
+    throw new Error(response?.message || '登录失败')
   }
 
-  return user
+  return normalizeLoginUser(response.data)
 }
 
 export async function getMe() {

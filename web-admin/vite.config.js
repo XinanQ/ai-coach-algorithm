@@ -185,4 +185,12 @@ function parseMultipartFile(bodyBuffer, contentType) {
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [vue(), tempProjectStorePlugin()],
+  server: {
+    proxy: {
+      '/api/auth': {
+        target: 'http://localhost:8081',
+        changeOrigin: true
+      }
+    }
+  }
 })

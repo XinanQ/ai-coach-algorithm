@@ -9,11 +9,15 @@ export async function request(path, options = {}) {
     ...options
   })
 
+  const contentType = response.headers.get('content-type')
+  const isJson = contentType && contentType.includes('application/json')
+  const data = isJson ? await response.json() : null
+
   if (!response.ok) {
-    throw new Error(`请求失败：${response.status}`)
+    throw new Error(data?.message || `请求失败：${response.status}`)
   }
 
-  return response.json()
+  return data
 }
 
 export function mockResolve(data) {
