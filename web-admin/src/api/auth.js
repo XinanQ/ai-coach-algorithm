@@ -1,13 +1,76 @@
-import { authenticateUser } from '../auth/permissions'
+import { request } from './request'
+import { roleProfiles } from '../auth/roleProfiles'
 
-export async function login(username, password) {
-  const user = authenticateUser(username, password)
+const ROLE_BY_BACKEND_LEVEL = {
+  HEAD: 'head_admin',
+  PROVINCE: 'province_admin',
+  CITY: 'city_admin',
+  BRANCH: 'branch_admin',
+  OUTLET: 'outlet_admin',
+  EMPLOYEE: 'employee'
+}
 
-  if (!user) {
-    throw new Error('账号或密码错误')
+function resolveFrontendRole(loginData) {
+  const level = String(loginData.level || '').trim().toUpperCase()
+
+  if (!loginData.isAdmin) {
+    return 'employee'
   }
 
-  return user
+  if (!ROLE_BY_BACKEND_LEVEL[level]) {
+    console.warn(`[auth] Unknown backend level "${loginData.level}", fallback to outlet_admin`)
+  }
+
+  return ROLE_BY_BACKEND_LEVEL[level] || 'outlet_admin'
+}
+
+function normalizeLoginUser(loginData) {
+  const role = resolveFrontendRole(loginData)
+  const profile = roleProfiles[role] || roleProfiles.employee
+
+  return {
+    id: loginData.employeeId,
+    employeeId: loginData.employeeId,
+    employeeNo: loginData.employeeNo,
+    username: loginData.employeeNo,
+    name: loginData.name,
+
+    // Fields returned by backend login API.
+    // organizationId is the real database ID from backend.
+    backendLevel: loginData.level,
+    isAdmin: loginData.isAdmin,
+    organizationId: loginData.organizationId,
+    backendOrganizationId: loginData.organizationId,
+    isInProject: loginData.isInProject,
+
+    // Temporary frontend compatibility fields.
+    // The current Web Admin permission system still uses mock roleProfiles
+    // with string orgId values such as 'nj', 'gl', and 'a-branch'.
+    // TODO: replace these fields after backend returns organizationCode.
+    role,
+    level: profile.level,
+    roleName: profile.name,
+    organization: profile.organization,
+    orgName: profile.organization,
+    orgId: profile.orgId,
+    dataScope: profile.dataScope
+  }
+}
+
+export async function login(username, password) {
+  const response = await request('/api/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({
+      employeeNo: username,
+      password
+    })
+  })
+
+  if (!response?.data) {
+    throw new Error(response?.message || '登录失败')
+  }
+
+  return normalizeLoginUser(response.data)
 }
 
 export async function getMe() {
