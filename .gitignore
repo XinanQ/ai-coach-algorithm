@@ -54,8 +54,6 @@ replay_pid*
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio, WebStorm and Rider
 # Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
 
-.idea/
-
 # User-specific stuff
 .idea/**/workspace.xml
 .idea/**/tasks.xml
@@ -604,3 +602,6 @@ gradle-app.setting
 *.hprof
 
 # End of https://www.toptal.com/developers/gitignore/api/macos,windows,visualstudiocode,node,java,python,vue,maven,gradle,jetbrains,go
+
+.idea/
+.vite/
