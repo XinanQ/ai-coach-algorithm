@@ -1,8 +1,5 @@
 package com.performance;
 
-import com.performance.TaskResult;
-import com.performance.TaskResultStatus;
-import com.performance.TaskResultRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +26,11 @@ public class PerformanceServiceImpl implements PerformanceService {
     }
 
     @Override
+    public List<TaskResult> listAll() {
+        return repo.findAll();
+    }
+
+    @Override
     public List<TaskResult> listByStatus(TaskResultStatus status) {
         return repo.findByStatus(status);
     }
@@ -46,6 +48,30 @@ public class PerformanceServiceImpl implements PerformanceService {
     @Override
     public Optional<TaskResult> findById(Long id) {
         return repo.findById(id);
+    }
+
+    @Override
+    public TaskResult updateReport(Long id, TaskResult report) {
+        return repo.findById(id).map(existing -> {
+            existing.setTaskId(report.getTaskId());
+            existing.setProjectId(report.getProjectId());
+            existing.setIndicatorId(report.getIndicatorId());
+            existing.setOrganizationId(report.getOrganizationId());
+            existing.setSubmitter(report.getSubmitter());
+            existing.setSubmitterId(report.getSubmitterId());
+            existing.setReportDate(report.getReportDate());
+            existing.setResult(report.getResult());
+            existing.setAttachmentUrl(report.getAttachmentUrl());
+            if (report.getStatus() != null) {
+                existing.setStatus(report.getStatus());
+            }
+            return repo.save(existing);
+        }).orElse(null);
+    }
+
+    @Override
+    public void deleteById(Long id) {
+        repo.deleteById(id);
     }
 
     @Override

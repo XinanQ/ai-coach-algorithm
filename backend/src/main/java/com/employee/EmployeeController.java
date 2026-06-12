@@ -1,7 +1,8 @@
 package com.employee;
 
-import com.employee.Employee;
-import com.employee.EmployeeService;
+import com.employee.dto.EmployeeCreateRequest;
+import com.employee.dto.EmployeeResponse;
+import com.employee.dto.EmployeeUpdateRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -10,9 +11,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URI;
 import java.util.List;
+import java.util.stream.Collectors;
+
 @RestController
 @RequestMapping("/api/admin/employees")
-
 public class EmployeeController {
 
     private final EmployeeService service;
@@ -22,29 +24,33 @@ public class EmployeeController {
     }
 
     @GetMapping
-    public List<Employee> list() {
-        return service.findAll();
+    public List<EmployeeResponse> list() {
+        return service.findAll().stream()
+                .map(EmployeeResponse::from)
+                .collect(Collectors.toList());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Employee> get(@PathVariable Long id) {
+    public ResponseEntity<EmployeeResponse> get(@PathVariable Long id) {
         return service.findById(id)
+                .map(EmployeeResponse::from)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<Employee> create(@RequestBody Employee employee) {
-        Employee saved = service.save(employee);
-        return ResponseEntity.created(URI.create("/api/admin/employees/" + saved.getId())).body(saved);
+    public ResponseEntity<EmployeeResponse> create(@RequestBody EmployeeCreateRequest request) {
+        Employee saved = service.save(request.toEmployee());
+        return ResponseEntity.created(URI.create("/api/admin/employees/" + saved.getId()))
+                .body(EmployeeResponse.from(saved));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Employee> update(@PathVariable Long id, @RequestBody Employee employee) {
+    public ResponseEntity<EmployeeResponse> update(@PathVariable Long id, @RequestBody EmployeeUpdateRequest request) {
         return service.findById(id).map(existing -> {
-            employee.setId(id);
-            Employee updated = service.save(employee);
-            return ResponseEntity.ok(updated);
+            request.applyTo(existing);
+            Employee updated = service.save(existing);
+            return ResponseEntity.ok(EmployeeResponse.from(updated));
         }).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
@@ -53,6 +59,7 @@ public class EmployeeController {
         service.deleteById(id);
         return ResponseEntity.noContent().build();
     }
+
     @PostMapping("/import")
     public ResponseEntity<?> importExcel(@RequestParam("file") MultipartFile file) {
         try {

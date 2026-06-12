@@ -1,7 +1,5 @@
 package com.performance;
 
-import com.performance.TaskResult;
-import com.performance.TaskResultStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

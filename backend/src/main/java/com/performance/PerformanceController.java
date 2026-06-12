@@ -1,8 +1,5 @@
 package com.performance;
 
-import com.performance.TaskResult;
-import com.performance.TaskResultStatus;
-import com.performance.PerformanceService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -46,12 +43,25 @@ public class PerformanceController {
         if (from != null && to != null) {
             return service.listByDateRange(LocalDate.parse(from), LocalDate.parse(to));
         }
-        return service.listByStatus(TaskResultStatus.PENDING);
+        return service.listAll();
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<TaskResult> get(@PathVariable Long id) {
         return service.findById(id).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<TaskResult> update(@PathVariable Long id, @Valid @RequestBody TaskResult report) {
+        TaskResult updated = service.updateReport(id, report);
+        if (updated == null) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(updated);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        service.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/statuses")

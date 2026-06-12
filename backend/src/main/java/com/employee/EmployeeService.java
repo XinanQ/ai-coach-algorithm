@@ -1,6 +1,5 @@
 package com.employee;
 
-import com.employee.Employee;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
