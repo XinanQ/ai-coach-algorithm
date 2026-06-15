@@ -1,54 +1,71 @@
 package com.employee;
 
-import com.employee.Employee;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
+
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ExcelUtil {
 
     public static List<Employee> parseEmployees(InputStream in) throws IOException {
         List<Employee> list = new ArrayList<>();
-        try (XSSFWorkbook wb = new XSSFWorkbook(in)) {
-            XSSFSheet sheet = wb.getSheetAt(0);
+        try (Workbook wb = WorkbookFactory.create(in)) {
+            Sheet sheet = wb.getSheetAt(0);
+            DataFormatter formatter = new DataFormatter();
             boolean first = true;
+            Map<String, Integer> headerIndex = new HashMap<>();
             for (Row row : sheet) {
-                if (first) { first = false; continue; }
-                Employee e = new Employee();
-                e.setName(getString(row,0));
-                String ageStr = getString(row,1);
-                if(ageStr != null && !ageStr.isEmpty()){
-                    try{ e.setAge(Integer.valueOf(ageStr)); } catch(Exception ex){ }
+                if (first) {
+                    first = false;
+                    for (Cell cell : row) {
+                        String header = formatter.formatCellValue(cell).trim().toLowerCase();
+                        headerIndex.put(header, cell.getColumnIndex());
+                    }
+                    continue;
                 }
-                e.setDepartment(getString(row,2));
-                e.setEmail(getString(row,3));
-                e.setPosition(getString(row,4));
-                String orgId = getString(row,5);
-                if(orgId != null && !orgId.isEmpty()){ try{ e.setOrganizationId(Long.valueOf(orgId)); }catch(Exception ex){} }
-                e.setLevel(getString(row,6));
-                String isNew = getString(row,7);
-                if(isNew != null) e.setIsNew("1".equals(isNew) || "true".equalsIgnoreCase(isNew));
-                e.setWorkType(getString(row,8));
-                String isAdmin = getString(row,9);
-                if(isAdmin != null) e.setIsAdmin("1".equals(isAdmin) || "true".equalsIgnoreCase(isAdmin));
-                String isInProject = getString(row,10);
-                if(isInProject != null) e.setIsInProject("1".equals(isInProject) || "true".equalsIgnoreCase(isInProject));
+                if (row == null || row.getPhysicalNumberOfCells() == 0) {
+                    continue;
+                }
+                Employee e = new Employee();
+                e.setName(getString(row, headerIndex, formatter, "name"));
+                String ageStr = getString(row, headerIndex, formatter, "age");
+                if (ageStr != null && !ageStr.isEmpty()) {
+                    try { e.setAge(Integer.valueOf(ageStr)); } catch (Exception ex) { }
+                }
+                e.setDepartment(getString(row, headerIndex, formatter, "department"));
+                e.setEmail(getString(row, headerIndex, formatter, "email"));
+                e.setPosition(getString(row, headerIndex, formatter, "position"));
+                String orgId = getString(row, headerIndex, formatter, "organizationid", "organization_id", "organization id", "orgid");
+                if (orgId != null && !orgId.isEmpty()) {
+                    try { e.setOrganizationId(Long.valueOf(orgId)); } catch (Exception ex) { }
+                }
+                e.setLevel(getString(row, headerIndex, formatter, "level"));
+                String isNew = getString(row, headerIndex, formatter, "isnew", "is_new", "new");
+                if (isNew != null) e.setIsNew("1".equals(isNew) || "true".equalsIgnoreCase(isNew));
+                e.setWorkType(getString(row, headerIndex, formatter, "worktype", "work_type"));
+                String isAdmin = getString(row, headerIndex, formatter, "isadmin", "is_admin", "admin");
+                if (isAdmin != null) e.setIsAdmin("1".equals(isAdmin) || "true".equalsIgnoreCase(isAdmin));
+                String isInProject = getString(row, headerIndex, formatter, "isinproject", "is_in_project", "inproject", "in_project");
+                if (isInProject != null) e.setIsInProject("1".equals(isInProject) || "true".equalsIgnoreCase(isInProject));
                 list.add(e);
             }
+        } catch (Exception ex) {
+            throw new IOException("Failed to parse employee Excel file", ex);
         }
         return list;
     }
 
     public static byte[] employeesToExcel(List<Employee> list) throws IOException {
-        try (XSSFWorkbook wb = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()){
-            XSSFSheet sheet = wb.createSheet("Employees");
+        try (XSSFWorkbook wb = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Sheet sheet = wb.createSheet("Employees");
             int rowIdx = 0;
             Row header = sheet.createRow(rowIdx++);
             header.createCell(0).setCellValue("name");
@@ -83,17 +100,21 @@ public class ExcelUtil {
         }
     }
 
-    private static String getString(Row row, int idx){
-        if(row == null) return null;
-        Cell c = row.getCell(idx);
-        if(c == null) return null;
-        switch(c.getCellType()){
-            case STRING: return c.getStringCellValue();
-            case NUMERIC: return String.valueOf((long)c.getNumericCellValue());
-            case BOOLEAN: return String.valueOf(c.getBooleanCellValue());
-            default: return c.toString();
+    private static String getString(Row row, Map<String, Integer> headerIndex, DataFormatter formatter, String... names) {
+        for (String name : names) {
+            Integer idx = headerIndex.get(name.toLowerCase());
+            if (idx != null) {
+                Cell c = row.getCell(idx);
+                if (c != null) {
+                    String value = formatter.formatCellValue(c).trim();
+                    if (!value.isEmpty()) {
+                        return value;
+                    }
+                }
+            }
         }
+        return null;
     }
 
-    private static String nullSafe(String s){ return s == null ? "" : s; }
+    private static String nullSafe(String s) { return s == null ? "" : s; }
 }

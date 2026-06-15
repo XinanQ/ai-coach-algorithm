@@ -15,7 +15,6 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
         "com.performance",
         "com.points",
         "com.auth"
-
 })
 @EnableJpaRepositories(basePackages = {
         "com.organization",

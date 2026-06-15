@@ -1,6 +1,5 @@
 package com.organization;
 
-import com.organization.Organization;
 import com.organization.Organization.OrgLevel;
 
 import java.util.List;

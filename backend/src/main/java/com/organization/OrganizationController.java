@@ -1,13 +1,15 @@
 package com.organization;
 
-import com.organization.Organization;
 import com.organization.Organization.OrgLevel;
-import com.organization.OrganizationService;
+import com.organization.dto.OrganizationCreateRequest;
+import com.organization.dto.OrganizationResponse;
+import com.organization.dto.OrganizationUpdateRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/admin/organizations")
@@ -20,40 +22,51 @@ public class OrganizationController {
     }
 
     @GetMapping
-    public List<Organization> list(){
-        return orgService.findAll();
+    public List<OrganizationResponse> list(){
+        return orgService.findAll().stream()
+                .map(OrganizationResponse::from)
+                .collect(Collectors.toList());
     }
 
     @GetMapping("/tree")
-    public List<Organization> tree(){
-        return orgService.findTree();
+    public List<OrganizationResponse> tree(){
+        return orgService.findTree().stream()
+                .map(OrganizationResponse::from)
+                .collect(Collectors.toList());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Organization> getById(@PathVariable Long id){
+    public ResponseEntity<OrganizationResponse> getById(@PathVariable Long id){
         return orgService.findById(id)
+                .map(OrganizationResponse::from)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<Organization> create(@RequestBody Organization org, @RequestParam(required = false) Long parentId){
+    public ResponseEntity<OrganizationResponse> create(@RequestBody OrganizationCreateRequest request,
+                                                       @RequestParam(required = false) Long parentId){
+        Organization org = request.toOrganization();
         if(parentId != null){
             orgService.findById(parentId).ifPresent(org::setParent);
         }
         Organization saved = orgService.save(org);
-        return ResponseEntity.created(URI.create("/api/admin/organizations/" + saved.getId())).body(saved);
+        return ResponseEntity.created(URI.create("/api/admin/organizations/" + saved.getId()))
+                .body(OrganizationResponse.from(saved));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Organization> update(@PathVariable Long id, @RequestBody Organization org, @RequestParam(required = false) Long parentId){
+    public ResponseEntity<OrganizationResponse> update(@PathVariable Long id,
+                                                       @RequestBody OrganizationUpdateRequest request,
+                                                       @RequestParam(required = false) Long parentId){
         return orgService.findById(id).map(existing ->{
-            org.setId(id);
+            request.applyTo(existing);
+            existing.setId(id);
             if(parentId != null){
-                orgService.findById(parentId).ifPresent(org::setParent);
+                orgService.findById(parentId).ifPresent(existing::setParent);
             }
-            Organization updated = orgService.save(org);
-            return ResponseEntity.ok(updated);
+            Organization updated = orgService.save(existing);
+            return ResponseEntity.ok(OrganizationResponse.from(updated));
         }).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
@@ -64,7 +77,9 @@ public class OrganizationController {
     }
 
     @GetMapping("/by-level/{level}")
-    public List<Organization> byLevel(@PathVariable OrgLevel level){
-        return orgService.findByLevel(level);
+    public List<OrganizationResponse> byLevel(@PathVariable OrgLevel level){
+        return orgService.findByLevel(level).stream()
+                .map(OrganizationResponse::from)
+                .collect(Collectors.toList());
     }
 }

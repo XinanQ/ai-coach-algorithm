@@ -1,8 +1,6 @@
 package com.organization;
 
-import com.organization.Organization;
 import com.organization.Organization.OrgLevel;
-import com.organization.OrganizationRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
