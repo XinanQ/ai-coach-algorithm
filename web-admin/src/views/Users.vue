@@ -63,11 +63,9 @@
 
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
-import { getCurrentUser } from '../auth/permissions'
 import { getUsers } from '../api/users'
 
 const users = ref([])
-const currentUser = getCurrentUser()
 
 const filters = reactive({
   organization: '',
@@ -91,6 +89,6 @@ const organizationOptions = computed(() =>
 )
 
 onMounted(async () => {
-  users.value = await getUsers(currentUser)
+  users.value = await getUsers()
 })
 </script>

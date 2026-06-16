@@ -3,6 +3,7 @@ import { roleProfiles } from '../auth/roleProfiles'
 
 const ROLE_BY_BACKEND_LEVEL = {
   HEAD: 'head_admin',
+  HEADQUARTERS: 'head_admin',
   PROVINCE: 'province_admin',
   CITY: 'city_admin',
   BRANCH: 'branch_admin',
@@ -35,18 +36,12 @@ function normalizeLoginUser(loginData) {
     username: loginData.employeeNo,
     name: loginData.name,
 
-    // Fields returned by backend login API.
-    // organizationId is the real database ID from backend.
     backendLevel: loginData.level,
     isAdmin: loginData.isAdmin,
     organizationId: loginData.organizationId,
     backendOrganizationId: loginData.organizationId,
     isInProject: loginData.isInProject,
 
-    // Temporary frontend compatibility fields.
-    // The current Web Admin permission system still uses mock roleProfiles
-    // with string orgId values such as 'nj', 'gl', and 'a-branch'.
-    // TODO: replace these fields after backend returns organizationCode.
     role,
     level: profile.level,
     roleName: profile.name,
@@ -68,6 +63,10 @@ export async function login(username, password) {
 
   if (!response?.data) {
     throw new Error(response?.message || '登录失败')
+  }
+
+  if (response.data.token) {
+    localStorage.setItem('authToken', response.data.token)
   }
 
   return normalizeLoginUser(response.data)

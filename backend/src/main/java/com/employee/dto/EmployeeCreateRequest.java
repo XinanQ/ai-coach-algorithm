@@ -111,7 +111,6 @@ public class EmployeeCreateRequest {
         employee.setDepartment(department);
         employee.setEmail(email);
         employee.setPosition(position);
-        employee.setOrganizationId(organizationId);
         employee.setLevel(level);
         employee.setIsNew(isNew);
         employee.setWorkType(workType);
