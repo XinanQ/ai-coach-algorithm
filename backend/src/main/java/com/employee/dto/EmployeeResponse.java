@@ -11,6 +11,7 @@ public class EmployeeResponse {
     private String email;
     private String position;
     private Long organizationId;
+    private String organizationName;
     private String level;
     private Boolean isNew;
     private String workType;
@@ -25,7 +26,14 @@ public class EmployeeResponse {
         response.setDepartment(employee.getDepartment());
         response.setEmail(employee.getEmail());
         response.setPosition(employee.getPosition());
-        response.setOrganizationId(employee.getOrganizationId());
+        response.setPosition(employee.getPosition());
+
+        if (employee.getOrganization() != null) {
+            response.setOrganizationId(employee.getOrganization().getId());
+            response.setOrganizationName(employee.getOrganization().getName());
+        }
+
+        response.setLevel(employee.getLevel());
         response.setLevel(employee.getLevel());
         response.setIsNew(employee.getIsNew());
         response.setWorkType(employee.getWorkType());
@@ -129,4 +137,8 @@ public class EmployeeResponse {
     public void setIsInProject(Boolean isInProject) {
         this.isInProject = isInProject;
     }
+
+    public String getOrganizationName() { return organizationName;}
+
+    public void setOrganizationName(String organizationName) { this.organizationName = organizationName;}
 }

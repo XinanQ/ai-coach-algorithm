@@ -187,7 +187,7 @@ export default defineConfig({
   plugins: [vue(), tempProjectStorePlugin()],
   server: {
     proxy: {
-      '/api/auth': {
+      '/api': {
         target: 'http://localhost:8081',
         changeOrigin: true
       }

@@ -1,6 +1,7 @@
 package com.employee;
 
 import jakarta.persistence.*;
+import com.organization.Organization;
 
 @Entity
 @Table(name = "employees")
@@ -16,7 +17,10 @@ public class Employee {
     private String department;
     private String email;
     private String position;
-    private Long organizationId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "organization_id", nullable = false)
+    private Organization organization;
 
     // === 新增字段（根据需求文档）===
     private String level;          // 级别（总行/省行/市行/支行/网点）
@@ -78,12 +82,12 @@ public class Employee {
         this.position = position;
     }
 
-    public Long getOrganizationId() {
-        return organizationId;
+    public Organization getOrganization() {
+        return organization;
     }
 
-    public void setOrganizationId(Long organizationId) {
-        this.organizationId = organizationId;
+    public void setOrganization(Organization organization) {
+        this.organization = organization;
     }
 
     // === 新增 Getter/Setter ===
