@@ -19,6 +19,7 @@ export function setCurrentUser(user) {
 export function clearCurrentUser() {
   localStorage.removeItem('isLoggedIn')
   localStorage.removeItem('currentUser')
+  localStorage.removeItem('authToken')
 }
 
 export function isLoggedIn() {

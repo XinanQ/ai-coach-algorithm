@@ -1,6 +1,7 @@
 package com.employee;
 
 
+import com.organization.Organization;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -45,7 +46,11 @@ public class ExcelUtil {
                 e.setPosition(getString(row, headerIndex, formatter, "position"));
                 String orgId = getString(row, headerIndex, formatter, "organizationid", "organization_id", "organization id", "orgid");
                 if (orgId != null && !orgId.isEmpty()) {
-                    try { e.setOrganizationId(Long.valueOf(orgId)); } catch (Exception ex) { }
+                    try {
+                        Organization organization = new Organization();
+                        organization.setId(Long.valueOf(orgId));
+                        e.setOrganization(organization);
+                    } catch (Exception ex) { }
                 }
                 e.setLevel(getString(row, headerIndex, formatter, "level"));
                 String isNew = getString(row, headerIndex, formatter, "isnew", "is_new", "new");
@@ -87,7 +92,7 @@ public class ExcelUtil {
                 r.createCell(2).setCellValue(nullSafe(e.getDepartment()));
                 r.createCell(3).setCellValue(nullSafe(e.getEmail()));
                 r.createCell(4).setCellValue(nullSafe(e.getPosition()));
-                r.createCell(5).setCellValue(e.getOrganizationId() == null ? "" : String.valueOf(e.getOrganizationId()));
+                r.createCell(5).setCellValue(e.getOrganization() == null ? "" : String.valueOf(e.getOrganization().getId()));
                 r.createCell(6).setCellValue(nullSafe(e.getLevel()));
                 r.createCell(7).setCellValue(e.getIsNew() == null ? "" : String.valueOf(e.getIsNew()));
                 r.createCell(8).setCellValue(nullSafe(e.getWorkType()));

@@ -40,16 +40,16 @@
             <dd>{{ selectedOrg.level }}</dd>
           </div>
           <div>
-            <dt>管理员</dt>
-            <dd>{{ selectedOrg.manager }}</dd>
+            <dt>管理员人数</dt>
+            <dd>{{ selectedOrg.adminCount ?? 0 }} 人</dd>
           </div>
           <div>
             <dt>直属下级</dt>
             <dd>{{ selectedOrg.children?.length || 0 }} 个</dd>
           </div>
           <div>
-            <dt>网点人数</dt>
-            <dd>{{ selectedOrg.staffCount || '按下级汇总' }}</dd>
+            <dt>员工人数</dt>
+            <dd>{{ selectedOrg.staffCount ?? 0 }} 人</dd>
           </div>
         </dl>
       </div>
@@ -81,8 +81,8 @@ function countNodes(nodes) {
 
 function countOutlets(nodes) {
   return nodes.reduce(
-    (sum, node) => sum + (node.level === '网点' ? 1 : 0) + countOutlets(node.children || []),
-    0
+      (sum, node) => sum + (node.level === 'OUTLET' ? 1 : 0) + countOutlets(node.children || []),
+      0
   )
 }
 
@@ -110,7 +110,7 @@ onMounted(async () => {
 const OrgNode = defineComponent({
   props: {
     node: { type: Object, required: true },
-    selectedId: { type: String, required: true },
+    selectedId: { type: [String, Number], required: true },
     expandedIds: { type: Object, required: true },
     depth: { type: Number, required: true }
   },
@@ -144,9 +144,9 @@ const OrgNode = defineComponent({
               h(
                 'span',
                 { class: 'node-meta' },
-                props.node.level === '网点'
-                  ? `${props.node.staffCount || 0} 人`
-                  : `${props.node.children?.length || 0} 个下级`
+                  props.node.level === 'OUTLET'
+                      ? `${props.node.staffCount ?? 0} 人`
+                      : `${props.node.children?.length || 0} 个下级`
               )
             ]
           )

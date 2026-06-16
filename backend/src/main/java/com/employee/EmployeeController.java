@@ -25,14 +25,14 @@ public class EmployeeController {
 
     @GetMapping
     public List<EmployeeResponse> list() {
-        return service.findAll().stream()
+        return service.findVisibleEmployees().stream()
                 .map(EmployeeResponse::from)
                 .collect(Collectors.toList());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<EmployeeResponse> get(@PathVariable Long id) {
-        return service.findById(id)
+        return service.findVisibleById(id)
                 .map(EmployeeResponse::from)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
@@ -40,24 +40,27 @@ public class EmployeeController {
 
     @PostMapping
     public ResponseEntity<EmployeeResponse> create(@RequestBody EmployeeCreateRequest request) {
-        Employee saved = service.save(request.toEmployee());
+        Employee saved = service.createEmployee(request);
         return ResponseEntity.created(URI.create("/api/admin/employees/" + saved.getId()))
                 .body(EmployeeResponse.from(saved));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<EmployeeResponse> update(@PathVariable Long id, @RequestBody EmployeeUpdateRequest request) {
-        return service.findById(id).map(existing -> {
-            request.applyTo(existing);
-            Employee updated = service.save(existing);
+        try {
+            Employee updated = service.updateVisibleEmployee(id, request);
             return ResponseEntity.ok(EmployeeResponse.from(updated));
-        }).orElseGet(() -> ResponseEntity.notFound().build());
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        service.deleteById(id);
-        return ResponseEntity.noContent().build();
+        return service.findVisibleById(id).map(existing -> {
+            service.deleteById(existing.getId());
+            return ResponseEntity.noContent().<Void>build();
+        }).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping("/import")
@@ -73,7 +76,7 @@ public class EmployeeController {
     @GetMapping("/export")
     public ResponseEntity<byte[]> exportExcel() {
         try {
-            byte[] data = service.exportToExcel();
+            byte[] data = service.exportVisibleToExcel();
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
             headers.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=employees.xlsx");

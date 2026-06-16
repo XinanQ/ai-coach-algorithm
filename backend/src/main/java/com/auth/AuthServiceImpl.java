@@ -17,10 +17,14 @@ public class AuthServiceImpl implements AuthService {
     private final EmployeeRepository employeeRepository;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
+    private final AuthTokenService authTokenService;
+
     public AuthServiceImpl(UserAccountRepository userAccountRepository,
-                           EmployeeRepository employeeRepository) {
+                           EmployeeRepository employeeRepository,
+                           AuthTokenService authTokenService) {
         this.userAccountRepository = userAccountRepository;
         this.employeeRepository = employeeRepository;
+        this.authTokenService = authTokenService;
     }
 
     @Override
@@ -62,13 +66,19 @@ public class AuthServiceImpl implements AuthService {
                         "Employee profile not found"
                 ));
 
-        if (Boolean.FALSE.equals(employee.getIsInProject())) {
-            throw new AuthException(
-                    HttpStatus.FORBIDDEN,
-                    403,
-                    "Employee is not in project"
-            );
-        }
+//        if (Boolean.FALSE.equals(employee.getIsInProject())) {
+//            throw new AuthException(
+//                    HttpStatus.FORBIDDEN,
+//                    403,
+//                    "Employee is not in project"
+//            );
+//        }
+
+        String token = authTokenService.createToken(employee.getId());
+
+        Long organizationId = employee.getOrganization() == null
+                ? null
+                : employee.getOrganization().getId();
 
         return new LoginResponse(
                 employee.getId(),
@@ -76,8 +86,9 @@ public class AuthServiceImpl implements AuthService {
                 employee.getName(),
                 employee.getLevel(),
                 employee.getIsAdmin(),
-                employee.getOrganizationId(),
-                employee.getIsInProject()
+                organizationId,
+                employee.getIsInProject(),
+                token
         );
     }
 
