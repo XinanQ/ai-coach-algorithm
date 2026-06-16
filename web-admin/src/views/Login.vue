@@ -3,8 +3,8 @@
     <div class="login-box">
       <h2>金融业务绩效管理系统</h2>
 
-      <input v-model="username" placeholder="请输入用户ID" />
-      <input v-model="password" placeholder="请输入密码" type="password" />
+      <input v-model="username" placeholder="请输入用户ID" @keyup.enter="handleLogin" />
+      <input v-model="password" placeholder="请输入密码" type="password" @keyup.enter="handleLogin" />
       <p class="login-tip">系统将根据账号自动识别权限级别。</p>
 
       <button @click="handleLogin">登录</button>

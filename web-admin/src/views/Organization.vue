@@ -54,17 +54,51 @@
         </dl>
       </div>
     </section>
+
+    <section v-if="selectedOrg" class="grid grid-3">
+      <div class="panel">
+        <h2>人员分布</h2>
+        <div v-if="staffBreakdown" ref="staffChartEl" class="org-chart"></div>
+        <p v-else class="empty-hint">该机构暂无人员分布数据。</p>
+      </div>
+      <div class="panel">
+        <h2>下级积分对比</h2>
+        <div v-if="childrenRanking.length" ref="rankingChartEl" class="org-chart"></div>
+        <p v-else class="empty-hint">该机构暂无下级积分数据。</p>
+      </div>
+      <div class="panel">
+        <h2>指标完成率</h2>
+        <div v-if="indicatorStats.length" ref="radarChartEl" class="org-chart"></div>
+        <p v-else class="empty-hint">该机构暂无指标完成率数据。</p>
+      </div>
+    </section>
   </div>
 </template>
 
 <script setup>
-import { computed, defineComponent, h, onMounted, ref } from 'vue'
-import { getOrganizationTree } from '../api/organization'
+import { computed, defineComponent, h, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import * as echarts from 'echarts'
+import {
+  getOrganizationTree,
+  getOrgStaffBreakdown,
+  getChildrenRanking,
+  getOrgIndicatorStats
+} from '../api/organization'
 
 const keyword = ref('')
 const organizations = ref([])
 const selectedOrg = ref(null)
 const expandedIds = ref(new Set())
+
+const staffChartEl = ref(null)
+const rankingChartEl = ref(null)
+const radarChartEl = ref(null)
+const staffBreakdown = ref(null)
+const childrenRanking = ref([])
+const indicatorStats = ref([])
+let staffChart = null
+let rankingChart = null
+let radarChart = null
 
 function includesKeyword(node, value) {
   return node.name.includes(value) || node.children?.some((child) => includesKeyword(child, value))
@@ -102,9 +136,110 @@ function toggleNode(nodeId) {
   expandedIds.value = nextExpandedIds
 }
 
+function renderCharts() {
+  if (!selectedOrg.value) return
+
+  if (staffChartEl.value && staffBreakdown.value) {
+    staffChart?.dispose()
+    staffChart = echarts.init(staffChartEl.value)
+    staffChart.setOption({
+      tooltip: { formatter: '{b}: {c} 人' },
+      series: [
+        {
+          type: 'treemap',
+          data: [staffBreakdown.value],
+          leafDepth: 2,
+          roam: false,
+          breadcrumb: { show: false },
+          label: { fontSize: 12 }
+        }
+      ]
+    })
+  }
+
+  if (rankingChartEl.value && childrenRanking.value.length) {
+    rankingChart?.dispose()
+    rankingChart = echarts.init(rankingChartEl.value)
+    rankingChart.setOption({
+      grid: { left: 80, right: 24, top: 24, bottom: 28 },
+      tooltip: {},
+      xAxis: { type: 'value' },
+      yAxis: { type: 'category', data: childrenRanking.value.map((row) => row.name) },
+      series: [
+        {
+          type: 'bar',
+          data: childrenRanking.value.map((row) => row.points),
+          itemStyle: { color: '#0f766e' },
+          barMaxWidth: 24
+        }
+      ]
+    })
+  }
+
+  if (radarChartEl.value && indicatorStats.value.length) {
+    radarChart?.dispose()
+    radarChart = echarts.init(radarChartEl.value)
+    radarChart.setOption({
+      tooltip: {},
+      radar: {
+        indicator: indicatorStats.value.map((item) => ({ name: item.name, max: 100 })),
+        radius: '65%'
+      },
+      series: [
+        {
+          type: 'radar',
+          data: [
+            {
+              value: indicatorStats.value.map((item) => item.completionRate),
+              name: '完成率(%)',
+              areaStyle: { color: 'rgba(15, 118, 110, 0.2)' },
+              lineStyle: { color: '#0f766e' },
+              itemStyle: { color: '#0f766e' }
+            }
+          ]
+        }
+      ]
+    })
+  }
+}
+
+async function loadOrganizationMetrics() {
+  if (!selectedOrg.value) {
+    staffBreakdown.value = null
+    childrenRanking.value = []
+    indicatorStats.value = []
+    return
+  }
+
+  const [staff, ranking, stats] = await Promise.all([
+    getOrgStaffBreakdown(selectedOrg.value),
+    getChildrenRanking(selectedOrg.value),
+    getOrgIndicatorStats(selectedOrg.value)
+  ])
+
+  staffBreakdown.value = staff
+  childrenRanking.value = ranking
+  indicatorStats.value = stats
+}
+
 onMounted(async () => {
   organizations.value = await getOrganizationTree()
   selectedOrg.value = organizations.value[0]
+  await loadOrganizationMetrics()
+  await nextTick()
+  renderCharts()
+})
+
+watch(selectedOrg, async () => {
+  await loadOrganizationMetrics()
+  await nextTick()
+  renderCharts()
+})
+
+onBeforeUnmount(() => {
+  staffChart?.dispose()
+  rankingChart?.dispose()
+  radarChart?.dispose()
 })
 
 const OrgNode = defineComponent({
@@ -326,6 +461,16 @@ const OrgNode = defineComponent({
 .level-网点 {
   background: #f5f3ff;
   color: #6d28d9;
+}
+
+.org-chart {
+  width: 100%;
+  height: 260px;
+}
+
+.empty-hint {
+  color: #9ca3af;
+  font-size: 13px;
 }
 
 .detail-panel dl {

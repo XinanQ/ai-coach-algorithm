@@ -2,16 +2,16 @@
   <div class="page">
     <header class="page-header">
       <div>
-        <h1>积分排名</h1>
-        <p>按组织层级和指标查看绩效积分排名。</p>
+        <h1>{{ pageTitle }}</h1>
+        <p>{{ pageDescription }}</p>
       </div>
       <router-link class="button" to="/dashboard">返回概览</router-link>
     </header>
 
     <section class="panel">
-      <div class="ranking-tabs">
-        <button 
-          v-for="tab in rankingTabs" 
+      <div v-if="canChangeLevel" class="ranking-tabs">
+        <button
+          v-for="tab in rankingTabs"
           :key="tab.id"
           @click="activeLevel = tab.id"
           :class="['ranking-tab', { active: activeLevel === tab.id }]"
@@ -28,8 +28,8 @@
       </div>
 
       <div v-if="!filters.indicator" class="indicator-grid">
-        <div 
-          v-for="indicator in indicators" 
+        <div
+          v-for="indicator in indicators"
           :key="indicator.id"
           @click="selectIndicator(indicator.id)"
           class="indicator-card"
@@ -45,14 +45,14 @@
 
       <div v-else>
         <div class="ranking-header">
-          <h2>{{ currentIndicatorName }} - {{ levelTitle }}排名</h2>
+          <h2>{{ currentIndicatorName }} - {{ levelTitle }}{{ modeTitle }}</h2>
           <button @click="backToAll" class="back-btn">返回全部任务</button>
         </div>
-        
+
         <div v-if="filteredRankings.length === 0" class="no-data">
           <p>暂无排名数据</p>
         </div>
-        
+
         <table v-else class="table">
           <thead>
             <tr>
@@ -60,7 +60,7 @@
               <th>{{ levelTitle }}</th>
               <th v-if="activeLevel === 'employee'">机构</th>
               <th>完成量</th>
-              <th>积分</th>
+              <th>{{ activeMode === 'amount' ? '金额' : '积分' }}</th>
               <th>完成率</th>
             </tr>
           </thead>
@@ -83,7 +83,8 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref, computed, watch } from 'vue'
+import { computed, reactive, ref, onMounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import ProgressBar from '../components/ProgressBar.vue'
 import { getCurrentUser } from '../auth/permissions'
 import { getRankingOptions, getRankings } from '../api/rankings'
@@ -92,15 +93,24 @@ const indicators = ref([])
 const projects = ref([])
 const rankingRows = ref([])
 const currentUser = getCurrentUser()
+const route = useRoute()
 
 const activeLevel = ref('employee')
+const activeMode = ref('points')
 
-const rankingTabs = [
+const allRankingTabs = [
   { id: 'employee', name: '员工层级' },
   { id: 'outlet', name: '网点层级' },
   { id: 'branch', name: '支行层级' },
   { id: 'city', name: '市行层级' }
 ]
+
+const rankingTabs = computed(() => {
+  if (currentUser?.role === 'employee') {
+    return allRankingTabs.filter(tab => tab.id === 'employee')
+  }
+  return allRankingTabs
+})
 
 const filters = reactive({
   indicator: ''
@@ -116,9 +126,34 @@ const levelTitle = computed(() => {
   return titles[activeLevel.value]
 })
 
+const modeTitle = computed(() => {
+  if (currentUser?.role !== 'city_admin') return ''
+  return activeMode.value === 'amount' ? '（金额）' : ''
+})
+
+const pageTitle = computed(() => {
+  if (activeMode.value === 'amount') return '金额排名'
+  if (activeMode.value === 'points') return '积分排名'
+  return '项目排名'
+})
+
+const pageDescription = computed(() => {
+  const roleMap = {
+    head_admin: '总行',
+    province_admin: '省行',
+    city_admin: '市行',
+    branch_admin: '支行',
+    outlet_admin: '网点',
+    employee: '员工'
+  }
+  const roleLabel = roleMap[currentUser?.role] || '用户'
+  const modeLabel = activeMode.value === 'amount' ? '金额' : '积分'
+  return `您好，${roleLabel}，请查看${modeLabel}排名`
+})
+
 const currentIndicatorName = computed(() => {
   if (!filters.indicator) return ''
-  const indicator = indicators.value.find(ind => ind.id === parseInt(filters.indicator))
+  const indicator = indicators.value.find(ind => String(ind.id) === String(filters.indicator))
   return indicator ? indicator.name : ''
 })
 
@@ -126,13 +161,8 @@ const filteredRankings = computed(() => {
   return rankingRows.value
 })
 
-const getIndicatorName = (indicatorId) => {
-  const indicator = indicators.value.find(ind => ind.id === indicatorId)
-  return indicator ? indicator.name : ''
-}
-
 const selectIndicator = (indicatorId) => {
-  filters.indicator = indicatorId.toString()
+  filters.indicator = String(indicatorId)
   loadRankings()
 }
 
@@ -146,20 +176,37 @@ const handleIndicatorChange = () => {
 }
 
 const loadRankings = async () => {
-  console.log('Loading rankings for level:', activeLevel.value, 'indicator:', filters.indicator)
-  rankingRows.value = await getRankings(currentUser, activeLevel.value, '', filters.indicator)
-  console.log('Loaded ranking rows:', rankingRows.value.length)
+  rankingRows.value = await getRankings(currentUser, activeLevel.value, '', filters.indicator, activeMode.value)
 }
 
-onMounted(async () => {
-  const options = await getRankingOptions(currentUser)
+const loadOptionsAndData = async () => {
+  const options = await getRankingOptions(currentUser, activeMode.value)
   projects.value = options.projects
   indicators.value = options.indicators
   loadRankings()
+}
+
+const canChangeLevel = computed(() => {
+  return currentUser?.role !== 'employee'
+})
+
+onMounted(async () => {
+  if (route.query.mode && ['points', 'amount'].includes(route.query.mode)) {
+    activeMode.value = route.query.mode
+  }
+  loadOptionsAndData()
 })
 
 watch(activeLevel, () => {
   loadRankings()
+})
+
+watch(() => route.query.mode, (newMode) => {
+  if (newMode && ['points', 'amount'].includes(newMode)) {
+    activeMode.value = newMode
+    filters.indicator = ''
+    loadOptionsAndData()
+  }
 })
 </script>
 
@@ -192,6 +239,11 @@ watch(activeLevel, () => {
   background: #0f766e;
   border-color: #0f766e;
   color: #fff;
+}
+
+.ranking-tab:disabled {
+  cursor: not-allowed;
+  opacity: 1;
 }
 
 .indicator-grid {
