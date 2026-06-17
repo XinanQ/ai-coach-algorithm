@@ -2,7 +2,9 @@ import { decompositionPlans, indicators, projects, employeeRankings, outletRanki
 import { isOrgInScope } from '../auth/orgScope'
 import { mockResolve } from './request'
 
-export function getRankingOptions(user) {
+// mode 预留参数：积分(points) / 金额(amount)。当前为 mock 数据，暂不区分 mode，
+// 待后端提供排名接口后再据此返回不同维度数据。
+export function getRankingOptions(user, mode = 'points') {
   if (!user) return mockResolve({ projects: [], indicators: [] })
 
   const visibleProjectIds = projects
@@ -19,7 +21,7 @@ export function getRankingOptions(user) {
   })
 }
 
-export function getRankings(user, level = 'employee', projectId = '', indicatorId = '') {
+export function getRankings(user, level = 'employee', projectId = '', indicatorId = '', mode = 'points') {
   if (!user) return mockResolve([])
 
   let rankingData = {}

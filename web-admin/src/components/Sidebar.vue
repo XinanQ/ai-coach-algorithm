@@ -11,9 +11,26 @@
     </div>
 
     <nav class="side-nav">
-      <router-link v-for="item in visibleMenus" :key="item.path" :to="item.path">
-        {{ item.label }}
-      </router-link>
+      <div
+        v-for="item in visibleMenus"
+        :key="item.path"
+        class="nav-item"
+        :class="{ 'has-children': item.children }"
+      >
+        <router-link :to="item.path">
+          {{ item.label }}
+        </router-link>
+        <div v-if="item.children" class="dropdown-menu">
+          <router-link
+            v-for="child in item.children"
+            :key="child.path"
+            :to="child.path"
+            class="dropdown-item"
+          >
+            {{ child.label }}
+          </router-link>
+        </div>
+      </div>
     </nav>
 
     <button class="logout-button" type="button" @click="handleLogout">
@@ -93,12 +110,73 @@ function handleLogout() {
   padding: 20px 0;
 }
 
+.nav-item {
+  position: relative;
+}
+
+.nav-item.has-children:hover .dropdown-menu {
+  opacity: 1;
+  visibility: visible;
+  max-height: 300px;
+  transform: translateY(0) scale(1);
+}
+
+.dropdown-menu {
+  position: absolute;
+  left: 0;
+  top: 100%;
+  min-width: 140px;
+  background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.2);
+  padding: 8px 0;
+  opacity: 0;
+  visibility: hidden;
+  max-height: 0;
+  transform: translateY(-8px) scale(0.96);
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 10;
+  margin-top: 8px;
+  overflow: hidden;
+}
+
+.dropdown-item {
+  display: block;
+  padding: 10px 18px;
+  color: #9ca3af;
+  text-decoration: none;
+  font-size: 12px;
+  white-space: nowrap;
+  transition: all 0.25s ease;
+  transform: translateX(-8px);
+  opacity: 0;
+  position: relative;
+}
+
+.nav-item.has-children:hover .dropdown-item {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.dropdown-item:nth-child(1) { transition-delay: 0.05s; }
+.dropdown-item:nth-child(2) { transition-delay: 0.1s; }
+.dropdown-item:nth-child(3) { transition-delay: 0.15s; }
+.dropdown-item:nth-child(4) { transition-delay: 0.2s; }
+
+.dropdown-item:hover,
+.dropdown-item.router-link-active {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  padding-left: 24px;
+}
+
 .side-nav a {
   padding: 10px 12px;
   border-radius: 6px;
   color: #d1d5db;
   text-decoration: none;
   font-size: 15px;
+  display: block;
 }
 
 .side-nav a:hover,
