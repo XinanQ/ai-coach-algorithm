@@ -80,13 +80,19 @@ public class AuthServiceImpl implements AuthService {
                 ? null
                 : employee.getOrganization().getId();
 
+        String organizationName = employee.getOrganization() == null
+                ? null
+                : employee.getOrganization().getName();
+
         return new LoginResponse(
                 employee.getId(),
                 account.getEmployeeNo(),
                 employee.getName(),
+                employee.getPosition(),
                 employee.getLevel(),
                 employee.getIsAdmin(),
                 organizationId,
+                organizationName,
                 employee.getIsInProject(),
                 token
         );

@@ -35,19 +35,22 @@ function normalizeLoginUser(loginData) {
     employeeNo: loginData.employeeNo,
     username: loginData.employeeNo,
     name: loginData.name,
+    position: loginData.position,
 
     backendLevel: loginData.level,
     isAdmin: loginData.isAdmin,
     organizationId: loginData.organizationId,
     backendOrganizationId: loginData.organizationId,
+    organizationName: loginData.organizationName,
     isInProject: loginData.isInProject,
 
     role,
     level: profile.level,
     roleName: profile.name,
-    organization: profile.organization,
-    orgName: profile.organization,
-    orgId: profile.orgId,
+
+    organization: loginData.organizationName || profile.organization,
+    orgName: loginData.organizationName || profile.organization,
+    orgId: loginData.organizationId || profile.orgId,
     dataScope: profile.dataScope
   }
 }
