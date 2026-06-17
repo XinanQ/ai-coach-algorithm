@@ -1,0 +1,31 @@
+<view class="page">
+  <view class="page-head">
+    <text class="eyebrow">今日</text>
+    <text class="big-title">业绩上报</text>
+  </view>
+
+  <view class="field">
+    <text class="field-label">业绩指标</text>
+    <picker mode="selector" range="{{indicators}}" range-key="name" value="{{indicatorIndex}}" bindchange="onIndicatorChange">
+      <view class="field-value">{{indicators[indicatorIndex].name}} <text class="caret">></text></view>
+    </picker>
+  </view>
+
+  <view class="field">
+    <text class="field-label">数值（{{indicators[indicatorIndex].unit}}）</text>
+    <input class="field-input" type="digit" placeholder="请输入数值" value="{{value}}" bindinput="onValueInput" />
+  </view>
+
+  <view class="field">
+    <text class="field-label">附件凭证</text>
+    <view class="upload-row">
+      <view class="upload-item" wx:for="{{fileList}}" wx:key="url">
+        <image src="{{item.url}}" mode="aspectFill" class="upload-img" />
+        <view class="upload-remove" data-index="{{index}}" bindtap="removeImage">×</view>
+      </view>
+      <view class="upload-add" bindtap="chooseImage" wx:if="{{fileList.length < 3}}">+</view>
+    </view>
+  </view>
+
+  <button class="btn-primary submit-btn" bindtap="submit">提交上报</button>
+</view>

@@ -1,0 +1,22 @@
+<view class="page">
+  <view class="page-head">
+    <text class="eyebrow">我的</text>
+    <text class="big-title">上报历史</text>
+  </view>
+
+  <view class="list">
+    <view class="row" wx:for="{{records}}" wx:key="id">
+      <view class="row-top">
+        <text class="indicator">{{item.indicator}}</text>
+        <text class="status status-{{item.statusClass}}">{{item.status}}</text>
+      </view>
+      <view class="row-bottom">
+        <text class="value">{{item.value}}</text>
+        <text class="date">{{item.date}}</text>
+      </view>
+      <text class="reason" wx:if="{{item.reason}}">驳回原因：{{item.reason}}</text>
+    </view>
+  </view>
+
+  <view class="empty" wx:if="{{records.length === 0}}">暂无记录</view>
+</view>

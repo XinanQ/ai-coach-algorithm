@@ -1,0 +1,80 @@
+page {
+  background: var(--bg);
+}
+.compare {
+  display: flex;
+  flex-direction: column;
+  margin-top: 8rpx;
+}
+.card {
+  border-radius: 8rpx;
+  padding: 32rpx;
+}
+.mine {
+  background: var(--surface);
+  border: 1rpx solid var(--border);
+}
+.opt {
+  background: var(--gradient);
+  color: #fff;
+}
+.card-tag {
+  display: block;
+  font-size: 22rpx;
+  letter-spacing: 2rpx;
+  margin-bottom: 18rpx;
+}
+.mine .card-tag {
+  color: var(--text-secondary);
+}
+.opt .card-tag {
+  color: rgba(255, 255, 255, 0.7);
+}
+.card-text {
+  font-size: 28rpx;
+  line-height: 1.7;
+}
+.arrow-down {
+  text-align: center;
+  font-size: 24rpx;
+  color: var(--text-secondary);
+  padding: 20rpx 0;
+}
+.ops {
+  margin-top: 40rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+.op-primary {
+  background: var(--primary);
+  color: #fff;
+  border-radius: 8rpx;
+  font-size: 32rpx;
+  height: 96rpx;
+  line-height: 96rpx;
+}
+.op-primary[disabled] {
+  opacity: 0.5;
+  color: #fff;
+  background: var(--primary);
+}
+.op-primary::after {
+  border: none;
+}
+.op-row {
+  display: flex;
+  gap: 20rpx;
+}
+.op-ghost {
+  flex: 1;
+  background: var(--surface-2);
+  color: var(--text);
+  border-radius: 8rpx;
+  font-size: 30rpx;
+  height: 88rpx;
+  line-height: 88rpx;
+}
+.op-ghost::after {
+  border: none;
+}

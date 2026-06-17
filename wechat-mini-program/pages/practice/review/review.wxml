@@ -1,0 +1,26 @@
+<view class="page">
+  <view class="page-head">
+    <text class="eyebrow">复盘提升</text>
+    <text class="big-title">优化你的话术</text>
+  </view>
+
+  <view class="compare">
+    <view class="card mine">
+      <text class="card-tag">我的原话术</text>
+      <text class="card-text">{{original}}</text>
+    </view>
+    <view class="arrow-down">↓ AI 优化</view>
+    <view class="card opt">
+      <text class="card-tag">AI 优化话术</text>
+      <text class="card-text">{{optimized}}</text>
+    </view>
+  </view>
+
+  <view class="ops">
+    <button class="op-primary" disabled="{{saved}}" bindtap="save">{{saved ? '已收藏到话术库' : '收藏到话术库'}}</button>
+    <view class="op-row">
+      <button class="op-ghost" bindtap="goLibrary">查看话术库</button>
+      <button class="op-ghost" bindtap="done">完成</button>
+    </view>
+  </view>
+</view>

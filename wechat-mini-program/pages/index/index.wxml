@@ -1,0 +1,67 @@
+<!--index.wxml-->
+<view class="container">
+  <view class="header">
+    <text class="greeting">你好，{{userName}}</text>
+    <text class="sub">今天也要加油哦</text>
+  </view>
+
+  <view class="score-card">
+    <view class="ring" style="background: conic-gradient(var(--primary) {{scorePercent}}%, var(--surface-2) {{scorePercent}}%);">
+      <view class="ring-inner">
+        <text class="ring-percent">{{scorePercent}}%</text>
+        <text class="ring-label">完成度</text>
+      </view>
+    </view>
+    <view class="score-info">
+      <text class="score-eyebrow">本月积分</text>
+      <view class="score-main">
+        <text class="score-value">{{myScore}}</text>
+        <text class="score-target">/ {{scoreTarget}}</text>
+      </view>
+      <text class="score-remain">{{scoreRemain > 0 ? '还差 ' + scoreRemain + ' 分达成目标' : '本月目标已达成'}}</text>
+    </view>
+  </view>
+
+  <view class="card-row">
+    <view class="card">
+      <text class="card-value">第{{myRank}}名</text>
+      <text class="card-label">网点排名</text>
+    </view>
+  </view>
+
+  <view class="sections">
+    <view class="section" bindtap="goReport">
+      <view class="section-left">
+        <text class="section-title">今日业绩上报</text>
+        <text class="section-desc">{{todayReported ? '已上报' : '尚未上报，点击填写'}}</text>
+      </view>
+      <text class="arrow">></text>
+    </view>
+
+    <view class="section" bindtap="goPractice">
+      <view class="section-left">
+        <text class="section-title">AI陪练任务</text>
+        <text class="section-desc">{{practiceTaskCount > 0 ? practiceTaskCount + ' 个待完成任务' : '暂无任务'}}</text>
+      </view>
+      <text class="arrow">></text>
+    </view>
+
+    <view class="section" bindtap="goRanking">
+      <view class="section-left">
+        <text class="section-title">排行榜</text>
+        <text class="section-desc">查看积分排名</text>
+      </view>
+      <text class="arrow">></text>
+    </view>
+
+    <view class="section" bindtap="goNews">
+      <view class="section-left">
+        <text class="section-title">喜报</text>
+        <text class="section-desc">查看历史喜报</text>
+      </view>
+      <text class="arrow">></text>
+    </view>
+  </view>
+</view>
+
+<tab-bar active="index" />

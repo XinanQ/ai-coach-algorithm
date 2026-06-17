@@ -1,0 +1,97 @@
+page {
+  background: var(--bg);
+}
+.login {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 顶部黑色品牌区 */
+.brand {
+  background: var(--gradient);
+  padding: 140rpx 48rpx 96rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  color: #fff;
+}
+.logo {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 8rpx;
+  background: #fff;
+  color: var(--primary);
+  font-size: 40rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 36rpx;
+}
+.app-name {
+  font-size: 56rpx;
+  font-weight: 700;
+  letter-spacing: -1rpx;
+  line-height: 1.1;
+}
+.app-desc {
+  font-size: 26rpx;
+  opacity: 0.7;
+  margin-top: 16rpx;
+}
+
+/* 表单区 */
+.form {
+  flex: 1;
+  padding: 72rpx 48rpx 48rpx;
+  display: flex;
+  flex-direction: column;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  padding: 24rpx 0;
+  border-bottom: 1rpx solid var(--border);
+}
+.field + .field {
+  margin-top: 16rpx;
+}
+.label {
+  font-size: 24rpx;
+  color: var(--text-secondary);
+  letter-spacing: 2rpx;
+  margin-bottom: 18rpx;
+}
+.input {
+  font-size: 34rpx;
+  color: var(--text);
+  height: 56rpx;
+  line-height: 56rpx;
+}
+.placeholder {
+  color: #B5B5B5;
+}
+
+.login-btn {
+  margin-top: 80rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 96rpx;
+  padding: 0;
+  font-weight: 600;
+}
+.login-btn::after {
+  border: none;
+}
+.login-btn-hover {
+  opacity: 0.85;
+}
+
+.hint {
+  margin-top: 36rpx;
+  font-size: 22rpx;
+  color: var(--text-secondary);
+  text-align: center;
+}

@@ -1,0 +1,63 @@
+page {
+  background: var(--bg);
+}
+.page {
+  padding-bottom: calc(140rpx + env(safe-area-inset-bottom));
+}
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+.emp {
+  border: 1rpx solid var(--border);
+  border-radius: 8rpx;
+  padding: 28rpx;
+}
+.emp-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.emp-id {
+  display: flex;
+  flex-direction: column;
+}
+.emp-name {
+  font-size: 32rpx;
+  font-weight: 700;
+}
+.emp-dept {
+  font-size: 22rpx;
+  color: var(--text-secondary);
+  margin-top: 6rpx;
+}
+.emp-score {
+  font-size: 32rpx;
+  font-weight: 700;
+}
+.emp-bar {
+  height: 14rpx;
+  background: var(--surface-2);
+  border-radius: 999rpx;
+  margin: 22rpx 0 16rpx;
+  overflow: hidden;
+}
+.emp-bar-fill {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 999rpx;
+}
+.emp-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.emp-rate {
+  font-size: 24rpx;
+  color: var(--text-secondary);
+}
+.arrow {
+  font-size: 30rpx;
+  color: var(--text);
+}

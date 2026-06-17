@@ -1,0 +1,72 @@
+page {
+  background: var(--bg);
+}
+.page {
+  padding-bottom: calc(140rpx + env(safe-area-inset-bottom));
+}
+.grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20rpx;
+}
+.cell {
+  width: calc(50% - 10rpx);
+  box-sizing: border-box;
+  background: var(--surface-2);
+  border-radius: 8rpx;
+  padding: 28rpx;
+  display: flex;
+  flex-direction: column;
+}
+.cv {
+  font-size: 48rpx;
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: -1rpx;
+}
+.cl {
+  font-size: 22rpx;
+  color: var(--text-secondary);
+  margin-top: 8rpx;
+}
+.section-title {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 700;
+  margin: 40rpx 0 24rpx;
+}
+.bars {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+.bar-row {
+  display: flex;
+  align-items: center;
+}
+.bar-name {
+  width: 120rpx;
+  font-size: 26rpx;
+}
+.bar-name.wide {
+  width: 220rpx;
+}
+.bar {
+  flex: 1;
+  height: 20rpx;
+  background: var(--surface-2);
+  border-radius: 999rpx;
+  margin: 0 20rpx;
+  overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 999rpx;
+}
+.bar-val {
+  width: 80rpx;
+  text-align: right;
+  font-size: 24rpx;
+  font-weight: 700;
+}

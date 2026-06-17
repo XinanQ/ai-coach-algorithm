@@ -1,0 +1,37 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/report/report",
+    "pages/history/history",
+    "pages/ranking/ranking",
+    "pages/news/list/list",
+    "pages/news/detail/detail",
+    "pages/practice/list/list",
+    "pages/practice/intro/intro",
+    "pages/practice/chat/chat",
+    "pages/practice/result/result",
+    "pages/practice/history/history",
+    "pages/practice/review/review",
+    "pages/script/list/list",
+    "pages/script/detail/detail",
+    "pages/admin/workspace/workspace",
+    "pages/admin/assign/assign",
+    "pages/admin/task-library/task-library",
+    "pages/admin/analysis/analysis",
+    "pages/admin/employees/employees",
+    "pages/admin/employee-detail/employee-detail",
+    "pages/profile/profile",
+    "pages/logs/logs",
+    "pages/login/login",
+    "pages/role/role"
+  ],
+  "window": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "AI陪练",
+    "navigationBarBackgroundColor": "#FFFFFF"
+  },
+  "style": "v2",
+  "componentFramework": "glass-easel",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

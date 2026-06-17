@@ -1,0 +1,58 @@
+<view class="page">
+  <view class="score-card">
+    <view class="score-ring" style="background: conic-gradient(#fff {{score}}%, rgba(255,255,255,0.25) {{score}}%)">
+      <view class="score-ring-inner">
+        <text class="score">{{score}}</text>
+        <text class="score-label">本次得分</text>
+      </view>
+    </view>
+    <text class="delta">较上次 +{{delta}}</text>
+  </view>
+
+  <view class="cert">
+    <view class="cert-badge">认证</view>
+    <view class="cert-info">
+      <text class="cert-title">{{cert}}</text>
+      <text class="cert-desc">{{certDesc}}</text>
+    </view>
+  </view>
+
+  <view class="block">
+    <text class="block-title">分项评分</text>
+    <view class="dim-row" wx:for="{{dimensions}}" wx:key="label">
+      <text class="dim-label">{{item.label}}</text>
+      <view class="dim-bar">
+        <view class="dim-bar-fill" style="width: {{item.value}}%"></view>
+      </view>
+      <text class="dim-value">{{item.value}}</text>
+      <text class="dim-level">{{item.level}}</text>
+    </view>
+  </view>
+
+  <view class="block">
+    <text class="block-title">本次奖励</text>
+    <view class="rewards">
+      <view class="reward">
+        <text class="reward-val">+{{rewardPoints}}</text>
+        <text class="reward-label">积分</text>
+      </view>
+      <view class="reward">
+        <text class="reward-val">+{{rewardExp}}</text>
+        <text class="reward-label">经验</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="block">
+    <text class="block-title">改进建议</text>
+    <text class="block-content">{{suggestion}}</text>
+  </view>
+
+  <view class="actions">
+    <button class="act-primary" bindtap="goReview">复盘提升 · 收藏话术</button>
+    <view class="act-row">
+      <button class="act-ghost" bindtap="retry">再练一次</button>
+      <button class="act-ghost" bindtap="nextLevel">挑战下一关</button>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,36 @@
+page {
+  background: var(--bg);
+}
+.list {
+  border-top: 1rpx solid var(--border);
+}
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 36rpx 0;
+  border-bottom: 1rpx solid var(--border);
+}
+.row-left {
+  display: flex;
+  flex-direction: column;
+}
+.title {
+  font-size: 32rpx;
+  font-weight: 700;
+  letter-spacing: -0.5rpx;
+}
+.date {
+  font-size: 24rpx;
+  color: var(--text-secondary);
+  margin-top: 10rpx;
+}
+.arrow {
+  font-size: 30rpx;
+  color: var(--text);
+}
+.empty {
+  text-align: center;
+  color: var(--text-secondary);
+  margin-top: 100rpx;
+}

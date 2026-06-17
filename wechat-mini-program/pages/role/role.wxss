@@ -1,0 +1,57 @@
+page {
+  background: var(--bg);
+}
+.roles {
+  display: flex;
+  flex-direction: column;
+  gap: 28rpx;
+  margin-top: 16rpx;
+}
+.role-card {
+  background: var(--surface);
+  border: 1rpx solid var(--border);
+  border-radius: 8rpx;
+  padding: 40rpx;
+}
+.role-card-hover {
+  background: var(--surface-2);
+}
+.role-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.role-name {
+  font-size: 40rpx;
+  font-weight: 700;
+  letter-spacing: -0.5rpx;
+}
+.role-badge {
+  font-size: 22rpx;
+  color: var(--text-secondary);
+  border: 1rpx solid var(--border);
+  border-radius: 999rpx;
+  padding: 4rpx 18rpx;
+}
+.role-feats {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+  margin-top: 28rpx;
+}
+.feat {
+  font-size: 26rpx;
+  color: var(--text-secondary);
+  padding-left: 24rpx;
+  position: relative;
+}
+.feat::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 16rpx;
+  width: 8rpx;
+  height: 8rpx;
+  border-radius: 50%;
+  background: var(--primary);
+}

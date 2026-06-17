@@ -1,0 +1,28 @@
+<view class="page">
+  <view class="page-head">
+    <text class="eyebrow">本网点</text>
+    <text class="big-title">排行榜</text>
+  </view>
+
+  <view class="hero-card my-rank">
+    <text class="my-rank-label">我的排名</text>
+    <view class="my-rank-main">
+      <text class="my-rank-no">第 {{myRank}} 名</text>
+      <text class="my-rank-score">{{myScore}} 分</text>
+    </view>
+  </view>
+
+  <view class="tabs">
+    <view class="tab {{activeTab === index ? 'active' : ''}}" wx:for="{{tabs}}" wx:key="*this" data-index="{{index}}" bindtap="switchTab">{{item}}</view>
+  </view>
+
+  <view class="list">
+    <view class="row" wx:for="{{list}}" wx:key="rank">
+      <text class="rank">{{item.rank}}</text>
+      <text class="name">{{item.name}}</text>
+      <text class="score">{{item.score}}分</text>
+    </view>
+  </view>
+</view>
+
+<tab-bar active="ranking" />
