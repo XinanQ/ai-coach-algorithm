@@ -9,4 +9,6 @@ import java.util.Optional;
 public interface UserAccountRepository extends JpaRepository<UserAccount, Long> {
 
     Optional<UserAccount> findByEmployeeNo(String employeeNo);
+
+    Optional<UserAccount> findByEmployeeId(Long employeeId);
 }
