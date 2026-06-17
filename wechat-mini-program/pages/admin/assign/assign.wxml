@@ -1,0 +1,42 @@
+<view class="page">
+  <view class="page-head">
+    <text class="eyebrow">管理员</text>
+    <text class="big-title">下发陪练任务</text>
+  </view>
+
+  <view class="field">
+    <text class="label">任务名称</text>
+    <input class="input" placeholder="如：理财产品风险揭示话术" placeholder-class="ph" value="{{name}}" bindinput="onName" />
+  </view>
+
+  <view class="field">
+    <text class="label">任务等级</text>
+    <view class="seg2">
+      <view class="seg2-item {{level === 'must' ? 'active' : ''}}" data-level="must" bindtap="setLevel">必须完成</view>
+      <view class="seg2-item {{level === 'recommend' ? 'active' : ''}}" data-level="recommend" bindtap="setLevel">强烈推荐</view>
+    </view>
+    <text class="hint">{{level === 'must' ? '纳入完成率考核' : '提升专项能力，不计入硬性考核'}}</text>
+  </view>
+
+  <view class="field">
+    <text class="label">目标人群</text>
+    <picker class="picker" range="{{targets}}" value="{{targetIndex}}" bindchange="onTarget">{{targets[targetIndex]}} ▾</picker>
+  </view>
+
+  <view class="field">
+    <text class="label">截止时间</text>
+    <picker mode="date" class="picker" value="{{deadline}}" bindchange="onDeadline">{{deadline || '请选择日期'}} ▾</picker>
+  </view>
+
+  <view class="field">
+    <text class="label">评分维度</text>
+    <view class="dims">
+      <view class="dim {{item.checked ? 'on' : ''}}" wx:for="{{dims}}" wx:key="label" data-index="{{index}}" bindtap="toggleDim">
+        <text class="dim-text">{{item.label}}</text>
+        <text class="check">{{item.checked ? '✓' : ''}}</text>
+      </view>
+    </view>
+  </view>
+
+  <button class="btn-primary submit-btn" bindtap="submit">确认下发</button>
+</view>

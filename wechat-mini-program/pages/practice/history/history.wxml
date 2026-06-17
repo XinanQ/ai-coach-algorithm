@@ -1,0 +1,18 @@
+<view class="page">
+  <view class="page-head">
+    <text class="eyebrow">AI陪练</text>
+    <text class="big-title">历史成绩</text>
+  </view>
+
+  <view class="list">
+    <view class="row" wx:for="{{records}}" wx:key="id" data-id="{{item.id}}" bindtap="viewDetail">
+      <view class="row-left">
+        <text class="scene">{{item.scene}}</text>
+        <text class="date">{{item.date}}</text>
+      </view>
+      <text class="score">{{item.score}}<text class="score-unit">分</text></text>
+    </view>
+  </view>
+
+  <view class="empty" wx:if="{{records.length === 0}}">暂无记录</view>
+</view>

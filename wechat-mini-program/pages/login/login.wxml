@@ -1,0 +1,45 @@
+<view class="login">
+  <view class="brand">
+    <view class="logo">AI</view>
+    <text class="app-name">AI陪练</text>
+    <text class="app-desc">银行网点员工业绩陪练平台</text>
+  </view>
+
+  <view class="form">
+    <view class="field">
+      <text class="label">工号</text>
+      <input
+        class="input"
+        type="text"
+        placeholder="请输入工号"
+        placeholder-class="placeholder"
+        value="{{empId}}"
+        bindinput="onEmpIdInput"
+        confirm-type="next"
+      />
+    </view>
+
+    <view class="field">
+      <text class="label">密码</text>
+      <input
+        class="input"
+        password
+        placeholder="请输入密码"
+        placeholder-class="placeholder"
+        value="{{password}}"
+        bindinput="onPasswordInput"
+        confirm-type="done"
+        bindconfirm="onLogin"
+      />
+    </view>
+
+    <button
+      class="btn-primary login-btn"
+      loading="{{loading}}"
+      hover-class="login-btn-hover"
+      bindtap="onLogin"
+    >登录</button>
+
+    <text class="hint">登录即代表同意《用户协议》与《隐私政策》</text>
+  </view>
+</view>

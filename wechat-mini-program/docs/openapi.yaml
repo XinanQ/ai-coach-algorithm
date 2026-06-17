@@ -1,0 +1,892 @@
+openapi: 3.0.3
+info:
+  title: 银行 AI 话术陪练小程序 — 后端接口
+  version: 1.0.0
+  description: >
+    前端按 config/request/api/mock 四层重构，页面统一调用 api 层。
+    所有响应使用信封 { code, message, data }，code=0 表示成功。
+    除登录类接口外均需请求头 X-Auth-Token: <token>（非 Authorization、非 Bearer）。
+servers:
+  - url: https://api.example.com/api
+    description: 占位地址，替换为真实后端；已含统一前缀 /api
+security:
+  - authToken: []
+tags:
+  - name: auth
+  - name: home
+  - name: report
+  - name: ranking
+  - name: news
+  - name: practice
+  - name: script
+  - name: admin
+paths:
+  /auth/login:
+    post:
+      tags: [auth]
+      summary: 工号密码登录
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [employeeNo, password]
+              properties:
+                employeeNo: { type: string, example: "0001" }
+                password: { type: string, example: "******" }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - properties:
+                      data: { $ref: '#/components/schemas/LoginResult' }
+  /auth/wx-login:
+    post:
+      tags: [auth]
+      summary: 微信登录
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code]
+              properties:
+                code: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - properties:
+                      data: { $ref: '#/components/schemas/LoginResult' }
+  /auth/profile:
+    get:
+      tags: [auth]
+      summary: 当前用户资料
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - properties:
+                      data: { $ref: '#/components/schemas/User' }
+  /auth/logout:
+    post:
+      tags: [auth]
+      summary: 退出登录
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Envelope' }
+  /home/summary:
+    get:
+      tags: [home]
+      summary: 员工首页概览
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - properties:
+                      data: { $ref: '#/components/schemas/HomeSummary' }
+  /report/indicators:
+    get:
+      tags: [report]
+      summary: 上报指标列表
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/Indicator' }
+  /report:
+    post:
+      tags: [report]
+      summary: 提交业绩上报
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [indicatorId, value]
+              properties:
+                indicatorId: { type: integer }
+                value: { type: string }
+                images:
+                  type: array
+                  items: { type: string, format: uri }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - properties:
+                      data: { $ref: '#/components/schemas/IdResult' }
+  /report/history:
+    get:
+      tags: [report]
+      summary: 本人上报历史
+      parameters:
+        - { in: query, name: page, schema: { type: integer } }
+        - { in: query, name: size, schema: { type: integer } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/ReportRecord' }
+  /upload:
+    post:
+      tags: [report]
+      summary: 文件上传（图片）
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file: { type: string, format: binary }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - properties:
+                      data:
+                        type: object
+                        properties:
+                          url: { type: string, format: uri }
+  /ranking:
+    get:
+      tags: [ranking]
+      summary: 排行榜
+      parameters:
+        - in: query
+          name: period
+          schema: { type: string, enum: [day, week, month] }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - properties:
+                      data: { $ref: '#/components/schemas/RankingResult' }
+  /news:
+    get:
+      tags: [news]
+      summary: 喜报列表
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/NewsItem' }
+  /news/{id}:
+    get:
+      tags: [news]
+      summary: 喜报详情
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - properties:
+                      data: { $ref: '#/components/schemas/NewsDetail' }
+  /practice/growth:
+    get:
+      tags: [practice]
+      summary: 成长信息
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - properties:
+                      data: { $ref: '#/components/schemas/Growth' }
+  /practice/tasks:
+    get:
+      tags: [practice]
+      summary: 任务三分类
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - properties:
+                      data: { $ref: '#/components/schemas/TaskGroups' }
+  /practice/tasks/{id}:
+    get:
+      tags: [practice]
+      summary: 任务详情
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - properties:
+                      data: { $ref: '#/components/schemas/TaskDetail' }
+  /practice/dialog/start:
+    post:
+      tags: [practice]
+      summary: 开始对话
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [taskId]
+              properties:
+                taskId: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - properties:
+                      data: { $ref: '#/components/schemas/DialogStart' }
+  /practice/dialog/reply:
+    post:
+      tags: [practice]
+      summary: 提交一轮回复
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [taskId, text]
+              properties:
+                taskId: { type: string }
+                text: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - properties:
+                      data: { $ref: '#/components/schemas/DialogReply' }
+  /practice/dialog/finish:
+    post:
+      tags: [practice]
+      summary: 结束对话并触发评分
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [taskId]
+              properties:
+                taskId: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - properties:
+                      data:
+                        type: object
+                        properties:
+                          resultId: { type: string }
+                          score: { type: integer }
+  /practice/result/{taskId}:
+    get:
+      tags: [practice]
+      summary: 评分报告
+      parameters:
+        - { in: path, name: taskId, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - properties:
+                      data: { $ref: '#/components/schemas/ScoreResult' }
+  /practice/review/{taskId}:
+    get:
+      tags: [practice]
+      summary: 复盘（原话术/AI 优化）
+      parameters:
+        - { in: path, name: taskId, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - properties:
+                      data: { $ref: '#/components/schemas/Review' }
+  /practice/history:
+    get:
+      tags: [practice]
+      summary: 陪练历史
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/PracticeRecord' }
+  /scripts:
+    get:
+      tags: [script]
+      summary: 话术库列表
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/ScriptItem' }
+    post:
+      tags: [script]
+      summary: 收藏优化话术
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [optimized]
+              properties:
+                taskId: { type: string }
+                optimized: { type: string }
+                scene: { type: string }
+                title: { type: string }
+                tags:
+                  type: array
+                  items: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - properties:
+                      data: { $ref: '#/components/schemas/IdResult' }
+  /scripts/{id}:
+    get:
+      tags: [script]
+      summary: 话术详情
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - properties:
+                      data: { $ref: '#/components/schemas/ScriptDetail' }
+  /admin/workspace/stats:
+    get:
+      tags: [admin]
+      summary: 驾驶舱统计
+      parameters:
+        - { in: query, name: branch, schema: { type: string } }
+        - { in: query, name: position, schema: { type: string } }
+        - { in: query, name: type, schema: { type: string } }
+        - { in: query, name: period, schema: { type: string } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - properties:
+                      data: { $ref: '#/components/schemas/WorkspaceStats' }
+  /admin/workspace/ranking:
+    get:
+      tags: [admin]
+      summary: 员工排行
+      parameters:
+        - { in: query, name: branch, schema: { type: string } }
+        - { in: query, name: position, schema: { type: string } }
+        - { in: query, name: type, schema: { type: string } }
+        - { in: query, name: period, schema: { type: string } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/AdminRankRow' }
+  /admin/tasks/assign:
+    post:
+      tags: [admin]
+      summary: 下发陪练任务
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, level, target, deadline]
+              properties:
+                name: { type: string }
+                level: { type: string, enum: [must, recommend] }
+                target: { type: string }
+                deadline: { type: string }
+                dimensions:
+                  type: array
+                  items: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - properties:
+                      data: { $ref: '#/components/schemas/IdResult' }
+  /admin/task-templates:
+    get:
+      tags: [admin]
+      summary: 任务模板库
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/TaskTemplate' }
+  /admin/analysis:
+    get:
+      tags: [admin]
+      summary: 团队数据分析
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - properties:
+                      data: { $ref: '#/components/schemas/Analysis' }
+  /admin/employees:
+    get:
+      tags: [admin]
+      summary: 员工列表
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/EmployeeRow' }
+  /admin/employees/{id}:
+    get:
+      tags: [admin]
+      summary: 员工详情
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - properties:
+                      data: { $ref: '#/components/schemas/EmployeeDetail' }
+components:
+  securitySchemes:
+    authToken:
+      type: apiKey
+      in: header
+      name: X-Auth-Token
+  schemas:
+    Envelope:
+      type: object
+      properties:
+        code: { type: integer, example: 0 }
+        message: { type: string, example: ok }
+        data: {}
+    IdResult:
+      type: object
+      properties:
+        id: { type: string }
+    User:
+      type: object
+      properties:
+        empId: { type: string }
+        name: { type: string }
+        branch: { type: string }
+        role: { type: string, enum: [manager, staff, ""] }
+    LoginResult:
+      type: object
+      properties:
+        token: { type: string }
+        user: { $ref: '#/components/schemas/User' }
+    HomeSummary:
+      type: object
+      properties:
+        userName: { type: string }
+        todayReported: { type: boolean }
+        myRank: { type: integer }
+        myScore: { type: integer }
+        scoreTarget: { type: integer }
+        practiceTaskCount: { type: integer }
+    Indicator:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        unit: { type: string }
+    ReportRecord:
+      type: object
+      properties:
+        id: { type: integer }
+        date: { type: string }
+        indicator: { type: string }
+        value: { type: string }
+        status: { type: string }
+        statusClass: { type: string, enum: [approved, rejected, pending] }
+        reason: { type: string }
+    RankingResult:
+      type: object
+      properties:
+        myRank: { type: integer }
+        myScore: { type: integer }
+        list:
+          type: array
+          items:
+            type: object
+            properties:
+              rank: { type: integer }
+              name: { type: string }
+              score: { type: integer }
+    NewsItem:
+      type: object
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        date: { type: string }
+    NewsDetail:
+      type: object
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        date: { type: string }
+        recipient: { type: string }
+        content: { type: string }
+        imageUrl: { type: string }
+    Growth:
+      type: object
+      properties:
+        level: { type: integer }
+        levelName: { type: string }
+        points: { type: integer }
+        target: { type: integer }
+        weekGain: { type: integer }
+        streak: { type: integer }
+    AssignedTask:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        scene: { type: string }
+        level: { type: string, enum: [must, recommend] }
+        status: { type: string }
+        deadline: { type: string }
+        points: { type: integer }
+    LibraryTask:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        type: { type: string }
+        points: { type: integer }
+    DoneTask:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        scene: { type: string }
+        status: { type: string }
+        score: { type: integer }
+        date: { type: string }
+    TaskGroups:
+      type: object
+      properties:
+        assigned:
+          type: array
+          items: { $ref: '#/components/schemas/AssignedTask' }
+        library:
+          type: array
+          items: { $ref: '#/components/schemas/LibraryTask' }
+        done:
+          type: array
+          items: { $ref: '#/components/schemas/DoneTask' }
+    TaskDetail:
+      type: object
+      properties:
+        scene: { type: string }
+        customerName: { type: string }
+        customerDesc: { type: string }
+        tags:
+          type: array
+          items: { type: string }
+        rounds: { type: integer }
+        background: { type: string }
+        goal: { type: string }
+        requirements:
+          type: array
+          items: { type: string }
+        duration: { type: string }
+        progress: { type: integer }
+    Message:
+      type: object
+      properties:
+        role: { type: string, enum: [ai, user] }
+        content: { type: string }
+    DialogStart:
+      type: object
+      properties:
+        messages:
+          type: array
+          items: { $ref: '#/components/schemas/Message' }
+        round: { type: integer }
+    DialogReply:
+      type: object
+      properties:
+        message: { $ref: '#/components/schemas/Message' }
+        round: { type: integer }
+        liveScore: { type: integer }
+    Dimension:
+      type: object
+      properties:
+        label: { type: string }
+        value: { type: integer }
+        level: { type: string }
+    ScoreResult:
+      type: object
+      properties:
+        score: { type: integer }
+        delta: { type: integer }
+        cert: { type: string }
+        certDesc: { type: string }
+        dimensions:
+          type: array
+          items: { $ref: '#/components/schemas/Dimension' }
+        rewardPoints: { type: integer }
+        rewardExp: { type: integer }
+        suggestion: { type: string }
+    Review:
+      type: object
+      properties:
+        original: { type: string }
+        optimized: { type: string }
+    PracticeRecord:
+      type: object
+      properties:
+        id: { type: integer }
+        scene: { type: string }
+        score: { type: integer }
+        date: { type: string }
+    ScriptItem:
+      type: object
+      properties:
+        id: { type: string }
+        scene: { type: string }
+        title: { type: string }
+        tags:
+          type: array
+          items: { type: string }
+        date: { type: string }
+    ScriptDetail:
+      type: object
+      properties:
+        id: { type: string }
+        scene: { type: string }
+        title: { type: string }
+        tags:
+          type: array
+          items: { type: string }
+        standard: { type: string }
+        mine: { type: string }
+    WorkspaceStats:
+      type: object
+      properties:
+        completionRate: { type: integer }
+        completionDelta: { type: integer }
+        avgScore: { type: integer }
+        avgDelta: { type: integer }
+        pendingCount: { type: integer }
+        highRiskCount: { type: integer }
+    AdminRankRow:
+      type: object
+      properties:
+        rank: { type: integer }
+        name: { type: string }
+        dept: { type: string }
+        rate: { type: integer }
+        score: { type: integer }
+    TaskTemplate:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        scene: { type: string }
+        dimensions: { type: integer }
+    Analysis:
+      type: object
+      properties:
+        team:
+          type: object
+          properties:
+            completionRate: { type: integer }
+            avgScore: { type: integer }
+            recommendRate: { type: integer }
+            highRiskCount: { type: integer }
+        completionTop3:
+          type: array
+          items:
+            type: object
+            properties:
+              name: { type: string }
+              value: { type: integer }
+        abilityTop3:
+          type: array
+          items:
+            type: object
+            properties:
+              name: { type: string }
+              count: { type: integer }
+    EmployeeRow:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        dept: { type: string }
+        rate: { type: integer }
+        score: { type: integer }
+        progress: { type: integer }
+    EmployeeDetail:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        dept: { type: string }
+        rate: { type: integer }
+        score: { type: integer }
+        tasks:
+          type: array
+          items:
+            type: object
+            properties:
+              name: { type: string }
+              status: { type: string }
+              score: { type: integer, nullable: true }

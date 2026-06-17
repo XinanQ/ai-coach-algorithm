@@ -1,0 +1,23 @@
+<view class="page">
+  <view class="page-head">
+    <text class="eyebrow">个人沉淀</text>
+    <text class="big-title">话术库</text>
+  </view>
+
+  <view class="list">
+    <view class="row" wx:for="{{scripts}}" wx:key="id" data-id="{{item.id}}" bindtap="viewDetail">
+      <view class="row-main">
+        <text class="title">{{item.title}}</text>
+        <view class="tags">
+          <text class="tag" wx:for="{{item.tags}}" wx:for-item="t" wx:key="*this">{{t}}</text>
+        </view>
+        <text class="meta">{{item.scene}} · {{item.date}}</text>
+      </view>
+      <text class="arrow">></text>
+    </view>
+  </view>
+
+  <view class="empty" wx:if="{{scripts.length === 0}}">话术库还是空的，完成陪练复盘后可收藏优化话术</view>
+</view>
+
+<tab-bar active="script" />

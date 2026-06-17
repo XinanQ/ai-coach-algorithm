@@ -1,0 +1,54 @@
+/**app.wxss**/
+page {
+  --primary: #111111;
+  --primary-dark: #000000;
+  --accent: #111111;
+  --gradient: linear-gradient(180deg, #1A1A1A 0%, #000000 100%);
+  --bg: #FFFFFF;
+  --surface: #FFFFFF;
+  --surface-2: #F4F4F4;
+  --text: #111111;
+  --text-secondary: #6E6E6E;
+  --border: #E4E4E4;
+
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, "Helvetica Neue", "PingFang SC", sans-serif;
+}
+
+/* 通用页面外壳与标题，统一各页排版 */
+.page {
+  padding: 0 32rpx 48rpx;
+  box-sizing: border-box;
+}
+.page-head {
+  padding: 48rpx 0 28rpx;
+}
+.eyebrow {
+  display: block;
+  font-size: 24rpx;
+  color: var(--text-secondary);
+  letter-spacing: 3rpx;
+}
+.big-title {
+  display: block;
+  font-size: 52rpx;
+  font-weight: 700;
+  letter-spacing: -1rpx;
+  line-height: 1.1;
+  margin-top: 12rpx;
+}
+/* 通用黑色 hero 卡片 */
+.hero-card {
+  background: var(--gradient);
+  border-radius: 8rpx;
+  padding: 40rpx;
+  color: #fff;
+}
+/* 通用主按钮 */
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+  border-radius: 8rpx;
+  font-size: 32rpx;
+}
