@@ -1,5 +1,6 @@
 package com.indicator.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public class IndicatorResponse {
@@ -11,6 +12,12 @@ public class IndicatorResponse {
     private String category;
     private String businessLine;
     private String description;
+    private BigDecimal targetValue;
+    private Long targetOrgId;
+    private Long targetEmployeeId;
+    private Long parentId;
+    private Integer level;
+    private String status;
     private Boolean enabled;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -69,6 +76,54 @@ public class IndicatorResponse {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public BigDecimal getTargetValue() {
+        return targetValue;
+    }
+
+    public void setTargetValue(BigDecimal targetValue) {
+        this.targetValue = targetValue;
+    }
+
+    public Long getTargetOrgId() {
+        return targetOrgId;
+    }
+
+    public void setTargetOrgId(Long targetOrgId) {
+        this.targetOrgId = targetOrgId;
+    }
+
+    public Long getTargetEmployeeId() {
+        return targetEmployeeId;
+    }
+
+    public void setTargetEmployeeId(Long targetEmployeeId) {
+        this.targetEmployeeId = targetEmployeeId;
+    }
+
+    public Long getParentId() {
+        return parentId;
+    }
+
+    public void setParentId(Long parentId) {
+        this.parentId = parentId;
+    }
+
+    public Integer getLevel() {
+        return level;
+    }
+
+    public void setLevel(Integer level) {
+        this.level = level;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     public Boolean getEnabled() {

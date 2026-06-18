@@ -1,6 +1,7 @@
 package com.indicator;
 
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -46,6 +47,9 @@ public class Indicator {
     private Long parentId;
     private Integer level;
     private Long ownerId;
+    private BigDecimal targetValue;
+    private Long targetOrgId;
+    private Long targetEmployeeId;
     private String status;       // 分解任务状态，如 OPEN；不是 enabled
 
     // ========== 构造方法 ==========
@@ -106,6 +110,15 @@ public class Indicator {
 
     public Long getOwnerId() { return ownerId; }
     public void setOwnerId(Long ownerId) { this.ownerId = ownerId; }
+
+    public BigDecimal getTargetValue() { return targetValue; }
+    public void setTargetValue(BigDecimal targetValue) { this.targetValue = targetValue; }
+
+    public Long getTargetOrgId() { return targetOrgId; }
+    public void setTargetOrgId(Long targetOrgId) { this.targetOrgId = targetOrgId; }
+
+    public Long getTargetEmployeeId() { return targetEmployeeId; }
+    public void setTargetEmployeeId(Long targetEmployeeId) { this.targetEmployeeId = targetEmployeeId; }
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }

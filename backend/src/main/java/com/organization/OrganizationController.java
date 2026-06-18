@@ -6,39 +6,65 @@ import com.organization.dto.OrganizationResponse;
 import com.organization.dto.OrganizationUpdateRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.employee.EmployeeService;
 
 import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.Map;
+
+// 临时测试接口使用
+import com.auth.CurrentUserContext;
+//
 
 @RestController
 @RequestMapping("/api/admin/organizations")
 public class OrganizationController {
 
     private final OrganizationService orgService;
+    private final EmployeeService employeeService;
 
-    public OrganizationController(OrganizationService orgService){
+    public OrganizationController(OrganizationService orgService,
+                                  EmployeeService employeeService){
         this.orgService = orgService;
+        this.employeeService = employeeService;
+    }
+
+    private Map<Long, Long> getVisibleStaffCountMap() {
+        return employeeService.countVisibleEmployeesByOrganizationId();
+    }
+
+    private Map<Long, Long> getVisibleAdminCountMap() {
+        return employeeService.countVisibleAdminsByOrganizationId();
     }
 
     @GetMapping
     public List<OrganizationResponse> list(){
-        return orgService.findAll().stream()
-                .map(OrganizationResponse::from)
+        Map<Long, Long> staffCountMap = getVisibleStaffCountMap();
+        Map<Long, Long> adminCountMap = getVisibleAdminCountMap();
+
+        return orgService.findVisibleOrganizations().stream()
+                .map(org -> OrganizationResponse.from(org, staffCountMap, adminCountMap))
                 .collect(Collectors.toList());
     }
 
     @GetMapping("/tree")
     public List<OrganizationResponse> tree(){
-        return orgService.findTree().stream()
-                .map(OrganizationResponse::from)
+        Map<Long, Long> staffCountMap = getVisibleStaffCountMap();
+        Map<Long, Long> adminCountMap = getVisibleAdminCountMap();
+
+        return orgService.findVisibleTree().stream()
+                .map(org -> OrganizationResponse.from(org, staffCountMap, adminCountMap))
                 .collect(Collectors.toList());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<OrganizationResponse> getById(@PathVariable Long id){
-        return orgService.findById(id)
-                .map(OrganizationResponse::from)
+        Map<Long, Long> staffCountMap = getVisibleStaffCountMap();
+        Map<Long, Long> adminCountMap = getVisibleAdminCountMap();
+
+        return orgService.findVisibleById(id)
+                .map(org -> OrganizationResponse.from(org, staffCountMap, adminCountMap))
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
@@ -78,8 +104,19 @@ public class OrganizationController {
 
     @GetMapping("/by-level/{level}")
     public List<OrganizationResponse> byLevel(@PathVariable OrgLevel level){
-        return orgService.findByLevel(level).stream()
-                .map(OrganizationResponse::from)
+        Map<Long, Long> staffCountMap = getVisibleStaffCountMap();
+        Map<Long, Long> adminCountMap = getVisibleAdminCountMap();
+
+        return orgService.findVisibleByLevel(level).stream()
+                .map(org -> OrganizationResponse.from(org, staffCountMap, adminCountMap))
                 .collect(Collectors.toList());
     }
+
+    // 临时测试接口使用
+    @GetMapping("/visible-ids")
+    public List<Long> getVisibleOrganizationIds() {
+        Long organizationId = CurrentUserContext.getOrganizationId();
+        return orgService.findSelfAndDescendantIds(organizationId);
+    }
+    //
 }

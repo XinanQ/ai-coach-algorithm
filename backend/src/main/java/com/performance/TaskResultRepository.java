@@ -11,4 +11,7 @@ public interface TaskResultRepository extends JpaRepository<TaskResult, Long> {
     List<TaskResult> findByStatus(TaskResultStatus status);
     List<TaskResult> findBySubmitterId(Long submitterId);
     List<TaskResult> findByReportDateBetween(LocalDate from, LocalDate to);
+    List<TaskResult> findByIndicatorIdAndStatus(Long indicatorId, TaskResultStatus status);
+    List<TaskResult> findByIndicatorIdAndSubmitterIdAndStatus(Long indicatorId, Long submitterId, TaskResultStatus status);
+    List<TaskResult> findByIndicatorIdAndOrganizationIdInAndStatus(Long indicatorId, List<Long> organizationIds, TaskResultStatus status);
 }
