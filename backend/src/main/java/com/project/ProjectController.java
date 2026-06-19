@@ -44,12 +44,6 @@ public class ProjectController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-//    @PostMapping
-//    public ResponseEntity<Project> create(@Valid @RequestBody Project project) {
-//        Project saved = service.save(project);
-//        return ResponseEntity.created(URI.create("/api/admin/projects/" + saved.getId())).body(saved);
-//    }
-
     @PostMapping
     public ResponseEntity<ProjectResponse> create(@Valid @RequestBody ProjectCreateRequest request) {
 
@@ -60,25 +54,6 @@ public class ProjectController {
                 .created(URI.create("/api/admin/projects/" + saved.getId()))
                 .body(toResponse(saved));
     }
-//    public ResponseEntity<?> create(@RequestBody ProjectCreateRequest request) {
-//        try {
-//            System.out.println("DTO create called: " + request);
-//
-//            Project project = toEntity(request);
-//            Project saved = service.save(project);
-//
-//            return ResponseEntity
-//                    .created(URI.create("/api/admin/projects/" + saved.getId()))
-//                    .body(toResponse(saved));
-//        } catch (Exception ex) {
-//            ex.printStackTrace();
-//
-//            return ResponseEntity
-//                    .badRequest()
-//                    .body("创建项目失败：" + ex.getClass().getSimpleName() + " - " + ex.getMessage());
-//        }
-//    }
-
 
     @PutMapping("/{id}")
     public ResponseEntity<Project> update(@PathVariable Long id, @Valid @RequestBody Project project) {
