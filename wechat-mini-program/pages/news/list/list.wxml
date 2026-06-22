@@ -1,0 +1,18 @@
+<view class="page">
+  <view class="page-head">
+    <text class="eyebrow">荣誉记录</text>
+    <text class="big-title">喜报</text>
+  </view>
+
+  <view class="list">
+    <view class="row" wx:for="{{list}}" wx:key="id" data-id="{{item.id}}" bindtap="viewDetail">
+      <view class="row-left">
+        <text class="title">{{item.title}}</text>
+        <text class="date">{{item.date}}</text>
+      </view>
+      <text class="arrow">></text>
+    </view>
+  </view>
+
+  <view class="empty" wx:if="{{list.length === 0}}">暂无喜报</view>
+</view>

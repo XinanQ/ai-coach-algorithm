@@ -35,6 +35,7 @@ function normalizeLoginUser(loginData) {
     employeeNo: loginData.employeeNo,
     username: loginData.employeeNo,
     name: loginData.name,
+    position: loginData.position,
 
     backendLevel: loginData.level,
     isAdmin: loginData.isAdmin,

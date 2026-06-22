@@ -1,0 +1,51 @@
+page {
+  background: var(--bg);
+}
+.list {
+  border-top: 1rpx solid var(--border);
+}
+.row {
+  padding: 28rpx 0;
+  border-bottom: 1rpx solid var(--border);
+}
+.row-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12rpx;
+}
+.indicator {
+  font-size: 32rpx;
+  font-weight: 700;
+  letter-spacing: -0.5rpx;
+}
+.status {
+  font-size: 24rpx;
+  color: var(--text-secondary);
+}
+.status-approved {
+  color: #07c160;
+}
+.status-rejected {
+  color: #ee0a24;
+}
+.status-pending {
+  color: #ff7d00;
+}
+.row-bottom {
+  display: flex;
+  justify-content: space-between;
+  font-size: 26rpx;
+  color: var(--text-secondary);
+}
+.reason {
+  display: block;
+  font-size: 22rpx;
+  color: #ee0a24;
+  margin-top: 12rpx;
+}
+.empty {
+  text-align: center;
+  color: var(--text-secondary);
+  margin-top: 100rpx;
+}

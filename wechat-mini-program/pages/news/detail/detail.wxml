@@ -1,0 +1,15 @@
+<view class="page">
+  <view class="head">
+    <text class="eyebrow">喜报</text>
+    <text class="title">{{title}}</text>
+    <view class="meta">
+      <text wx:if="{{recipient}}">{{recipient}}</text>
+      <text wx:if="{{date}}">{{date}}</text>
+    </view>
+  </view>
+
+  <image wx:if="{{imageUrl}}" src="{{imageUrl}}" mode="widthFix" class="image" />
+  <view class="content">{{content}}</view>
+
+  <button class="btn-primary save-btn" bindtap="saveImage">保存图片</button>
+</view>

@@ -1,0 +1,6 @@
+{
+  "usingComponents": {
+    "tab-bar": "../../../components/tab-bar/index"
+  },
+  "navigationBarTitleText": "员工管理"
+}

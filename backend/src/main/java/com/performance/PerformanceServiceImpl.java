@@ -1,5 +1,6 @@
 package com.performance;
 
+import com.points.PointsCalculationService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,9 +14,12 @@ import java.util.Optional;
 public class PerformanceServiceImpl implements PerformanceService {
 
     private final TaskResultRepository repo;
+    private final PointsCalculationService pointsCalculationService;
 
-    public PerformanceServiceImpl(TaskResultRepository repo) {
+    public PerformanceServiceImpl(TaskResultRepository repo,
+                                  PointsCalculationService pointsCalculationService) {
         this.repo = repo;
+        this.pointsCalculationService = pointsCalculationService;
     }
 
     @Override
@@ -81,7 +85,9 @@ public class PerformanceServiceImpl implements PerformanceService {
             r.setAuditedBy(reviewer);
             r.setAuditComment(comment);
             r.setAuditedAt(LocalDateTime.now());
-            return repo.save(r);
+            TaskResult saved = repo.save(r);
+            pointsCalculationService.calculateOnApprove(saved);
+            return saved;
         }).orElse(null);
     }
 

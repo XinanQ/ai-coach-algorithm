@@ -1,0 +1,55 @@
+<view class="page">
+  <view class="page-head">
+    <text class="eyebrow">管理员驾驶舱</text>
+    <text class="big-title">工作台</text>
+  </view>
+
+  <view class="filters">
+    <picker class="filter" range="{{branches}}" value="{{branchIndex}}" bindchange="onBranch">{{branches[branchIndex]}} ▾</picker>
+    <picker class="filter" range="{{positions}}" value="{{positionIndex}}" bindchange="onPosition">{{positions[positionIndex]}} ▾</picker>
+    <picker class="filter" range="{{types}}" value="{{typeIndex}}" bindchange="onType">{{types[typeIndex]}} ▾</picker>
+    <picker class="filter" range="{{periods}}" value="{{periodIndex}}" bindchange="onPeriod">{{periods[periodIndex]}} ▾</picker>
+  </view>
+
+  <view class="hero-card stats">
+    <view class="stat">
+      <text class="stat-val">{{stats.completionRate}}%</text>
+      <text class="stat-label">任务完成率</text>
+      <text class="stat-delta">较上周 +{{stats.completionDelta}}%</text>
+    </view>
+    <view class="stat">
+      <text class="stat-val">{{stats.avgScore}}</text>
+      <text class="stat-label">平均评分</text>
+      <text class="stat-delta">较上周 +{{stats.avgDelta}}</text>
+    </view>
+    <view class="stat">
+      <text class="stat-val">{{stats.pendingCount}}</text>
+      <text class="stat-label">待完成任务</text>
+    </view>
+    <view class="stat">
+      <text class="stat-val">{{stats.highRiskCount}}</text>
+      <text class="stat-label">高风险话术</text>
+    </view>
+  </view>
+
+  <text class="section-title">员工排行</text>
+  <view class="rank-head">
+    <text class="rh rh-rank">排名</text>
+    <text class="rh rh-name">员工</text>
+    <text class="rh rh-rate">完成率</text>
+    <text class="rh rh-score">最近得分</text>
+  </view>
+  <view class="rank-row" wx:for="{{ranking}}" wx:key="rank">
+    <text class="rc rc-rank">{{item.rank}}</text>
+    <view class="rc rc-name">
+      <text class="rn">{{item.name}}</text>
+      <text class="rd">{{item.dept}}</text>
+    </view>
+    <text class="rc rc-rate">{{item.rate}}%</text>
+    <text class="rc rc-score">{{item.score}}</text>
+  </view>
+
+  <button class="btn-primary assign-btn" bindtap="goAssign">下发新任务</button>
+</view>
+
+<tab-bar active="workspace" />

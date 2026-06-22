@@ -1,0 +1,93 @@
+page {
+  background: var(--bg);
+}
+.page {
+  padding-bottom: calc(140rpx + env(safe-area-inset-bottom));
+}
+.user-card {
+  display: flex;
+  align-items: center;
+  margin-bottom: 40rpx;
+}
+.avatar {
+  width: 104rpx;
+  height: 104rpx;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--primary);
+  font-size: 44rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 28rpx;
+}
+.info {
+  display: flex;
+  flex-direction: column;
+}
+.name {
+  font-size: 40rpx;
+  font-weight: 700;
+  letter-spacing: -0.5rpx;
+}
+.branch {
+  font-size: 24rpx;
+  opacity: 0.75;
+  margin-top: 10rpx;
+}
+.menu {
+  border-top: 1rpx solid var(--border);
+}
+.menu-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 36rpx 0;
+  border-bottom: 1rpx solid var(--border);
+  font-size: 32rpx;
+  font-weight: 500;
+}
+.arrow {
+  color: var(--text);
+  font-size: 30rpx;
+}
+.ghost-btn {
+  margin-top: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 96rpx;
+  padding: 0;
+  background: #fff;
+  color: var(--text);
+  border: 1rpx solid var(--border);
+  border-radius: 8rpx;
+  font-size: 32rpx;
+  font-weight: 500;
+}
+.ghost-btn::after {
+  border: none;
+}
+.ghost-hover {
+  background: var(--surface-2);
+}
+.logout-btn {
+  margin-top: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 96rpx;
+  padding: 0;
+  background: var(--surface-2);
+  color: var(--text);
+  border-radius: 8rpx;
+  font-size: 32rpx;
+  font-weight: 500;
+}
+.logout-btn::after {
+  border: none;
+}
+.logout-btn-hover {
+  opacity: 0.8;
+}

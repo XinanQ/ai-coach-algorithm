@@ -1,0 +1,46 @@
+page {
+  background: var(--bg);
+}
+.page {
+  padding-bottom: calc(140rpx + env(safe-area-inset-bottom));
+}
+.head-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+.link {
+  font-size: 26rpx;
+  color: var(--text-secondary);
+}
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28rpx;
+  border: 1rpx solid var(--border);
+  border-radius: 8rpx;
+}
+.row-main {
+  flex: 1;
+}
+.name {
+  font-size: 30rpx;
+  font-weight: 600;
+}
+.meta {
+  display: block;
+  font-size: 22rpx;
+  color: var(--text-secondary);
+  margin-top: 10rpx;
+}
+.go {
+  font-size: 26rpx;
+  color: var(--text);
+  margin-left: 16rpx;
+}

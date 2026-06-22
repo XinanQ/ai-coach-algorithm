@@ -605,3 +605,17 @@ gradle-app.setting
 
 .idea/
 .vite/
+
+### WeChat Mini Program (wechat-mini-program/) ###
+# 微信开发者工具的私有配置：每个开发者本地不同，可能含本地调试地址、
+# 自定义编译场景（condition）参数等，按微信官方惯例不应提交。
+project.private.config.json
+
+# npm 构建产物（小程序「构建 npm」生成）
+miniprogram_npm/
+
+# 本地敏感配置：若日后把真实后端域名 / 密钥从 config.js 抽到下列文件，
+# 请使用这些被忽略的文件名，切勿把密钥写进会提交的 config.js
+wechat-mini-program/config.local.js
+wechat-mini-program/.env
+wechat-mini-program/.env.*

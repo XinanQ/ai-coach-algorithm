@@ -1,0 +1,32 @@
+<view class="container">
+  <view class="topbar">
+    <text class="topbar-scene">{{scene}} · 第{{round}}/3轮</text>
+    <view class="topbar-right">
+      <text class="timer">{{timeText}}</text>
+      <view class="live-score">
+        <text class="live-val">{{liveScore}}</text>
+        <text class="live-label">实时分</text>
+      </view>
+    </view>
+  </view>
+
+  <scroll-view class="chat-area" scroll-y scroll-into-view="bottom">
+    <view class="msg-row {{item.role === 'user' ? 'msg-user' : 'msg-ai'}}" wx:for="{{messages}}" wx:key="index">
+      <view class="avatar avatar-ai" wx:if="{{item.role !== 'user'}}">客</view>
+      <view class="bubble">{{item.content}}</view>
+      <view class="avatar avatar-user" wx:if="{{item.role === 'user'}}">我</view>
+    </view>
+    <view id="bottom"></view>
+  </scroll-view>
+
+  <view class="dim-tags" wx:if="{{!finished}}">
+    <text class="dim-tag" wx:for="{{dims}}" wx:key="*this">{{item}}</text>
+    <text class="end-link" bindtap="finishDialog">结束回顾</text>
+  </view>
+
+  <view class="input-bar" wx:if="{{!finished}}">
+    <view class="mic" bindtap="onVoice">语音</view>
+    <input class="input" placeholder-class="placeholder" placeholder="请输入回复" value="{{inputValue}}" bindinput="onInput" confirm-type="send" bindconfirm="send" />
+    <button class="send-btn" bindtap="send">发送</button>
+  </view>
+</view>

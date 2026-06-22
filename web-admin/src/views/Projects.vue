@@ -57,6 +57,26 @@
           <input v-model.trim="form.description" class="field" placeholder="说明项目目标和业务范围" />
         </label>
         <div class="form-field full">
+          <div class="form-label">指标设置</div>
+          <div class="indicator-list">
+            <div v-for="(indicator, index) in form.indicators" :key="index" class="indicator-row">
+              <input v-model.trim="indicator.name" class="field" placeholder="指标名称，例如：保险" />
+              <input v-model.trim="indicator.unit" class="field" placeholder="单位，例如：万元" />
+              <input v-model.number="indicator.amount" class="field" type="number" min="0" step="0.01" placeholder="数额" />
+              <span class="indicator-equals">=</span>
+              <input v-model.number="indicator.points" class="field" type="number" min="0" step="0.1" placeholder="积分" />
+              <input v-model.number="indicator.weight" class="field" type="number" min="0" max="100" placeholder="占比%" />
+              <button class="button danger-button" type="button" @click="removeIndicator(index)">删除</button>
+            </div>
+            <p v-if="!form.indicators.length" class="muted">暂未设置指标，可点击下方按钮添加。</p>
+            <button class="button" type="button" @click="addIndicator">新增指标</button>
+            <p class="indicator-hint">
+              示例：名称「保险」、单位「万元」、数额 100、积分 100，表示每 100 万元保险积 100 分。
+              占比合计建议为 100%，当前合计 {{ indicatorWeightTotal }}%。
+            </p>
+          </div>
+        </div>
+        <div class="form-field full">
           <div class="form-label">项目附件</div>
           <div class="upload-section">
             <input ref="fileInput" type="file" class="file-input" @change="handleFileChange" />
@@ -144,8 +164,21 @@ const form = reactive({
   reportDeadline: '00:00',
   attachmentRequired: false,
   status: '未开始',
-  attachment: null
+  attachment: null,
+  indicators: []
 })
+
+const indicatorWeightTotal = computed(() =>
+  form.indicators.reduce((sum, indicator) => sum + Number(indicator.weight || 0), 0)
+)
+
+function addIndicator() {
+  form.indicators.push({ name: '', unit: '万元', amount: 0, points: 0, weight: 0 })
+}
+
+function removeIndicator(index) {
+  form.indicators.splice(index, 1)
+}
 
 const fileInput = ref(null)
 
@@ -176,7 +209,8 @@ function resetForm({ keepMessage = false } = {}) {
     reportDeadline: '00:00',
     attachmentRequired: false,
     status: '未开始',
-    attachment: null
+    attachment: null,
+    indicators: []
   })
   if (fileInput.value) {
     fileInput.value.value = ''
@@ -224,12 +258,6 @@ async function saveProject() {
     messageType.value = 'error'
   }
 
-  // const result = await createProject({ ...form, attachment: undefined }, currentUser, form.attachment)
-  // await loadProjects()
-  // message.value = `项目已创建并保存到 ${result.filePath}。`
-  // messageType.value = 'success'
-  // resetForm({ keepMessage: true })
-  // showCreateForm.value = false
 }
 
 async function removeProject(project) {
@@ -379,5 +407,44 @@ dd {
 .form-label {
   color: #374151;
   font-size: 14px;
+}
+
+.indicator-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.indicator-row {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr auto 1fr 0.8fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.indicator-equals {
+  text-align: center;
+  color: #6b7280;
+}
+
+.indicator-hint {
+  margin: 4px 0 0;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.muted {
+  color: #9ca3af;
+  font-size: 13px;
+}
+
+@media (max-width: 900px) {
+  .indicator-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .indicator-equals {
+    display: none;
+  }
 }
 </style>

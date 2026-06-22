@@ -1,0 +1,32 @@
+<view class="page">
+  <view class="page-head">
+    <text class="eyebrow">银行AI话术陪练</text>
+    <text class="big-title">选择角色</text>
+  </view>
+
+  <view class="roles">
+    <view class="role-card" hover-class="role-card-hover" bindtap="choose" data-role="manager">
+      <view class="role-top">
+        <text class="role-name">管理员</text>
+        <text class="role-badge">团队</text>
+      </view>
+      <view class="role-feats">
+        <text class="feat">团队驾驶舱</text>
+        <text class="feat">下发陪练任务</text>
+        <text class="feat">查看员工成绩</text>
+      </view>
+    </view>
+
+    <view class="role-card" hover-class="role-card-hover" bindtap="choose" data-role="staff">
+      <view class="role-top">
+        <text class="role-name">普通员工</text>
+        <text class="role-badge">个人</text>
+      </view>
+      <view class="role-feats">
+        <text class="feat">接收并完成任务</text>
+        <text class="feat">自主练习</text>
+        <text class="feat">闯关成长</text>
+      </view>
+    </view>
+  </view>
+</view>
