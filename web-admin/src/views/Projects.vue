@@ -18,7 +18,7 @@
       <div class="section-heading">
         <div>
           <h2>创建项目</h2>
-          <p>项目会写入本机临时文件，并立即出现在当前机构的项目列表中。</p>
+          <p>项目会保存到后端数据库，并显示在项目管理列表中。</p>
         </div>
         <span class="badge neutral">{{ currentUser.organization }}</span>
       </div>
@@ -240,42 +240,24 @@ async function saveProject() {
     messageType.value = 'error'
     return
   }
+  try {
+    const result = await createProject(
+        { ...form, attachment: undefined },
+        currentUser
+    )
 
-  for (const indicator of form.indicators) {
-    if (!indicator.name || !indicator.unit) {
-      message.value = '每个指标都需要填写名称和单位。'
-      messageType.value = 'error'
-      return
-    }
-    if (Number(indicator.amount) <= 0 || Number(indicator.points) <= 0) {
-      message.value = `指标「${indicator.name}」的数额和积分必须大于 0。`
-      messageType.value = 'error'
-      return
-    }
+    await loadProjects()
+
+    message.value = `项目“${result.name}”创建成功，已保存到数据库。`
+    messageType.value = 'success'
+
+    resetForm({ keepMessage: true })
+    showCreateForm.value = false
+  } catch (error) {
+    message.value = error.message || '创建项目失败。'
+    messageType.value = 'error'
   }
 
-  const indicatorPayload = form.indicators.map((indicator) => ({
-    name: indicator.name,
-    indicatorType: '结果指标',
-    valueType: '金额',
-    unit: indicator.unit,
-    weight: Number(indicator.weight || 0),
-    pointRule: Number(indicator.points) / Number(indicator.amount),
-    bigOrderEnabled: false,
-    bigOrderThreshold: 0,
-    talentCount: 0
-  }))
-
-  const result = await createProject(
-    { ...form, indicators: indicatorPayload, attachment: undefined },
-    currentUser,
-    form.attachment
-  )
-  await loadProjects()
-  message.value = `项目已创建并保存到 ${result.filePath}。`
-  messageType.value = 'success'
-  resetForm({ keepMessage: true })
-  showCreateForm.value = false
 }
 
 async function removeProject(project) {

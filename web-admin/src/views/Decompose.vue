@@ -243,7 +243,11 @@ function sourceLabel(plan) {
 async function loadDecomposition() {
   message.value = ''
   const projectId = route.params.id
-  const result = await getDecomposition({ projectId, role: currentUser?.role, orgId: currentUser?.orgId })
+  const result = await getDecomposition({
+    projectId,
+    role: currentUser?.role,
+    organizationId: currentUser?.organizationId
+  })
   plans.value = Array.isArray(result) ? result : result ? [result] : []
   selectPlan(plans.value[0]?.id || '')
 }

@@ -39,18 +39,19 @@ function normalizeLoginUser(loginData) {
 
     backendLevel: loginData.level,
     isAdmin: loginData.isAdmin,
-    organizationId: loginData.organizationId,
-    backendOrganizationId: loginData.organizationId,
-    organizationName: loginData.organizationName,
     isInProject: loginData.isInProject,
+
+    organizationId: loginData.organizationId,
+    orgId: loginData.organizationId,
+
+    organizationCode: loginData.organizationCode || '',
+    organizationName: loginData.organizationName || '',
+    orgName: loginData.organizationName || '',
+    organization: loginData.organizationName || '',
 
     role,
     level: profile.level,
     roleName: profile.name,
-
-    organization: loginData.organizationName || profile.organization,
-    orgName: loginData.organizationName || profile.organization,
-    orgId: loginData.organizationId || profile.orgId,
     dataScope: profile.dataScope
   }
 }
