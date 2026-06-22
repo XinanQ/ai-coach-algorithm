@@ -10,6 +10,8 @@ public class LoginResponse {
     private Long organizationId;
     private Boolean isInProject;
     private String token;
+    private String organizationName;
+    private String organizationCode;
 
     public LoginResponse(Long employeeId,
                          String employeeNo,
@@ -17,6 +19,8 @@ public class LoginResponse {
                          String level,
                          Boolean isAdmin,
                          Long organizationId,
+                         String organizationName,
+                         String organizationCode,
                          Boolean isInProject,
                          String token) {
         this.employeeId = employeeId;
@@ -25,6 +29,8 @@ public class LoginResponse {
         this.level = level;
         this.isAdmin = isAdmin;
         this.organizationId = organizationId;
+        this.organizationName = organizationName;
+        this.organizationCode = organizationCode;
         this.isInProject = isInProject;
         this.token = token;
     }
@@ -57,6 +63,9 @@ public class LoginResponse {
         return isInProject;
     }
 
-    public String getToken() { return token;
-    }
+    public String getToken() { return token; }
+
+    public String getOrganizationName() { return organizationName; }
+
+    public String getOrganizationCode() { return organizationCode; }
 }

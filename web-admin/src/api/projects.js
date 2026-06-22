@@ -12,7 +12,7 @@ function normalizeProjectPayload(project, user) {
     ...project,
     startDate: normalizeDate(project.startDate),
     endDate: normalizeDate(project.endDate),
-    ownerOrgId: user?.orgId
+    organizationId: user?.organizationId
   }
 }
 
@@ -61,16 +61,20 @@ function canDecomposeProject(project, user) {
 export async function getProjects(user) {
   const data = await request('/api/admin/projects')
 
-  return data.map((project) => ({
-    ...project,
-    relation: project.relation || project.distributionStatus || '待分解',
-    canConfigureIndicators: true,
-    canDecompose: true,
-    canDelete: false,
-    canCreateProject: user
-        ? ['总行', '省行', '市行', '支行'].includes(user.level)
-        : false
-  }))
+  return data.map((project) => {
+    const sameOrg = Number(project.organizationId) === Number(user?.organizationId)
+
+    return {
+      ...project,
+      relation: sameOrg ? '本级创建' : project.distributionStatus || '可见项目',
+      canConfigureIndicators: sameOrg,
+      canDecompose: sameOrg,
+      canDelete: false,
+      canCreateProject: user
+          ? ['总行', '省行', '市行', '支行'].includes(user.level)
+          : false
+    }
+  })
 }
 
 export async function getProject(projectId) {

@@ -119,7 +119,6 @@ public class ProjectController {
                 project.getManagerId(),
                 project.getManagerId() == null ? "项目负责人" : "负责人ID " + project.getManagerId(),
                 "",
-                project.getOrganizationId() == null ? "" : String.valueOf(project.getOrganizationId()),
                 "待分解",
                 project.getCreatedAt() == null ? "" : project.getCreatedAt().toLocalDate().toString()
         );
@@ -201,10 +200,12 @@ public class ProjectController {
 
     private Long resolveOrganizationId(ProjectCreateRequest request) {
         Long organizationId = parseLong(request.organizationId());
-        if (organizationId != null) return organizationId;
 
-        Long ownerOrgId = parseLong(request.ownerOrgId());
-        return ownerOrgId == null ? 1L : ownerOrgId;
+        if (organizationId != null) {
+            return organizationId;
+        }
+
+        throw new IllegalArgumentException("organizationId is required and must be a numeric organization id");
     }
 
     private Long parseLong(String value) {

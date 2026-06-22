@@ -22,7 +22,6 @@ public record ProjectResponse(
 
         String owner,
         String ownerLevel,
-        String ownerOrgId,
 
         String distributionStatus,
         String createdAt

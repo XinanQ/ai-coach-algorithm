@@ -66,19 +66,19 @@ public class AuthServiceImpl implements AuthService {
                         "Employee profile not found"
                 ));
 
-//        if (Boolean.FALSE.equals(employee.getIsInProject())) {
-//            throw new AuthException(
-//                    HttpStatus.FORBIDDEN,
-//                    403,
-//                    "Employee is not in project"
-//            );
-//        }
-
         String token = authTokenService.createToken(employee.getId());
 
         Long organizationId = employee.getOrganization() == null
                 ? null
                 : employee.getOrganization().getId();
+
+        String organizationName = employee.getOrganization() == null
+                ? ""
+                : employee.getOrganization().getName();
+
+        String organizationCode = employee.getOrganization() == null
+                ? ""
+                : employee.getOrganization().getCode();
 
         return new LoginResponse(
                 employee.getId(),
@@ -87,6 +87,8 @@ public class AuthServiceImpl implements AuthService {
                 employee.getLevel(),
                 employee.getIsAdmin(),
                 organizationId,
+                organizationName,
+                organizationCode,
                 employee.getIsInProject(),
                 token
         );

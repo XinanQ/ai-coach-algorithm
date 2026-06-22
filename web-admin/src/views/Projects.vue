@@ -18,7 +18,7 @@
       <div class="section-heading">
         <div>
           <h2>创建项目</h2>
-          <p>项目会保存到后端数据库，并显示在项目管理列表中。。</p>
+          <p>项目会保存到后端数据库，并显示在项目管理列表中。</p>
         </div>
         <span class="badge neutral">{{ currentUser.organization }}</span>
       </div>
