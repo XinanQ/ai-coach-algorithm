@@ -3,7 +3,7 @@
     <header class="page-header">
       <div>
         <h1>指标配置</h1>
-        <p>{{ project.name }} · {{ project.owner }} 创建，当前账号{{ canEdit ? '可维护指标' : '仅可查看指标' }}。</p>
+        <p>{{ project.name }} · 当前账号{{ canEdit ? '可维护指标' : '仅可查看指标' }}。</p>
       </div>
       <button class="button primary" :disabled="!canEdit" @click="startCreate">新增指标</button>
     </header>
@@ -33,7 +33,7 @@
 
     <section v-if="!canEdit" class="panel readonly-panel">
       <strong>当前机构不是项目创建机构</strong>
-      <span>你可以查看指标规则，但新增、编辑和删除应由 {{ project.owner }} 完成。</span>
+      <span>你可以查看指标规则，但只有项目归属机构的管理员可以新增、编辑和删除指标。</span>
     </section>
 
     <section class="panel">
@@ -177,7 +177,9 @@ const form = reactive({
   talentCount: 0
 })
 
-const canEdit = computed(() => project.value.ownerOrgId === currentUser?.orgId)
+const canEdit = computed(() =>
+    Number(project.value.organizationId) === Number(currentUser?.organizationId)
+)
 const totalWeight = computed(() =>
   projectIndicators.value.reduce((sum, indicator) => sum + Number(indicator.weight || 0), 0)
 )

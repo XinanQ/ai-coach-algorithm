@@ -78,6 +78,11 @@ public class IndicatorController {
         return service.findChildren(id);
     }
 
+    @GetMapping("/{id}/progress")
+    public IndicatorProgressResponse progress(@PathVariable Long id) {
+        return service.getProgress(id);
+    }
+
     @PostMapping("/{id}/remind")
     public ResponseEntity<Void> remind(@PathVariable Long id, @RequestParam @NotBlank String message) {
         service.remind(id, message);

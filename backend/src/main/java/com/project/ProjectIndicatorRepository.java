@@ -16,4 +16,6 @@ public interface ProjectIndicatorRepository extends JpaRepository<ProjectIndicat
     boolean existsByProjectIdAndIndicatorId(Long projectId, Long indicatorId);
 
     Optional<ProjectIndicator> findByIdAndProjectId(Long id, Long projectId);
+
+    Optional<ProjectIndicator> findByProjectIdAndIndicatorId(Long projectId, Long indicatorId);
 }

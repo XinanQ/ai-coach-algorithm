@@ -13,5 +13,16 @@ public interface PointsLogRepository extends JpaRepository<PointsLog, Long> {
 
     List<PointsLog> findByProjectIdAndBizDateBetween(Long projectId, LocalDate from, LocalDate to);
 
+    List<PointsLog> findByIndicatorIdAndBizDateBetween(Long indicatorId, LocalDate from, LocalDate to);
+
+    List<PointsLog> findByBizDateBetween(LocalDate from, LocalDate to);
+
+    List<PointsLog> findByProjectIdAndIndicatorIdAndBizDateBetween(
+            Long projectId, Long indicatorId, LocalDate from, LocalDate to);
+
     List<PointsLog> findByReportId(Long reportId);
+
+    boolean existsByReportId(Long reportId);
+
+    List<PointsLog> findByEmployeeIdAndProjectIdOrderByCreatedAtAsc(Long employeeId, Long projectId);
 }

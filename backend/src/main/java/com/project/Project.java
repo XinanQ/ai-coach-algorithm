@@ -1,10 +1,14 @@
 package com.project;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.AssertTrue;
+//import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+
 
 @Entity
 @Table(name = "projects")
@@ -24,16 +28,30 @@ public class Project {
     private Long organizationId;
     private Long managerId;
 
+    @NotNull
     @Enumerated(EnumType.STRING)
-    private ProjectStatus status;
+    @Column(nullable = false)
+    private ProjectStatus status = ProjectStatus.PLANNED;
 
     @NotNull
-    private LocalDate reportDeadline;
+    private LocalTime reportDeadline;
 
+    @Column(name = "attachments_required")
     private Boolean attachmentsRequired = false;
+
     private String attachmentInstructions;
 
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
     public Project() {
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.createdAt == null) {
+            this.createdAt = LocalDateTime.now();
+        }
     }
 
     public Long getId() {
@@ -100,11 +118,11 @@ public class Project {
         this.status = status;
     }
 
-    public LocalDate getReportDeadline() {
+    public LocalTime getReportDeadline() {
         return reportDeadline;
     }
 
-    public void setReportDeadline(LocalDate reportDeadline) {
+    public void setReportDeadline(LocalTime reportDeadline) {
         this.reportDeadline = reportDeadline;
     }
 
@@ -120,20 +138,29 @@ public class Project {
         return attachmentInstructions;
     }
 
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
     public void setAttachmentInstructions(String attachmentInstructions) {
         this.attachmentInstructions = attachmentInstructions;
     }
 
-    @AssertTrue(message = "reportDeadline must fall between startDate and endDate")
-    public boolean isReportDeadlineValid() {
-        if (startDate == null || endDate == null || reportDeadline == null) {
-            return true;
-        }
-        return !reportDeadline.isBefore(startDate) && !reportDeadline.isAfter(endDate);
-    }
+//    @AssertTrue(message = "reportDeadline must fall between startDate and endDate")
+//    public boolean isReportDeadlineValid() {
+//        if (startDate == null || endDate == null || reportDeadline == null) {
+//            return true;
+//        }
+//        return !reportDeadline.isBefore(startDate) && !reportDeadline.isAfter(endDate);
+//    }
 
-    @AssertTrue(message = "attachmentInstructions is required when attachments are required")
-    public boolean isAttachmentInstructionsValid() {
-        return !Boolean.TRUE.equals(attachmentsRequired) || (attachmentInstructions != null && !attachmentInstructions.isBlank());
-    }
+//    @AssertTrue(message = "attachmentInstructions is required when attachments are required")
+//    public boolean isAttachmentInstructionsValid() {
+//        return !Boolean.TRUE.equals(attachmentsRequired) || (attachmentInstructions != null && !attachmentInstructions.isBlank());
+//    }
+//}
 }

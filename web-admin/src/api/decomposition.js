@@ -6,29 +6,27 @@ function clone(value) {
   return JSON.parse(JSON.stringify(value))
 }
 
-export function getDecomposition({ projectId, role, orgId } = {}) {
+export function getDecomposition({ projectId, role, organizationId } = {}) {
   if (!role) {
     return mockResolve(decompositionRows)
   }
 
+  const currentOrgId = Number(organizationId)
+
   const plans = decompositionPlans
-    .filter((plan) => plan.ownerRole === role)
-    .filter((plan) => !orgId || plan.currentOrgId === orgId)
-    .filter((plan) => !projectId || plan.projectId === projectId)
-    .map((plan) => ({
-      ...clone(plan),
-      project: projects.find((project) => project.id === plan.projectId)
-    }))
+      .filter((plan) => plan.ownerRole === role)
+      .filter((plan) => !currentOrgId || Number(plan.currentOrgId) === currentOrgId)
+      .filter((plan) => !projectId || String(plan.projectId) === String(projectId))
+      .map((plan) => ({
+        ...clone(plan),
+        project: projects.find((project) => String(project.id) === String(plan.projectId))
+      }))
 
   if (!projectId) return mockResolve(plans)
 
   if (plans[0]) return mockResolve(plans[0])
 
-  const tempProject = getLocalTempProjects().find(
-    (project) => project.id === projectId && project.ownerOrgId === orgId
-  )
-
-  return mockResolve(tempProject ? buildInitialPlan(tempProject, role, orgId) : null)
+  return mockResolve(null)
 }
 
 export function saveDecomposition(plan) {

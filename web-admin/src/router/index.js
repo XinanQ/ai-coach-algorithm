@@ -73,24 +73,21 @@ const routes = [
     path: '/projects/:id',
     component: ProjectDetail,
     meta: {
-      roles: ['head_admin', 'province_admin', 'city_admin', 'branch_admin'],
-      projectAccess: 'visible'
+      roles: ['head_admin', 'province_admin', 'city_admin', 'branch_admin']
     }
   },
   {
     path: '/projects/:id/indicators',
     component: Indicators,
     meta: {
-      roles: ['head_admin', 'province_admin', 'city_admin', 'branch_admin'],
-      projectAccess: 'visible'
+      roles: ['head_admin', 'province_admin', 'city_admin', 'branch_admin']
     }
   },
   {
     path: '/projects/:id/decompose',
     component: Decompose,
     meta: {
-      roles: ['head_admin', 'province_admin', 'city_admin', 'branch_admin', 'outlet_admin'],
-      projectAccess: 'decompose'
+      roles: ['head_admin', 'province_admin', 'city_admin', 'branch_admin', 'outlet_admin']
     }
   },
   {
