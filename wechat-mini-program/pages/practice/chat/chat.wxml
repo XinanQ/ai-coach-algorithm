@@ -1,6 +1,6 @@
 <view class="container">
   <view class="topbar">
-    <text class="topbar-scene">{{scene}} · 第{{round}}/3轮</text>
+    <text class="topbar-scene">{{scene}} · 第{{round}}/{{totalRounds}}轮</text>
     <view class="topbar-right">
       <text class="timer">{{timeText}}</text>
       <view class="live-score">

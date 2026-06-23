@@ -12,7 +12,8 @@ Page({
     this.loadData()
   },
   loadData() {
-    api.admin.getAnalysis().then((d) => {
+    // 规范：GET /api/mini/admin/analysis?period=week|month（默认 week）
+    api.admin.getAnalysis('week').then((d) => {
       const max = Math.max.apply(null, d.abilityTop3.map((a) => a.count))
       const abilityTop3 = d.abilityTop3.map((a) => ({
         name: a.name,

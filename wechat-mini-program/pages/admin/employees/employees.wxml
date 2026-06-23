@@ -5,11 +5,11 @@
   </view>
 
   <view class="list">
-    <view class="emp" wx:for="{{employees}}" wx:key="id" data-id="{{item.id}}" bindtap="goDetail">
+    <view class="emp" wx:for="{{employees}}" wx:key="employeeId" data-id="{{item.employeeId}}" bindtap="goDetail">
       <view class="emp-top">
         <view class="emp-id">
           <text class="emp-name">{{item.name}}</text>
-          <text class="emp-dept">{{item.dept}}</text>
+          <text class="emp-dept">{{item.position}}</text>
         </view>
         <text class="emp-score">{{item.score}}分</text>
       </view>
@@ -17,7 +17,7 @@
         <view class="emp-bar-fill" style="width: {{item.progress}}%"></view>
       </view>
       <view class="emp-foot">
-        <text class="emp-rate">完成率 {{item.rate}}%</text>
+        <text class="emp-rate">完成率 {{item.completionRate}}%</text>
         <text class="arrow">></text>
       </view>
     </view>

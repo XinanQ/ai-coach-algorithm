@@ -8,10 +8,10 @@
   </view>
 
   <view class="list">
-    <view class="row" wx:for="{{templates}}" wx:key="id" bindtap="goAssign">
+    <view class="row" wx:for="{{templates}}" wx:key="templateId" data-id="{{item.templateId}}" bindtap="goAssign">
       <view class="row-main">
         <text class="name">{{item.name}}</text>
-        <text class="meta">{{item.scene}} · {{item.dimensions}} 个评分维度</text>
+        <text class="meta">{{item.scene}} · {{item.dimensionCount}} 个评分维度</text>
       </view>
       <text class="go">下发 ></text>
     </view>

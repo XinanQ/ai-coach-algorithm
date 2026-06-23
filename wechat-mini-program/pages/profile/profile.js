@@ -13,7 +13,7 @@ Page({
     const role = auth.getRole()
     this.setData({
       userName: user.name || '员工',
-      branch: user.branch || '',
+      branch: user.organizationName || '',
       role,
       roleLabel: role === 'manager' ? '管理员' : '普通员工'
     })

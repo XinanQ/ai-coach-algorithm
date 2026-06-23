@@ -1,13 +1,20 @@
-// 首页 mock
-function summary() {
+// 首页 mock（GET /api/mini/home）
+// 字段对齐后端规范；demo 用非零数据让页面看起来已填充
+function home() {
   return {
-    userName: '张三',
-    todayReported: false,
-    myRank: 12,
-    myScore: 86,
+    name: '张三',
+    level: 'STAFF',
+    isAdmin: false,
+    organizationId: 4,
+    organizationName: 'XX网点',
+    monthlyScore: 86,
     scoreTarget: 120,
-    practiceTaskCount: 1
+    completionRate: 72,
+    rank: 12,
+    rankScope: '网点排名',
+    todayReported: false,
+    pendingPracticeTaskCount: 1
   }
 }
 
-module.exports = { summary }
+module.exports = { home }

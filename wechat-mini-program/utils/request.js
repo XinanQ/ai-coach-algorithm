@@ -1,5 +1,5 @@
 // wx.request 统一封装
-// 约定后端返回信封：{ code: 0, message: '', data: ... }，成功时 resolve data
+// 约定后端返回信封：{ code: 200, message: '', data: ... }，成功时 resolve data
 const config = require('../config')
 
 function buildHeader(extra) {
@@ -32,7 +32,8 @@ function request(method, url, data, options) {
           return
         }
 
-        if (statusCode >= 200 && statusCode < 300 && body && body.code === 0) {
+        // 后端约定：业务成功码为 200（不是 0）
+        if (statusCode >= 200 && statusCode < 300 && body && body.code === 200) {
           resolve(body.data)
           return
         }
@@ -61,7 +62,7 @@ function upload(url, filePath, name, formData) {
       success(res) {
         try {
           const body = JSON.parse(res.data)
-          if (body && body.code === 0) {
+          if (body && body.code === 200) {
             resolve(body.data)
           } else {
             reject(new Error((body && body.message) || '上传失败'))

@@ -5,11 +5,13 @@ import ForgotPassword from '../views/ForgotPassword.vue'
 import Dashboard from '../views/Dashboard.vue'
 import Organization from '../views/Organization.vue'
 import Users from '../views/Users.vue'
+import EmployeeCRUD from '../views/EmployeeCRUD.vue'
 import Projects from '../views/Projects.vue'
 import ProjectDetail from '../views/ProjectDetail.vue'
 import Indicators from '../views/Indicators.vue'
 import Decompose from '../views/Decompose.vue'
 import Report from '../views/Report.vue'
+import PerformanceReview from '../views/PerformanceReview.vue'
 import Rankings from '../views/Rankings.vue'
 import Forbidden from '../views/Forbidden.vue'
 import { canAccessRoute, getCurrentUser, getDefaultPath, isLoggedIn } from '../auth/permissions'
@@ -63,6 +65,13 @@ const routes = [
     }
   },
   {
+    path: '/users/employee-manage',
+    component: EmployeeCRUD,
+    meta: {
+      roles: ['city_admin', 'branch_admin', 'outlet_admin']
+    }
+  },
+  {
     path: '/projects',
     component: Projects,
     meta: {
@@ -105,6 +114,13 @@ const routes = [
     component: Report,
     meta: {
       roles: ['outlet_admin', 'employee']
+    }
+  },
+  {
+    path: '/performance-review',
+    component: PerformanceReview,
+    meta: {
+      roles: ['head_admin', 'province_admin', 'city_admin', 'branch_admin', 'outlet_admin', 'employee']
     }
   },
   {

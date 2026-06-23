@@ -25,7 +25,7 @@
   <view class="card-row">
     <view class="card">
       <text class="card-value">第{{myRank}}名</text>
-      <text class="card-label">网点排名</text>
+      <text class="card-label">{{rankScope}}</text>
     </view>
   </view>
 
