@@ -6,6 +6,7 @@ Page({
     userName: '员工',
     todayReported: false,
     myRank: '--',
+    rankScope: '网点排名',
     myScore: 0,
     scoreTarget: 120,
     scorePercent: 0,
@@ -17,21 +18,23 @@ Page({
     this.loadData()
   },
   loadData() {
+    // 字段对齐 GET /api/mini/home：monthlyScore / completionRate / rank / pendingPracticeTaskCount
     api.home.getSummary().then((d) => {
-      const myScore = d.myScore
-      const scoreTarget = d.scoreTarget
-      const scorePercent = scoreTarget > 0
-        ? Math.min(100, Math.round((myScore / scoreTarget) * 100))
-        : 0
+      const myScore = d.monthlyScore || 0
+      const scoreTarget = d.scoreTarget || 0
+      const scorePercent = d.completionRate != null
+        ? d.completionRate
+        : (scoreTarget > 0 ? Math.min(100, Math.round((myScore / scoreTarget) * 100)) : 0)
       this.setData({
-        userName: d.userName || '员工',
+        userName: d.name || '员工',
         todayReported: d.todayReported,
-        myRank: d.myRank,
+        myRank: d.rank == null ? '--' : d.rank,
+        rankScope: d.rankScope || '网点排名',
         myScore,
         scoreTarget,
         scorePercent,
         scoreRemain: Math.max(0, scoreTarget - myScore),
-        practiceTaskCount: d.practiceTaskCount
+        practiceTaskCount: d.pendingPracticeTaskCount || 0
       })
     })
   },

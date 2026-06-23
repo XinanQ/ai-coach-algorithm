@@ -11,8 +11,8 @@
   <view class="hero-card growth-card">
     <view class="growth-top">
       <view class="growth-left">
-        <text class="growth-level">Lv.{{growth.level}} {{growth.levelName}}</text>
-        <text class="growth-sub">连续练习 {{growth.streak}} 天 · 本周 +{{growth.weekGain}}</text>
+        <text class="growth-level">{{growth.levelName}}</text>
+        <text class="growth-sub">连续练习 {{growth.streakDays}} 天 · 本周 +{{growth.weekGain}}</text>
       </view>
       <text class="growth-points">{{growth.points}}/{{growth.target}}</text>
     </view>
@@ -26,43 +26,20 @@
     <view class="seg-item {{activeTab === index ? 'active' : ''}}" wx:for="{{segs}}" wx:key="*this" data-index="{{index}}" bindtap="switchSeg">{{item}}</view>
   </view>
 
-  <!-- 上级下发 -->
-  <view class="list" wx:if="{{activeTab === 0}}">
-    <view class="task" wx:for="{{assignedTasks}}" wx:key="id" data-id="{{item.id}}" bindtap="goTask">
+  <!-- 任务列表（按当前 tab 拉取，统一结构）-->
+  <view class="list">
+    <view class="task" wx:for="{{list}}" wx:key="taskId" data-id="{{item.taskId}}" bindtap="goTask">
       <view class="task-head">
         <text class="badge {{item.level === 'must' ? 'badge-must' : 'badge-recommend'}}">{{item.level === 'must' ? '必须完成' : '强烈推荐'}}</text>
-        <text class="task-status">{{item.status}}</text>
+        <text class="task-status">{{item.statusLabel}}</text>
       </view>
-      <text class="task-name">{{item.name}}</text>
+      <text class="task-name">{{item.title}}</text>
       <view class="task-meta">
         <text class="task-scene">{{item.scene}}</text>
-        <text class="task-deadline">截止 {{item.deadline}} · +{{item.points}}积分</text>
+        <text class="task-deadline">{{item.deadline ? '截止 ' + item.deadline + ' · ' : ''}}+{{item.rewardPoints}}积分</text>
       </view>
     </view>
-    <view class="empty" wx:if="{{assignedTasks.length === 0}}">暂无下发任务</view>
-  </view>
-
-  <!-- 自主练习（通用任务库）-->
-  <view class="list" wx:if="{{activeTab === 1}}">
-    <view class="lib" wx:for="{{libraryTasks}}" wx:key="id" data-id="{{item.id}}" bindtap="goTask">
-      <view class="lib-left">
-        <text class="lib-name">{{item.name}}</text>
-        <text class="lib-meta">{{item.type}} · {{item.points}}积分/关</text>
-      </view>
-      <text class="arrow">></text>
-    </view>
-  </view>
-
-  <!-- 已完成 -->
-  <view class="list" wx:if="{{activeTab === 2}}">
-    <view class="done" wx:for="{{doneTasks}}" wx:key="id">
-      <view class="done-left">
-        <text class="done-name">{{item.name}}</text>
-        <text class="done-meta">{{item.scene}} · {{item.date}}</text>
-      </view>
-      <text class="done-score">{{item.score}}分</text>
-    </view>
-    <view class="empty" wx:if="{{doneTasks.length === 0}}">暂无已完成任务</view>
+    <view class="empty" wx:if="{{list.length === 0}}">暂无任务</view>
   </view>
 </view>
 

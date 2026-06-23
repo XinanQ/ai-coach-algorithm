@@ -5,7 +5,7 @@
         <h1>人员管理</h1>
         <p>维护员工基础信息、所属机构、员工类型与管理员身份。</p>
       </div>
-      <button class="button primary">新增人员</button>
+      <button class="button primary" type="button" @click="goEmployeeManage">人员编辑</button>
     </header>
 
     <section class="panel toolbar">
@@ -63,7 +63,10 @@
 
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { getUsers } from '../api/users'
+
+const router = useRouter()
 
 const users = ref([])
 
@@ -87,6 +90,10 @@ const filteredUsers = computed(() =>
 const organizationOptions = computed(() =>
   [...new Set(users.value.map((user) => user.organization))].sort((a, b) => a.localeCompare(b, 'zh-Hans-CN'))
 )
+
+function goEmployeeManage() {
+  router.push('/users/employee-manage')
+}
 
 onMounted(async () => {
   users.value = await getUsers()
