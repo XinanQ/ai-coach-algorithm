@@ -1,33 +1,36 @@
-// 陪练 mock
-function growth() {
-  return { level: 5, levelName: '专业进阶', points: 1260, target: 1800, weekGain: 320, streak: 7 }
-}
+// 陪练 mock（字段对齐《微信小程序接口联调说明》）
 
-function tasks() {
-  return {
+// GET /api/mini/practice/tasks?tab=assigned|self|done
+// 成长信息随任务列表一起返回；list 仅含当前 tab 的任务
+function tasks(tab) {
+  const growth = { levelName: 'Lv5 专业进阶', points: 1260, target: 1800, streakDays: 7, weekGain: 320 }
+  const lists = {
     assigned: [
-      { id: 't1', name: '风险揭示话术', scene: '理财产品风险揭示', level: 'must', status: '进行中', deadline: '06/28', points: 50 },
-      { id: 't2', name: '高净值客户需求挖掘', scene: '需求挖掘', level: 'recommend', status: '待完成', deadline: '07/05', points: 60 }
+      { taskId: 't1', title: '风险揭示话术', scene: '理财产品风险揭示', level: 'must', status: 'IN_PROGRESS', deadline: '2026-06-28', rewardPoints: 50 },
+      { taskId: 't2', title: '高净值客户需求挖掘', scene: '需求挖掘', level: 'recommend', status: 'PENDING', deadline: '2026-07-05', rewardPoints: 60 }
     ],
-    library: [
-      { id: 'l1', name: '信用卡分期回访', type: '实战', points: 40 },
-      { id: 'l2', name: '贷款逾期提醒', type: '实战', points: 40 },
-      { id: 'l3', name: '客户投诉安抚', type: '实战', points: 40 },
-      { id: 'l4', name: '基金波动解释', type: '实战', points: 40 }
+    self: [
+      { taskId: 'l1', title: '信用卡分期回访', scene: '信用卡', level: 'recommend', status: 'PENDING', deadline: '', rewardPoints: 40 },
+      { taskId: 'l2', title: '贷款逾期提醒', scene: '贷款', level: 'recommend', status: 'PENDING', deadline: '', rewardPoints: 40 },
+      { taskId: 'l3', title: '客户投诉安抚', scene: '投诉', level: 'recommend', status: 'PENDING', deadline: '', rewardPoints: 40 },
+      { taskId: 'l4', title: '基金波动解释', scene: '基金', level: 'recommend', status: 'PENDING', deadline: '', rewardPoints: 40 }
     ],
     done: [
-      { id: 't0', name: '存款推荐话术', scene: '存款推荐', status: '已完成', score: 82, date: '06/10' }
+      { taskId: 't0', title: '存款推荐话术', scene: '存款推荐', level: 'must', status: 'DONE', deadline: '2026-06-10', rewardPoints: 50 }
     ]
   }
+  return Object.assign({}, growth, { list: lists[tab] || lists.assigned })
 }
 
-function taskDetail() {
+// GET /api/mini/practice/tasks/{taskId}
+function taskDetail(taskId) {
   return {
+    taskId: taskId || 't1',
     scene: '存款推荐',
+    rounds: 3,
     customerName: '王女士',
     customerDesc: '35岁，企业白领，有一笔闲置资金',
     tags: ['流动性担忧', '利率敏感', '风险厌恶'],
-    rounds: 3,
     background: '客户近期有一笔闲置资金，关注收益的同时担心资金随时可能需要支取。请你结合客户情况，推荐合适的存款产品并打消其顾虑。',
     goal: '完成 3 轮对话，覆盖产品收益、流动性方案与风险说明。',
     requirements: ['完成 3 轮对话', '综合得分 ≥ 80 分', '提交复盘与优化话术'],
@@ -36,22 +39,49 @@ function taskDetail() {
   }
 }
 
+// POST /api/mini/practice/dialog/start
 function dialogStart() {
   return {
+    sessionId: 's' + Date.now(),
+    round: 1,
+    totalRounds: 3,
+    liveScore: 70,
     messages: [
       { role: 'ai', content: '您好，我最近想了解一下存款产品，有没有收益比较高又安全的推荐？' }
-    ],
-    round: 1
+    ]
   }
 }
 
+// POST /api/mini/practice/dialog/reply
+// round 为用户刚作答的轮次，mock 据此推进到下一轮；超过总轮次则 finished=true
 function dialogReply(round) {
+  const totalRounds = 3
+  const cur = round || 1
+  const nextRound = cur + 1
+  const finished = nextRound > totalRounds
   return {
-    message: { role: 'ai', content: `（第${round}轮）那如果资金需要随时支取，您会怎么建议？` },
-    round
+    round: finished ? totalRounds : nextRound,
+    totalRounds,
+    liveScore: Math.min(95, 66 + nextRound * 6),
+    message: finished
+      ? null
+      : { role: 'ai', content: `（第${nextRound}轮）如果资金需要随时支取，您会怎么建议呢？` },
+    finished
   }
 }
 
+// POST /api/mini/practice/dialog/finish
+function dialogFinish() {
+  return {
+    resultId: 'r' + Date.now(),
+    taskId: 't1',
+    score: 82,
+    weakTags: ['流动性解释不足', '风险提示不足'],
+    suggestion: '建议补充提前支取规则，并避免绝对化收益表达。'
+  }
+}
+
+// —— 以下为前端演示页 mock（规范未定义）——
 function result(score) {
   return {
     score: score != null ? score : 82,
@@ -84,4 +114,8 @@ function history() {
   ]
 }
 
-module.exports = { growth, tasks, taskDetail, dialogStart, dialogReply, result, review, history }
+module.exports = {
+  tasks, taskDetail,
+  dialogStart, dialogReply, dialogFinish,
+  result, review, history
+}

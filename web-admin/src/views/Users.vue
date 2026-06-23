@@ -5,7 +5,7 @@
         <h1>人员管理</h1>
         <p>维护员工基础信息、所属机构、员工类型与管理员身份。</p>
       </div>
-      <button class="button primary" type="button" @click="goEmployeeManage">新增人员</button>
+      <button class="button primary" type="button" @click="goEmployeeManage">人员编辑</button>
     </header>
 
     <section class="panel toolbar">
@@ -67,6 +67,7 @@ import { useRouter } from 'vue-router'
 import { getUsers } from '../api/users'
 
 const router = useRouter()
+
 const users = ref([])
 
 const filters = reactive({

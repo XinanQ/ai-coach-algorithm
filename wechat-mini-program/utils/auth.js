@@ -32,11 +32,13 @@ function login(empId, password) {
     return Promise.reject(new Error('请输入工号和密码'))
   }
   return apiAuth.login(empId, password).then((res) => {
+    // 后端登录返回扁平对象（employeeId/name/organizationName/isAdmin/level + token），
+    // token 与用户字段同级；整体存为 userInfo 供各页读取
     wx.setStorageSync(TOKEN_KEY, res.token)
-    wx.setStorageSync(USER_KEY, res.user)
+    wx.setStorageSync(USER_KEY, res)
     const app = getApp()
-    if (app) app.globalData.userInfo = res.user
-    return res.user
+    if (app) app.globalData.userInfo = res
+    return res
   })
 }
 

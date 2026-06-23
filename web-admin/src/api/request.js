@@ -2,27 +2,39 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
 
 export async function request(path, options = {}) {
   const token = localStorage.getItem('authToken')
+  const { headers: optionHeaders = {}, ...restOptions } = options
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...restOptions,
     headers: {
       'Content-Type': 'application/json',
       ...(token ? { 'X-Auth-Token': token } : {}),
-      ...options.headers
-    },
-    ...options
+      ...optionHeaders
+    }
   })
 
-  const contentType = response.headers.get('content-type')
-  const isJson = contentType && contentType.includes('application/json')
-  const data = isJson ? await response.json() : null
+  const contentType = response.headers.get('content-type') || ''
+  const isJson = contentType.includes('application/json')
+
+  const data = isJson ? await response.json() : await response.text()
 
   if (!response.ok) {
-    throw new Error(data?.message || `请求失败：${response.status}`)
+    const message =
+        typeof data === 'object'
+            ? data.message || data.error || JSON.stringify(data)
+            : data || `请求失败：${response.status}`
+
+    throw new Error(message)
   }
 
   return data
 }
 
 export function mockResolve(data) {
-  return Promise.resolve(structuredClone(data))
+  // structuredClone 无法克隆 Vue 响应式（Proxy）对象，失败时回退到 JSON 深拷贝
+  try {
+    return Promise.resolve(structuredClone(data))
+  } catch {
+    return Promise.resolve(JSON.parse(JSON.stringify(data)))
+  }
 }

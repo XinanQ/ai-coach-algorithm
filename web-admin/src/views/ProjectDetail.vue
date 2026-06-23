@@ -60,7 +60,8 @@
 <script setup>
 import { onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { getProject, getProjectIndicators } from '../api/projects'
+import { getProject } from '../api/projects'
+import { getIndicators } from '../api/indicators'
 
 const route = useRoute()
 const project = ref({})
@@ -68,7 +69,7 @@ const projectIndicators = ref([])
 
 async function loadProject() {
   project.value = await getProject(route.params.id)
-  projectIndicators.value = await getProjectIndicators(route.params.id)
+  projectIndicators.value = await getIndicators(route.params.id)
 }
 
 onMounted(loadProject)

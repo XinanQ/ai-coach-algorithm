@@ -3,7 +3,11 @@
     <header class="page-header">
       <div>
         <h1>首页数据概览</h1>
-        <p>{{ currentUser.roleName }} · {{ currentUser.organization }}，数据范围：{{ currentUser.dataScope }}。</p>
+        <p>
+          {{ currentUser.position || currentUser.roleName || '未设置职位' }}
+          ·
+          {{ currentUser.organizationName || currentUser.organization || '未设置机构' }}，数据范围：{{ currentUser.dataScope }}。
+        </p>
       </div>
       <router-link v-if="canManageProjects" class="button primary" to="/projects">进入项目管理</router-link>
       <router-link v-else class="button primary" to="/report">进入每日上报</router-link>

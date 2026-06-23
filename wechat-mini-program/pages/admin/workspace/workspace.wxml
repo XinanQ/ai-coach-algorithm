@@ -39,13 +39,13 @@
     <text class="rh rh-rate">完成率</text>
     <text class="rh rh-score">最近得分</text>
   </view>
-  <view class="rank-row" wx:for="{{ranking}}" wx:key="rank">
+  <view class="rank-row" wx:for="{{ranking}}" wx:key="employeeId">
     <text class="rc rc-rank">{{item.rank}}</text>
     <view class="rc rc-name">
       <text class="rn">{{item.name}}</text>
-      <text class="rd">{{item.dept}}</text>
+      <text class="rd">{{item.position}}</text>
     </view>
-    <text class="rc rc-rate">{{item.rate}}%</text>
+    <text class="rc rc-rate">{{item.completionRate}}%</text>
     <text class="rc rc-score">{{item.score}}</text>
   </view>
 

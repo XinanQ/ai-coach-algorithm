@@ -6,8 +6,12 @@
     </div>
 
     <div v-if="currentUser" class="user-card">
-      <strong>{{ currentUser.roleName }}</strong>
-      <span>{{ currentUser.organization }}</span>
+      <strong>{{ currentUser.name || '未登录用户' }}</strong>
+      <span>
+    {{ currentUser.position || currentUser.roleName || '未设置职位' }}
+    ·
+    {{ currentUser.organizationName || currentUser.organization || '未设置机构' }}
+      </span>
     </div>
 
     <nav class="side-nav">

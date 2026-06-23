@@ -13,7 +13,7 @@
     <text class="std-text">{{detail.standard}}</text>
   </view>
 
-  <view class="block" wx:if="{{!standardOnly}}">
+  <view class="block" wx:if="{{!standardOnly && detail.mine}}">
     <text class="block-title">我的优化话术</text>
     <text class="block-text">{{detail.mine}}</text>
   </view>

@@ -19,17 +19,23 @@ Page({
     this.loadData()
   },
   loadData() {
+    // 规范：GET /api/mini/admin/workspace 单接口返回统计 + 排行
+    // period 映射为后端枚举；branchId/position/type 待后端确定取值口径后再接（当前 mock 忽略）
     const filters = {
-      branch: this.data.branches[this.data.branchIndex],
-      position: this.data.positions[this.data.positionIndex],
-      type: this.data.types[this.data.typeIndex],
-      period: this.data.periods[this.data.periodIndex]
+      period: ['week', 'month', 'quarter'][this.data.periodIndex] || 'week'
     }
-    Promise.all([
-      api.admin.getWorkspaceStats(filters),
-      api.admin.getWorkspaceRanking(filters)
-    ]).then(([stats, ranking]) => {
-      this.setData({ stats, ranking })
+    api.admin.getWorkspace(filters).then((d) => {
+      this.setData({
+        stats: {
+          completionRate: d.completionRate,
+          completionDelta: d.completionDelta,
+          avgScore: d.avgScore,
+          avgDelta: d.avgDelta,
+          pendingCount: d.pendingCount,
+          highRiskCount: d.highRiskCount
+        },
+        ranking: d.ranking || []
+      })
     })
   },
   onBranch(e) { this.setData({ branchIndex: Number(e.detail.value) }, () => this.loadData()) },

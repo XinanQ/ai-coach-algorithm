@@ -27,6 +27,8 @@ public interface IndicatorService {
 
     Indicator decompose(Long id, Indicator child);
 
+    IndicatorProgressResponse getProgress(Long id);
+
     void remind(Long id, String message);
 
     List<Task> findReminders(Long indicatorId);

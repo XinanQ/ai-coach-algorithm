@@ -5,7 +5,7 @@
   </view>
 
   <view class="list">
-    <view class="row" wx:for="{{scripts}}" wx:key="id" data-id="{{item.id}}" bindtap="viewDetail">
+    <view class="row" wx:for="{{scripts}}" wx:key="scriptId" data-id="{{item.scriptId}}" bindtap="viewDetail">
       <view class="row-main">
         <text class="title">{{item.title}}</text>
         <view class="tags">

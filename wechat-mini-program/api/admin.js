@@ -2,49 +2,53 @@ const request = require('../utils/request')
 const config = require('../config')
 const mock = require('../mock/admin')
 
-// 驾驶舱统计（filters: { branch, position, type, period }）
-function getWorkspaceStats(filters) {
-  if (config.USE_MOCK) return Promise.resolve(mock.workspaceStats())
-  return request.get('/admin/workspace/stats', filters)
+// 管理员工作台（GET /api/mini/admin/workspace）
+// 返回统计 + 员工排行：{ completionRate, completionDelta, avgScore, avgDelta,
+//   pendingCount, highRiskCount, ranking: [{ rank, employeeId, name, position, completionRate, score }] }
+// filters 可选：{ branchId, position, type, period }
+function getWorkspace(filters) {
+  if (config.USE_MOCK) return Promise.resolve(mock.workspace())
+  return request.get('/mini/admin/workspace', filters)
 }
 
-// 员工排行
-function getWorkspaceRanking(filters) {
-  if (config.USE_MOCK) return Promise.resolve(mock.workspaceRanking())
-  return request.get('/admin/workspace/ranking', filters)
-}
-
-// 下发任务 { name, level, target, deadline, dimensions: [label] }
-function assignTask(payload) {
-  if (config.USE_MOCK) return Promise.resolve(mock.assign())
-  return request.post('/admin/tasks/assign', payload)
-}
-
-// 任务模板库
+// 任务模板库（GET /api/mini/admin/practice/templates）
 function getTaskTemplates() {
   if (config.USE_MOCK) return Promise.resolve(mock.taskTemplates())
-  return request.get('/admin/task-templates')
+  return request.get('/mini/admin/practice/templates')
 }
 
-// 数据分析 { team, completionTop3, abilityTop3 }
-function getAnalysis() {
+// 模板详情（GET /api/mini/admin/practice/templates/{templateId}）-> { templateId, name, scene, dimensions:[] }
+function getTemplateDetail(templateId) {
+  if (config.USE_MOCK) return Promise.resolve(mock.templateDetail(templateId))
+  return request.get('/mini/admin/practice/templates/' + templateId)
+}
+
+// 下发陪练任务（POST /api/mini/admin/practice/tasks）
+// body: { templateId, name, level, targetPosition, deadline, dimensions:[] } -> { taskId }
+function assignTask(payload) {
+  if (config.USE_MOCK) return Promise.resolve(mock.assign())
+  return request.post('/mini/admin/practice/tasks', payload)
+}
+
+// 数据分析（GET /api/mini/admin/analysis?period=week|month）
+function getAnalysis(period) {
   if (config.USE_MOCK) return Promise.resolve(mock.analysis())
-  return request.get('/admin/analysis')
+  return request.get('/mini/admin/analysis', { period })
 }
 
-// 员工列表
+// 员工列表（GET /api/mini/admin/employees）-> [{ employeeId, name, position, completionRate, score, progress }]
 function getEmployees() {
   if (config.USE_MOCK) return Promise.resolve(mock.employees())
-  return request.get('/admin/employees')
+  return request.get('/mini/admin/employees')
 }
 
-// 员工详情
+// 员工详情：规范未定义，前端演示用
 function getEmployeeDetail(id) {
   if (config.USE_MOCK) return Promise.resolve(mock.employeeDetail(id))
-  return request.get('/admin/employees/' + id)
+  return request.get('/mini/admin/employees/' + id)
 }
 
 module.exports = {
-  getWorkspaceStats, getWorkspaceRanking, assignTask,
-  getTaskTemplates, getAnalysis, getEmployees, getEmployeeDetail
+  getWorkspace, getTaskTemplates, getTemplateDetail, assignTask,
+  getAnalysis, getEmployees, getEmployeeDetail
 }
