@@ -5,6 +5,7 @@ import ForgotPassword from '../views/ForgotPassword.vue'
 import Dashboard from '../views/Dashboard.vue'
 import Organization from '../views/Organization.vue'
 import Users from '../views/Users.vue'
+import EmployeeCRUD from '../views/EmployeeCRUD.vue'
 import Projects from '../views/Projects.vue'
 import ProjectDetail from '../views/ProjectDetail.vue'
 import Indicators from '../views/Indicators.vue'
@@ -112,6 +113,13 @@ const routes = [
     component: Rankings,
     meta: {
       roles: ['head_admin', 'province_admin', 'city_admin', 'branch_admin', 'outlet_admin', 'employee']
+    }
+  },
+  {
+    path: '/users/employee-manage',
+    component: EmployeeCRUD,
+    meta: {
+      roles: ['city_admin', 'branch_admin', 'outlet_admin']
     }
   }
 ]
