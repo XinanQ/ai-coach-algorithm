@@ -9,7 +9,6 @@ public class LoginResponse {
     private String level;
     private Boolean isAdmin;
     private Long organizationId;
-    private String organizationName;
     private Boolean isInProject;
     private String token;
     private String organizationName;
@@ -67,17 +66,19 @@ public class LoginResponse {
         return organizationId;
     }
 
-    public String getOrganizationName() {
-        return organizationName;
-    }
-
     public Boolean getIsInProject() {
         return isInProject;
     }
 
-    public String getToken() { return token; }
+    public String getToken() {
+        return token;
+    }
 
-    public String getOrganizationName() { return organizationName; }
+    public String getOrganizationName() {
+        return organizationName;
+    }
 
-    public String getOrganizationCode() { return organizationCode; }
+    public String getOrganizationCode() {
+        return organizationCode;
+    }
 }
