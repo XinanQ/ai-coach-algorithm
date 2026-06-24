@@ -61,14 +61,14 @@
         </thead>
         <tbody v-if="projectIndicators.length">
           <tr v-for="indicator in projectIndicators" :key="indicator.id">
-            <td>{{ indicator.name }}</td>
-            <td><span class="badge">{{ indicator.indicatorType }}</span></td>
-            <td>{{ indicator.valueType }}</td>
+            <td>{{ indicator.indicatorName }}</td>
+            <td><span class="badge">{{ typeLabel[indicator.indicatorType] || indicator.indicatorType }}</span></td>
+            <td>{{ form.valueType }}</td>
             <td>{{ indicator.unit }}</td>
-            <td>{{ indicator.weight }}%</td>
-            <td>{{ indicator.pointRule }} 分 / {{ indicator.unit }}</td>
-            <td>{{ indicator.bigOrderEnabled ? `${indicator.bigOrderThreshold} ${indicator.unit}` : '未设置' }}</td>
-            <td>{{ indicator.talentCount }}</td>
+            <td>{{ indicator.ratio }}%</td>
+            <td>{{ indicator.pointsStandard }} 分 / {{ indicator.pointsUnit }}</td>
+            <td>{{ indicator.bigOrderThreshold ? `${indicator.bigOrderThreshold} ${indicator.unit}` : '未设置' }}</td>
+            <td>{{ indicator.marketingStarQuota ?? 0 }}</td>
             <td>
               <button class="button" :disabled="!canEdit" @click="startEdit(indicator)">编辑</button>
             </td>
@@ -86,7 +86,7 @@
       <div class="section-heading">
         <div>
           <h2>{{ editingId ? '编辑指标' : '新增指标' }}</h2>
-          <p>保存后会更新本页配置，后续接入后端时替换为保存接口。</p>
+          <p>保存后会提交到后端并持久化项目指标配置。</p>
         </div>
         <button v-if="editingId" class="button" @click="resetForm">取消编辑</button>
       </div>
@@ -99,8 +99,8 @@
         <label class="form-field">
           指标类型
           <select v-model="form.indicatorType" class="select">
-            <option>过程指标</option>
-            <option>结果指标</option>
+            <option value="PROCESS">过程指标</option>
+            <option value="RESULT">结果指标</option>
           </select>
         </label>
         <label class="form-field">
@@ -154,20 +154,27 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { getCurrentUser } from '../auth/permissions'
-import { getProject } from '../api/projects'
-import { getIndicators } from '../api/indicators'
+import {
+  getProject,
+  getProjectIndicators,
+  createProjectIndicator,
+  updateProjectIndicator
+} from '../api/projects'
+import { createIndicator, updateIndicator } from '../api/indicators'
+import { decimalSum, decimalToNumber } from '../utils/decimal'
 
 const route = useRoute()
 const currentUser = getCurrentUser()
 const project = ref({})
 const projectIndicators = ref([])
 const editingId = ref(null)
+const editingIndicatorId = ref(null)
 const message = ref('')
 const messageType = ref('success')
 
 const form = reactive({
   name: '',
-  indicatorType: '结果指标',
+  indicatorType: 'RESULT',
   valueType: '金额',
   unit: '万元',
   weight: 0,
@@ -177,24 +184,30 @@ const form = reactive({
   talentCount: 0
 })
 
+const typeLabel = {
+  PROCESS: '过程指标',
+  RESULT: '结果指标'
+}
+
 const canEdit = computed(() =>
     Number(project.value.organizationId) === Number(currentUser?.organizationId)
 )
 const totalWeight = computed(() =>
-  projectIndicators.value.reduce((sum, indicator) => sum + Number(indicator.weight || 0), 0)
+  decimalToNumber(decimalSum(projectIndicators.value.map((indicator) => indicator.ratio || 0)))
 )
 const resultIndicatorCount = computed(
-  () => projectIndicators.value.filter((indicator) => indicator.indicatorType === '结果指标').length
+  () => projectIndicators.value.filter((indicator) => indicator.indicatorType === 'RESULT').length
 )
 const bigOrderCount = computed(
-  () => projectIndicators.value.filter((indicator) => indicator.bigOrderEnabled).length
+  () => projectIndicators.value.filter((indicator) => indicator.bigOrderThreshold != null).length
 )
 
 function resetForm({ keepMessage = false } = {}) {
   editingId.value = null
+  editingIndicatorId.value = null
   Object.assign(form, {
     name: '',
-    indicatorType: '结果指标',
+    indicatorType: 'RESULT',
     valueType: '金额',
     unit: '万元',
     weight: 0,
@@ -212,16 +225,17 @@ function startCreate() {
 
 function startEdit(indicator) {
   editingId.value = indicator.id
+  editingIndicatorId.value = indicator.indicatorId
   Object.assign(form, {
-    name: indicator.name,
+    name: indicator.indicatorName,
     indicatorType: indicator.indicatorType,
-    valueType: indicator.valueType,
+    valueType: form.valueType,
     unit: indicator.unit,
-    weight: indicator.weight,
-    pointRule: indicator.pointRule,
-    bigOrderEnabled: indicator.bigOrderEnabled,
-    bigOrderThreshold: indicator.bigOrderThreshold,
-    talentCount: indicator.talentCount
+    weight: indicator.ratio ?? 0,
+    pointRule: indicator.pointsStandard ?? 0,
+    bigOrderEnabled: indicator.bigOrderThreshold != null,
+    bigOrderThreshold: indicator.bigOrderThreshold ?? 0,
+    talentCount: indicator.marketingStarQuota ?? 0
   })
   message.value = ''
 }
@@ -236,7 +250,7 @@ function validateForm() {
   return ''
 }
 
-function saveIndicator() {
+async function saveIndicator() {
   const error = validateForm()
   if (error) {
     message.value = error
@@ -244,29 +258,71 @@ function saveIndicator() {
     return
   }
 
-  const payload = {
-    ...form,
-    id: editingId.value || Date.now(),
-    projectId: route.params.id,
-    bigOrderThreshold: form.bigOrderEnabled ? Number(form.bigOrderThreshold) : 0
-  }
+  try {
+    const payload = {
+      unit: form.unit,
+      ratio: Number(form.weight),
+      pointsStandard: Number(form.pointRule),
+      pointsUnit: form.unit,
+      bigOrderThreshold: form.bigOrderEnabled ? Number(form.bigOrderThreshold) : null,
+      marketingStarQuota: Number(form.talentCount),
+      indicatorType: form.indicatorType,
+      sortOrder: projectIndicators.value.length + 1
+    }
 
-  if (editingId.value) {
-    projectIndicators.value = projectIndicators.value.map((indicator) =>
-      indicator.id === editingId.value ? payload : indicator
-    )
-  } else {
-    projectIndicators.value = [...projectIndicators.value, payload]
-  }
+    if (editingId.value) {
+      if (editingIndicatorId.value) {
+        await updateIndicator(editingIndicatorId.value, {
+          name: form.name,
+          code: generateCode(form.name),
+          unit: form.unit,
+          category: '项目指标',
+          businessLine: '',
+          description: `项目 ${project.value.name} 指标`,
+          enabled: true
+        })
+      }
+      await updateProjectIndicator(route.params.id, editingId.value, payload)
+      message.value = '指标配置已保存。'
+    } else {
+      const indicator = await createIndicator({
+        name: form.name,
+        code: generateCode(form.name),
+        unit: form.unit,
+        category: '项目指标',
+        businessLine: '',
+        description: `项目 ${project.value.name} 指标`,
+        enabled: true
+      })
+      await createProjectIndicator(route.params.id, {
+        ...payload,
+        indicatorId: indicator.id
+      })
+      message.value = '指标已挂接到项目并保存。'
+    }
 
-  message.value = totalWeight.value === 100 ? '指标配置已更新。' : '指标配置已更新，请继续调整权重至 100%。'
-  messageType.value = totalWeight.value === 100 ? 'success' : 'error'
-  resetForm()
+    messageType.value = 'success'
+    await loadPage()
+    resetForm()
+  } catch (err) {
+    message.value = err.message || '保存指标时出错。'
+    messageType.value = 'error'
+  }
+}
+
+function generateCode(name) {
+  const value = String(name || '').trim().toLowerCase()
+  return (
+    value
+      .replace(/\s+/g, '_')
+      .replace(/[^a-z0-9_]/g, '')
+      .slice(0, 40) || `indicator_${Date.now()}`
+  )
 }
 
 async function loadPage() {
   project.value = await getProject(route.params.id)
-  projectIndicators.value = await getIndicators(route.params.id)
+  projectIndicators.value = await getProjectIndicators(route.params.id)
   resetForm()
 }
 

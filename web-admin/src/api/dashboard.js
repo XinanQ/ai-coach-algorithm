@@ -1,6 +1,10 @@
 import { decompositionPlans, projects, rankingRows, reports } from '../data/mockData'
 import { isOrgInScope } from '../auth/orgScope'
-import { mockResolve } from './request'
+import { getRankings } from './rankings'
+
+function todayIsoDate() {
+  return new Date().toISOString().slice(0, 10)
+}
 
 function getVisibleProjects(user) {
   if (!user) return []
@@ -73,14 +77,35 @@ function buildStats(user, visibleProjects, visibleRankings, visibleReports) {
   ]
 }
 
-export function getDashboardSummary(user) {
-  const visibleProjects = getVisibleProjects(user)
-  const visibleRankings = getVisibleRankings(user)
-  const visibleReports = getVisibleReports(user)
+async function fetchDashboardRankings(user) {
+  if (!user) return []
 
-  return mockResolve({
-    stats: buildStats(user, visibleProjects, visibleRankings, visibleReports),
+  try {
+    const rows = await getRankings(user, 'employee', '', '', {
+      period: 'MONTH',
+      date: todayIsoDate()
+    })
+
+    if (user.role === 'employee') {
+      const self = rows.find((row) => Number(row.id) === Number(user.employeeId))
+      return self ? [self] : []
+    }
+
+    return rows.slice(0, 5)
+  } catch {
+    return getVisibleRankings(user).slice(0, 5)
+  }
+}
+
+export async function getDashboardSummary(user) {
+  const visibleProjects = getVisibleProjects(user)
+  const visibleReports = getVisibleReports(user)
+  const rankings = await fetchDashboardRankings(user)
+  const rankingLimit = user?.role === 'city_admin' ? 5 : 3
+
+  return {
+    stats: buildStats(user, visibleProjects, rankings, visibleReports),
     projects: visibleProjects,
-    rankings: visibleRankings.slice(0, 3)
-  })
+    rankings: rankings.slice(0, rankingLimit)
+  }
 }

@@ -1,13 +1,22 @@
 package com.performance;
 
+import com.auth.CurrentUserContext;
+import com.employee.Employee;
+import com.employee.EmployeeRepository;
+import com.performance.dto.ReportReviewItemResponse;
 import com.points.PointsCalculationService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -15,90 +24,275 @@ public class PerformanceServiceImpl implements PerformanceService {
 
     private final TaskResultRepository repo;
     private final PointsCalculationService pointsCalculationService;
+    private final EmployeeRepository employeeRepository;
+    private final ReviewScopeService reviewScopeService;
 
     public PerformanceServiceImpl(TaskResultRepository repo,
-                                  PointsCalculationService pointsCalculationService) {
+                                  PointsCalculationService pointsCalculationService,
+                                  EmployeeRepository employeeRepository,
+                                  ReviewScopeService reviewScopeService) {
         this.repo = repo;
         this.pointsCalculationService = pointsCalculationService;
+        this.employeeRepository = employeeRepository;
+        this.reviewScopeService = reviewScopeService;
     }
 
     @Override
     public TaskResult submitReport(TaskResult report) {
+        Long currentId = CurrentUserContext.getEmployeeId();
+        if (currentId == null) {
+            throw new IllegalArgumentException("未登录，无法提交上报");
+        }
+        if (report.getSubmitterId() != null && !report.getSubmitterId().equals(currentId)) {
+            throw new IllegalArgumentException("只能提交本人业绩上报");
+        }
+
+        Employee current = employeeRepository.findByIdWithOrganization(currentId).orElse(null);
+        report.setSubmitterId(currentId);
+        if (current != null && (report.getSubmitter() == null || report.getSubmitter().isBlank())) {
+            report.setSubmitter(current.getName());
+        }
+        if (current != null && current.getOrganization() != null && report.getOrganizationId() == null) {
+            report.setOrganizationId(current.getOrganization().getId());
+        }
+
         report.setStatus(TaskResultStatus.PENDING);
         report.setReceivedAt(LocalDateTime.now());
         return repo.save(report);
     }
 
     @Override
-    public List<TaskResult> listAll() {
-        return repo.findAll();
+    @Transactional(readOnly = true)
+    public List<ReportReviewItemResponse> listAll() {
+        return toReviewItems(filterByViewableScope(repo.findAll()));
     }
 
     @Override
-    public List<TaskResult> listByStatus(TaskResultStatus status) {
-        return repo.findByStatus(status);
+    @Transactional(readOnly = true)
+    public List<ReportReviewItemResponse> listByStatus(TaskResultStatus status) {
+        return toReviewItems(filterByViewableScope(repo.findByStatus(status)));
     }
 
     @Override
-    public List<TaskResult> listBySubmitter(Long submitterId) {
-        return repo.findBySubmitterId(submitterId);
+    @Transactional(readOnly = true)
+    public List<ReportReviewItemResponse> listBySubmitter(Long submitterId) {
+        Long currentId = CurrentUserContext.getEmployeeId();
+        if (currentId != null && currentId.equals(submitterId)) {
+            return toReviewItems(repo.findBySubmitterId(submitterId));
+        }
+        return toReviewItems(filterByViewableScope(repo.findBySubmitterId(submitterId)));
     }
 
     @Override
-    public List<TaskResult> listByDateRange(LocalDate from, LocalDate to) {
-        return repo.findByReportDateBetween(from, to);
+    @Transactional(readOnly = true)
+    public List<ReportReviewItemResponse> listByDateRange(LocalDate from, LocalDate to) {
+        return toReviewItems(filterByViewableScope(repo.findByReportDateBetween(from, to)));
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<TaskResult> findById(Long id) {
-        return repo.findById(id);
+        return repo.findById(id).filter(this::canAccessReport);
     }
 
     @Override
     public TaskResult updateReport(Long id, TaskResult report) {
-        return repo.findById(id).map(existing -> {
+        return findById(id).map(existing -> {
+            if (existing.getStatus() != TaskResultStatus.PENDING) {
+                throw new IllegalArgumentException("仅待审核记录可修改");
+            }
+            Long currentId = CurrentUserContext.getEmployeeId();
+            if (currentId == null || !currentId.equals(existing.getSubmitterId())) {
+                throw new IllegalArgumentException("仅上报人本人可修改待审核记录");
+            }
+
             existing.setTaskId(report.getTaskId());
             existing.setProjectId(report.getProjectId());
             existing.setIndicatorId(report.getIndicatorId());
             existing.setOrganizationId(report.getOrganizationId());
             existing.setSubmitter(report.getSubmitter());
-            existing.setSubmitterId(report.getSubmitterId());
             existing.setReportDate(report.getReportDate());
             existing.setResult(report.getResult());
             existing.setAttachmentUrl(report.getAttachmentUrl());
-            if (report.getStatus() != null) {
-                existing.setStatus(report.getStatus());
-            }
             return repo.save(existing);
         }).orElse(null);
     }
 
     @Override
     public void deleteById(Long id) {
-        repo.deleteById(id);
+        findById(id).ifPresent(r -> repo.deleteById(id));
     }
 
     @Override
     public TaskResult approve(Long id, String reviewer, String comment) {
-        return repo.findById(id).map(r -> {
-            r.setStatus(TaskResultStatus.APPROVED);
-            r.setAuditedBy(reviewer);
-            r.setAuditComment(comment);
-            r.setAuditedAt(LocalDateTime.now());
-            TaskResult saved = repo.save(r);
-            pointsCalculationService.calculateOnApprove(saved);
-            return saved;
-        }).orElse(null);
+        TaskResult report = repo.findById(id).orElse(null);
+        if (report == null) {
+            return null;
+        }
+        assertCanReview(report);
+        if (report.getStatus() != TaskResultStatus.PENDING) {
+            throw new IllegalArgumentException("仅待审核记录可通过审核");
+        }
+
+        report.setStatus(TaskResultStatus.APPROVED);
+        report.setAuditedBy(resolveAuditorName(reviewer));
+        report.setAuditComment(comment);
+        report.setAuditedAt(LocalDateTime.now());
+        TaskResult saved = repo.save(report);
+        pointsCalculationService.calculateOnApprove(saved);
+        return saved;
     }
 
     @Override
     public TaskResult reject(Long id, String reviewer, String reason) {
-        return repo.findById(id).map(r -> {
-            r.setStatus(TaskResultStatus.REJECTED);
-            r.setAuditedBy(reviewer);
-            r.setAuditComment(reason);
-            r.setAuditedAt(LocalDateTime.now());
-            return repo.save(r);
-        }).orElse(null);
+        TaskResult report = repo.findById(id).orElse(null);
+        if (report == null) {
+            return null;
+        }
+        assertCanReview(report);
+        if (report.getStatus() != TaskResultStatus.PENDING) {
+            throw new IllegalArgumentException("仅待审核记录可驳回");
+        }
+
+        report.setStatus(TaskResultStatus.REJECTED);
+        report.setAuditedBy(resolveAuditorName(reviewer));
+        report.setAuditComment(reason);
+        report.setAuditedAt(LocalDateTime.now());
+        return repo.save(report);
+    }
+
+    private String resolveAuditorName(String reviewerParam) {
+        Employee current = employeeRepository.findByIdWithOrganization(CurrentUserContext.getEmployeeId())
+                .orElse(null);
+        if (current != null && current.getName() != null && !current.getName().isBlank()) {
+            return current.getName();
+        }
+        if (reviewerParam != null && !reviewerParam.isBlank()) {
+            return reviewerParam;
+        }
+        return "admin";
+    }
+
+    private void assertCanReview(TaskResult report) {
+        if (!canReviewReport(report)) {
+            throw new IllegalArgumentException("无权限审核该机构的上报记录");
+        }
+    }
+
+    private boolean canReviewReport(TaskResult report) {
+        Long reviewerId = CurrentUserContext.getEmployeeId();
+        if (reviewerId == null || report.getSubmitterId() == null) {
+            return false;
+        }
+
+        Employee reviewer = employeeRepository.findByIdWithOrganization(reviewerId).orElse(null);
+        if (!reviewScopeService.isReviewAdmin(reviewer)) {
+            return false;
+        }
+
+        Employee submitter = employeeRepository.findByIdWithOrganization(report.getSubmitterId()).orElse(null);
+        Long submitterOrgId = resolveSubmitterOrgId(report, submitter);
+        if (submitterOrgId == null) {
+            return false;
+        }
+
+        return reviewScopeService.canReviewSubmitterOrg(reviewer, submitterOrgId);
+    }
+
+    private boolean canAccessReport(TaskResult report) {
+        Long currentId = CurrentUserContext.getEmployeeId();
+        if (currentId != null && currentId.equals(report.getSubmitterId())) {
+            return true;
+        }
+        return canReviewReport(report);
+    }
+
+    private List<TaskResult> filterByViewableScope(List<TaskResult> reports) {
+        Long currentId = CurrentUserContext.getEmployeeId();
+        if (currentId == null) {
+            return List.of();
+        }
+
+        Employee current = employeeRepository.findByIdWithOrganization(currentId).orElse(null);
+        if (current == null) {
+            return List.of();
+        }
+
+        if (!reviewScopeService.isReviewAdmin(current)) {
+            return reports.stream()
+                    .filter(r -> currentId.equals(r.getSubmitterId()))
+                    .collect(Collectors.toList());
+        }
+
+        Set<Long> visibleOrgIds = reviewScopeService.resolveViewableOrgIds(current);
+        if (visibleOrgIds.isEmpty()) {
+            return List.of();
+        }
+
+        Map<Long, Long> submitterOrgMap = loadSubmitterOrgMap(reports);
+
+        return reports.stream()
+                .filter(r -> {
+                    Long orgId = resolveSubmitterOrgId(r, submitterOrgMap);
+                    return orgId != null && visibleOrgIds.contains(orgId);
+                })
+                .collect(Collectors.toList());
+    }
+
+    private List<ReportReviewItemResponse> toReviewItems(List<TaskResult> reports) {
+        Employee current = employeeRepository.findByIdWithOrganization(CurrentUserContext.getEmployeeId())
+                .orElse(null);
+        Map<Long, Long> submitterOrgMap = loadSubmitterOrgMap(reports);
+
+        return reports.stream()
+                .map(report -> {
+                    boolean canReview = false;
+                    if (current != null && reviewScopeService.isReviewAdmin(current)
+                            && report.getStatus() == TaskResultStatus.PENDING) {
+                        Long submitterOrgId = resolveSubmitterOrgId(report, submitterOrgMap);
+                        canReview = submitterOrgId != null
+                                && reviewScopeService.canReviewSubmitterOrg(current, submitterOrgId);
+                    }
+                    return ReportReviewItemResponse.from(report, canReview);
+                })
+                .collect(Collectors.toList());
+    }
+
+    private Long resolveSubmitterOrgId(TaskResult report, Map<Long, Long> submitterOrgMap) {
+        if (report.getSubmitterId() != null) {
+            Long orgId = submitterOrgMap.get(report.getSubmitterId());
+            if (orgId != null) {
+                return orgId;
+            }
+        }
+        return report.getOrganizationId();
+    }
+
+    private Long resolveSubmitterOrgId(TaskResult report, Employee submitter) {
+        if (submitter != null && submitter.getOrganization() != null) {
+            return submitter.getOrganization().getId();
+        }
+        return report.getOrganizationId();
+    }
+
+    private Map<Long, Long> loadSubmitterOrgMap(List<TaskResult> reports) {
+        Set<Long> submitterIds = reports.stream()
+                .map(TaskResult::getSubmitterId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        if (submitterIds.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<Long, Long> result = new HashMap<>();
+        for (Long submitterId : submitterIds) {
+            employeeRepository.findByIdWithOrganization(submitterId).ifPresent(employee -> {
+                if (employee.getOrganization() != null) {
+                    result.put(employee.getId(), employee.getOrganization().getId());
+                }
+            });
+        }
+        return result;
     }
 }

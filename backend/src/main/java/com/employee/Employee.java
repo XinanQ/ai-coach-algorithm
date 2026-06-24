@@ -23,11 +23,11 @@ public class Employee {
     private Organization organization;
 
     // === 新增字段（根据需求文档）===
-    private String level;          // 级别（总行/省行/市行/支行/网点）
-    private Boolean isNew;         // 是否新员工
-    private String workType;       // 内勤/外勤
-    private Boolean isAdmin;       // 是否是管理员
-    private Boolean isInProject;   // 是否参加项目
+    private String level;
+    private Boolean isNew;
+    private String workType;
+    private Boolean isAdmin;
+    private Boolean isInProject;
 
     // === 构造方法 ===
     public Employee() {

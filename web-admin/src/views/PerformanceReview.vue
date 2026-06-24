@@ -74,7 +74,7 @@
             <td>{{ item.code }}</td>
             <td>
               <span class="reporter">{{ item.reporter }}</span>
-              <span class="muted emp-no">{{ item.employeeNo }}</span>
+              <span class="muted emp-id">ID {{ item.employeeId }}</span>
             </td>
             <td>{{ item.orgName }}</td>
             <td>{{ item.project }}</td>
@@ -89,11 +89,19 @@
             </td>
             <td>
               <div class="actions">
-                <template v-if="item.status === 'pending'">
+                <template v-if="item.status === 'pending' && item.canReview">
                   <button class="button primary small" type="button" @click="openReview(item, 'approve')">
                     通过
                   </button>
                   <button class="button danger small" type="button" @click="openReview(item, 'reject')">
+                    驳回
+                  </button>
+                </template>
+                <template v-else-if="item.status === 'pending'">
+                  <button class="button small disabled" type="button" @click="showNoPermission">
+                    通过
+                  </button>
+                  <button class="button small disabled" type="button" @click="showNoPermission">
                     驳回
                   </button>
                 </template>
@@ -147,7 +155,7 @@
       <div class="modal">
         <h2>上报详情 · {{ detailDialog.item?.code }}</h2>
         <dl class="summary detail">
-          <div><dt>上报人</dt><dd>{{ detailDialog.item?.reporter }}（{{ detailDialog.item?.employeeNo }}）</dd></div>
+          <div><dt>上报人</dt><dd>{{ detailDialog.item?.reporter }}（ID {{ detailDialog.item?.employeeId }}）</dd></div>
           <div><dt>所属机构</dt><dd>{{ detailDialog.item?.orgName }}</dd></div>
           <div><dt>项目</dt><dd>{{ detailDialog.item?.project }}</dd></div>
           <div><dt>指标</dt><dd>{{ detailDialog.item?.indicator }}</dd></div>
@@ -163,11 +171,21 @@
           </template>
           <div v-if="detailDialog.item?.status === 'approved'">
             <dt>积分</dt>
-            <dd>{{ detailDialog.item?.totalPoints }}（基础 {{ detailDialog.item?.points }}<span v-if="detailDialog.item?.bigOrder"> + 大单 {{ detailDialog.item?.bigOrderPoints }}</span>）</dd>
+            <dd>{{ detailDialog.item?.totalPoints ?? detailDialog.item?.points ?? '—' }}</dd>
           </div>
         </dl>
         <div class="modal-actions">
           <button class="button" type="button" @click="closeDetail">关闭</button>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="permissionDialog.visible" class="modal-overlay" @click.self="closePermissionDialog">
+      <div class="modal">
+        <h2>无审核权限</h2>
+        <p class="permission-hint">该上报不在您的审核范围内，无法通过或驳回。审核范围与积分流水权限一致。</p>
+        <div class="modal-actions">
+          <button class="button primary" type="button" @click="closePermissionDialog">知道了</button>
         </div>
       </div>
     </div>
@@ -211,6 +229,18 @@ const detailDialog = reactive({
   item: null
 })
 
+const permissionDialog = reactive({
+  visible: false
+})
+
+function showNoPermission() {
+  permissionDialog.visible = true
+}
+
+function closePermissionDialog() {
+  permissionDialog.visible = false
+}
+
 function statusLabel(status) {
   return REVIEW_STATUS[status]?.label || status
 }
@@ -249,6 +279,10 @@ function resetFilters() {
 }
 
 function openReview(item, action) {
+  if (!item?.canReview) {
+    showNoPermission()
+    return
+  }
   reviewDialog.visible = true
   reviewDialog.action = action
   reviewDialog.item = item
@@ -269,26 +303,24 @@ async function submitReview() {
   }
 
   reviewDialog.submitting = true
+  reviewDialog.error = ''
   const id = reviewDialog.item.id
-  const payload = { comment: reviewDialog.comment.trim() }
-
-  // 通过 -> 后端进入积分引擎并加入排名；驳回 -> 不加分
-  const result =
-    reviewDialog.action === 'approve'
-      ? await approveReview(id, payload)
-      : await rejectReview(id, payload)
-
-  // 前端乐观更新本地状态，等价于后端返回的新状态
-  const target = list.value.find((item) => item.id === id)
-  if (target) {
-    target.status = result.status
-    target.reviewer = currentUser?.username || currentUser?.name || '当前审核员'
-    target.reviewTime = formatNow()
-    target.reviewComment = payload.comment || (result.status === 'approved' ? '审核通过' : '已驳回')
+  const payload = {
+    comment: reviewDialog.comment.trim(),
+    reviewer: currentUser?.name || currentUser?.employeeNo || 'admin'
   }
 
-  reviewDialog.submitting = false
-  closeReview()
+  try {
+    await (reviewDialog.action === 'approve'
+      ? approveReview(id, payload)
+      : rejectReview(id, payload))
+    list.value = await getReviewList()
+    closeReview()
+  } catch (err) {
+    reviewDialog.error = err.message || '操作失败，请重试'
+  } finally {
+    reviewDialog.submitting = false
+  }
 }
 
 function openDetail(item) {
@@ -299,12 +331,6 @@ function openDetail(item) {
 function closeDetail() {
   detailDialog.visible = false
   detailDialog.item = null
-}
-
-function formatNow() {
-  const d = new Date()
-  const pad = (n) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
 onMounted(async () => {
@@ -403,7 +429,7 @@ onMounted(async () => {
   color: #111827;
 }
 
-.emp-no {
+.emp-id {
   margin-left: 8px;
   font-size: 12px;
 }
@@ -513,6 +539,20 @@ onMounted(async () => {
 .form-message.error {
   margin: 8px 0 0;
   color: #b91c1c;
+}
+
+.button.small.disabled {
+  opacity: 0.55;
+  cursor: pointer;
+  border-color: #d1d5db;
+  background: #f3f4f6;
+  color: #9ca3af;
+}
+
+.permission-hint {
+  margin: 0 0 16px;
+  color: #4b5563;
+  line-height: 1.6;
 }
 
 .modal-actions {

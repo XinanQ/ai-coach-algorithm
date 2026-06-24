@@ -84,6 +84,9 @@ import {
   getChildrenRanking,
   getOrgIndicatorStats
 } from '../api/organization'
+import { getCurrentUser } from '../auth/permissions'
+
+const currentUser = getCurrentUser()
 
 const keyword = ref('')
 const organizations = ref([])
@@ -160,17 +163,31 @@ function renderCharts() {
   if (rankingChartEl.value && childrenRanking.value.length) {
     rankingChart?.dispose()
     rankingChart = echarts.init(rankingChartEl.value)
+    const rows = [...childrenRanking.value].sort((a, b) => a.points - b.points)
     rankingChart.setOption({
-      grid: { left: 80, right: 24, top: 24, bottom: 28 },
-      tooltip: {},
+      grid: { left: 80, right: 48, top: 24, bottom: 28 },
+      tooltip: {
+        formatter: (params) => {
+          const row = rows[params.dataIndex]
+          return `${row.name}<br/>积分：${row.points}${row.rank ? `<br/>排名：${row.rank}` : ''}`
+        }
+      },
       xAxis: { type: 'value' },
-      yAxis: { type: 'category', data: childrenRanking.value.map((row) => row.name) },
+      yAxis: { type: 'category', data: rows.map((row) => row.name) },
       series: [
         {
           type: 'bar',
-          data: childrenRanking.value.map((row) => row.points),
+          data: rows.map((row) => row.points),
           itemStyle: { color: '#0f766e' },
-          barMaxWidth: 24
+          barMaxWidth: 24,
+          label: {
+            show: true,
+            position: 'right',
+            formatter: ({ dataIndex }) => {
+              const row = rows[dataIndex]
+              return row.rank ? `${row.points} (#${row.rank})` : String(row.points)
+            }
+          }
         }
       ]
     })
@@ -213,7 +230,7 @@ async function loadOrganizationMetrics() {
 
   const [staff, ranking, stats] = await Promise.all([
     getOrgStaffBreakdown(selectedOrg.value),
-    getChildrenRanking(selectedOrg.value),
+    getChildrenRanking(selectedOrg.value, currentUser),
     getOrgIndicatorStats(selectedOrg.value)
   ])
 

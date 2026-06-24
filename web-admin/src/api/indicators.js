@@ -1,5 +1,5 @@
 import { indicators } from '../data/mockData'
-import { mockResolve } from './request'
+import { mockResolve, request } from './request'
 import { getLocalProjects } from './projects'
 
 const indicatorsKey = (id) => `projectIndicators:${id}`
@@ -44,6 +44,20 @@ export function getIndicators(projectId) {
 export function saveIndicators(projectId, list) {
   localStorage.setItem(indicatorsKey(projectId), JSON.stringify(list))
   return mockResolve({ success: true })
+}
+
+export async function createIndicator(payload) {
+  return await request('/api/admin/indicators', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  })
+}
+
+export async function updateIndicator(id, payload) {
+  return await request(`/api/admin/indicators/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload)
+  })
 }
 
 export function getAllIndicators() {

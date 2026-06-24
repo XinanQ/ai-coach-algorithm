@@ -1,150 +1,241 @@
-import { reports } from '../data/mockData'
-import { mockResolve } from './request'
+import { request } from './request'
+import { getCurrentUser } from '../auth/permissions'
 
-// ============================================================================
-// 业绩审核数据层（reviewer 侧）
-//
-// 业务流程（后端负责，前端仅留好接口）：
-//   1. 员工上报业绩            ->  status = 'pending'（待审核）
-//   2. 审核员在本页通过/驳回
-//        - 通过 approveReview  ->  status = 'approved'，后端进入【积分引擎】计算
-//                                  积分，再【加入排名】
-//        - 驳回 rejectReview   ->  status = 'rejected'，不加分、不进排名
-//
-// 当前为假数据驱动：用 mockResolve 返回本地数据，函数签名与真实后端对齐，
-// 接后端时把 mockResolve(...) 换成 request(...) 即可，页面层无感切换。
-//
-// 待后端确认的接口契约（路径仅为前端建议，需与后端对齐）：
-//   GET  /api/admin/performance-reviews?status=&keyword=&startDate=&endDate=   列表
-//   GET  /api/admin/performance-reviews/{id}               详情
-//   POST /api/admin/performance-reviews/{id}/approve       通过 { comment, bigOrder, bigOrderPoints }
-//   POST /api/admin/performance-reviews/{id}/reject        驳回 { comment }
-// ============================================================================
+// 列表可见：本市行及下级；canReview 与积分流水审核范围一致。
 
-// 状态与中文文案的映射，供页面统一使用
 export const REVIEW_STATUS = {
   pending: { label: '待审核', type: 'pending' },
   approved: { label: '已通过', type: 'approved' },
   rejected: { label: '已驳回', type: 'rejected' }
 }
 
-// 把 mockData 里的上报记录映射成审核列表所需的形状
-function toReviewItem(report) {
-  return {
-    id: report.id,
-    code: `RVW-${String(report.id).padStart(3, '0')}`,
-    reporter: report.userName,
-    employeeNo: report.userId,
-    orgName: report.userOrgName,
-    orgId: report.userOrgId,
-    project: report.projectName,
-    indicator: report.indicatorName,
-    amount: report.value,
-    unit: report.indicatorUnit,
-    attachmentCount: report.attachment ? 1 : 0,
-    attachment: report.attachment,
-    submittedAt: report.reviewTime || `${report.date} 00:00`,
-    status: report.status,
-    description: report.description,
-    points: report.points,
-    bigOrder: report.bigOrder,
-    bigOrderPoints: report.bigOrderPoints,
-    totalPoints: report.totalPoints,
-    reviewer: report.reviewer,
-    reviewTime: report.reviewTime,
-    reviewComment: report.reviewComment
+const STATUS_TO_FRONT = {
+  PENDING: 'pending',
+  APPROVED: 'approved',
+  REJECTED: 'rejected'
+}
+
+let lookupCache = null
+
+export function clearReviewCache() {
+  lookupCache = null
+}
+
+async function loadLookups() {
+  if (lookupCache) return lookupCache
+
+  const [projects, employees, organizations, indicatorPage] = await Promise.all([
+    request('/api/admin/projects'),
+    request('/api/admin/employees'),
+    request('/api/admin/organizations'),
+    request('/api/admin/indicators?page=0&size=200')
+  ])
+
+  const indicators = indicatorPage?.content || (Array.isArray(indicatorPage) ? indicatorPage : [])
+
+  const orgById = new Map(organizations.map((o) => [Number(o.id), o]))
+  const childrenMap = new Map()
+  for (const org of organizations) {
+    const parentId = org.parentId != null ? Number(org.parentId) : null
+    if (parentId != null) {
+      if (!childrenMap.has(parentId)) childrenMap.set(parentId, [])
+      childrenMap.get(parentId).push(Number(org.id))
+    }
+  }
+
+  lookupCache = {
+    projectById: new Map(projects.map((p) => [p.backendId ?? Number(p.id), p])),
+    employeeById: new Map(employees.map((e) => [e.id, e])),
+    orgById,
+    childrenMap,
+    indicatorById: new Map(indicators.map((i) => [i.id, i]))
+  }
+  return lookupCache
+}
+
+function formatDateTime(value) {
+  if (!value) return ''
+  const text = String(value).replace('T', ' ')
+  return text.length > 16 ? text.slice(0, 16) : text
+}
+
+async function fetchPointsByReportId(reportId) {
+  try {
+    const logs = await request(`/api/admin/points-logs?reportId=${reportId}`)
+    return Array.isArray(logs) && logs.length ? logs[0] : null
+  } catch {
+    return null
   }
 }
 
-// 仅用于本地演示的补充数据（覆盖三种状态、凑足列表体量）。
-// 接入后端列表接口后，这块连同 mockData 的来源一起替换掉即可。
-const demoReviews = [
-  {
-    id: 101,
-    code: 'RVW-101',
-    reporter: '李伟',
-    employeeNo: 'EMP-1025',
-    orgName: '朝阳支行·建国路网点',
-    orgId: 'a-branch',
-    project: '六月存款冲刺月',
-    indicator: '存款余额',
-    amount: 420,
-    unit: '万元',
-    attachmentCount: 3,
-    attachment: 'deposit_proof.pdf',
-    submittedAt: '2026-06-02 10:10',
-    status: 'pending',
-    description: '六月存款余额冲刺，新增对公存款 420 万元',
-    points: 0,
-    bigOrder: false,
-    bigOrderPoints: 0,
-    totalPoints: 0,
-    reviewer: null,
-    reviewTime: null,
-    reviewComment: null
-  },
-  {
-    id: 102,
-    code: 'RVW-102',
-    reporter: '赵阳',
-    employeeNo: 'EMP-5032',
-    orgName: '朝阳支行·国贸网点',
-    orgId: 'a-branch',
-    project: '2026年二季度存款净增项目',
-    indicator: '存款净增额',
-    amount: 95,
-    unit: '万元',
-    attachmentCount: 1,
-    attachment: 'net_increase.png',
-    submittedAt: '2026-06-02 16:50',
-    status: 'rejected',
-    description: '二季度存款净增 95 万元',
-    points: 0,
-    bigOrder: false,
-    bigOrderPoints: 0,
-    totalPoints: 0,
-    reviewer: 'branch_admin',
-    reviewTime: '2026-06-03 09:10',
-    reviewComment: '附件金额与上报数额不一致，请核实后重新提交'
-  },
-  {
-    id: 103,
-    code: 'RVW-103',
-    reporter: '马丽',
-    employeeNo: 'EMP-8945',
-    orgName: '海淀支行·五道口网点',
-    orgId: 'b-branch',
-    project: '2026年二季度存款净增项目',
-    indicator: '存款净增额',
-    amount: 380,
-    unit: '万元',
-    attachmentCount: 2,
-    attachment: 'net_increase.pdf',
-    submittedAt: '2026-06-02 11:30',
-    status: 'approved',
-    description: '二季度存款净增 380 万元',
-    points: 190,
-    bigOrder: false,
-    bigOrderPoints: 0,
-    totalPoints: 190,
-    reviewer: 'branch_admin',
-    reviewTime: '2026-06-02 18:40',
-    reviewComment: '审核通过'
+function resolveAdminLevel(user) {
+  if (!user) return null
+
+  const level = String(user?.backendLevel || '').trim().toUpperCase()
+  if (['CITY', 'HEAD', 'HEADQUARTERS', 'PROVINCE'].includes(level)) return 'CITY'
+  if (level === 'BRANCH') return 'BRANCH'
+  if (level === 'OUTLET') return 'OUTLET'
+
+  const roleMap = {
+    city_admin: 'CITY',
+    head_admin: 'CITY',
+    province_admin: 'CITY',
+    branch_admin: 'BRANCH',
+    outlet_admin: 'OUTLET'
   }
-]
+  if (roleMap[user?.role]) return roleMap[user.role]
 
-// 拉取审核列表。params: { status, keyword, startDate, endDate }
-// status: 'all' | 'pending' | 'approved' | 'rejected'
-// startDate / endDate: 'YYYY-MM-DD'，按提交时间(submittedAt)的日期闭区间过滤
-export function getReviewList(params = {}) {
-  const { status = 'all', keyword = '', startDate = '', endDate = '' } = params
+  const cn = String(user?.position || user?.level || '')
+  if (cn.includes('市行') || cn.includes('总行') || cn.includes('省行')) return 'CITY'
+  if (cn.includes('支行')) return 'BRANCH'
+  if (cn.includes('网点')) return 'OUTLET'
 
-  const all = [...reports.map(toReviewItem), ...demoReviews].sort((a, b) =>
-    a.submittedAt < b.submittedAt ? 1 : -1
+  return null
+}
+
+function collectSelfAndDescendants(orgId, childrenMap) {
+  const result = new Set([orgId])
+  const stack = [orgId]
+  while (stack.length) {
+    const id = stack.pop()
+    for (const child of childrenMap.get(id) || []) {
+      if (!result.has(child)) {
+        result.add(child)
+        stack.push(child)
+      }
+    }
+  }
+  return result
+}
+
+function findScopeRootOrgId(startOrgId, targetLevel, orgById) {
+  let currentId = startOrgId
+  while (currentId != null) {
+    const org = orgById.get(currentId)
+    if (!org) break
+    if (String(org.level || '').toUpperCase() === targetLevel) {
+      return currentId
+    }
+    currentId = org.parentId != null ? Number(org.parentId) : null
+  }
+  return null
+}
+
+function resolveReviewableOrgIds(user, lookups) {
+  const adminLevel = resolveAdminLevel(user)
+  const orgId = Number(user?.organizationId || user?.orgId)
+  if (!adminLevel || !orgId) return new Set()
+
+  const cityRoot = findScopeRootOrgId(orgId, 'CITY', lookups.orgById)
+
+  // 市行/总行/省行：审核全市行树
+  if (adminLevel === 'CITY') {
+    if (!cityRoot) return new Set()
+    return collectSelfAndDescendants(cityRoot, lookups.childrenMap)
+  }
+
+  const scopeRoot = findScopeRootOrgId(orgId, adminLevel, lookups.orgById)
+  if (!scopeRoot) return new Set()
+
+  return collectSelfAndDescendants(scopeRoot, lookups.childrenMap)
+}
+
+function resolveSubmitterOrgId(report, lookups) {
+  const employee = lookups.employeeById.get(report.submitterId)
+  if (employee?.organizationId != null) return Number(employee.organizationId)
+  if (report.organizationId != null) return Number(report.organizationId)
+  return null
+}
+
+function computeCanReviewClient(report, lookups, currentUser) {
+  const status = STATUS_TO_FRONT[report.status] || String(report.status || '').toLowerCase()
+  if (status !== 'pending' || !currentUser) return false
+  if (!resolveAdminLevel(currentUser)) return false
+
+  const submitterOrgId = resolveSubmitterOrgId(report, lookups)
+  if (!submitterOrgId) return false
+
+  return resolveReviewableOrgIds(currentUser, lookups).has(submitterOrgId)
+}
+
+function resolveCanReview(report, lookups, currentUser) {
+  const client = computeCanReviewClient(report, lookups, currentUser)
+  if (typeof report.canReview === 'boolean') {
+    // 后端已返回时：市行管理员若被误判为 false，以机构树计算为准
+    if (!report.canReview && resolveAdminLevel(currentUser) === 'CITY') {
+      return client
+    }
+    return report.canReview
+  }
+  return client
+}
+
+async function toReviewItem(report, lookups, pointsLog = null, currentUser = getCurrentUser()) {
+  const project = lookups.projectById.get(report.projectId)
+  const indicator = lookups.indicatorById.get(report.indicatorId)
+  const employee = lookups.employeeById.get(report.submitterId)
+  const orgId = employee?.organizationId || report.organizationId
+  const org = orgId != null ? lookups.orgById.get(Number(orgId)) : null
+
+  const status = STATUS_TO_FRONT[report.status] || String(report.status || '').toLowerCase()
+  const points = pointsLog ? Number(pointsLog.pointsDelta) : 0
+
+  return {
+    id: report.id,
+    code: `RVW-${String(report.id).padStart(3, '0')}`,
+    reporter: report.submitter || employee?.name || '—',
+    employeeId: report.submitterId ?? employee?.id ?? '—',
+    orgName: org?.name || employee?.organizationName || '—',
+    orgId: org?.id || orgId,
+    project: project?.name || (report.projectId ? `项目#${report.projectId}` : '—'),
+    indicator: indicator?.name || (report.indicatorId ? `指标#${report.indicatorId}` : '—'),
+    amount: report.result,
+    unit: indicator?.unit || '',
+    attachmentCount: report.attachmentUrl ? 1 : 0,
+    attachment: report.attachmentUrl,
+    submittedAt: formatDateTime(report.receivedAt) || `${report.reportDate || ''} 00:00`,
+    status,
+    description: '',
+    points,
+    bigOrder: false,
+    bigOrderPoints: 0,
+    totalPoints: points,
+    reviewer: report.auditedBy,
+    reviewTime: formatDateTime(report.auditedAt),
+    reviewComment: report.auditComment,
+    reportDate: report.reportDate,
+    projectId: report.projectId,
+    indicatorId: report.indicatorId,
+    calcDetail: pointsLog?.calcDetail || null,
+    canReview: resolveCanReview(report, lookups, currentUser)
+  }
+}
+
+async function fetchAllReviewItems() {
+  const lookups = await loadLookups()
+  const currentUser = getCurrentUser()
+  const reports = await request('/api/admin/reports')
+  const list = Array.isArray(reports) ? reports : []
+
+  const approvedIds = list.filter((r) => r.status === 'APPROVED').map((r) => r.id)
+  const pointsEntries = await Promise.all(
+    approvedIds.map(async (reportId) => [reportId, await fetchPointsByReportId(reportId)])
+  )
+  const pointsByReportId = new Map(pointsEntries)
+
+  const items = await Promise.all(
+    list.map((report) => toReviewItem(report, lookups, pointsByReportId.get(report.id), currentUser))
   )
 
+  return items.sort((a, b) => (a.submittedAt < b.submittedAt ? 1 : -1))
+}
+
+export async function getReviewList(params = {}) {
+  const { status = 'all', keyword = '', startDate = '', endDate = '' } = params
+  const all = await fetchAllReviewItems()
   const kw = keyword.trim()
-  const filtered = all
+
+  return all
     .filter((item) => (status === 'all' ? true : item.status === status))
     .filter((item) => {
       const day = item.submittedAt.slice(0, 10)
@@ -153,38 +244,48 @@ export function getReviewList(params = {}) {
       return true
     })
     .filter((item) =>
-      kw
-        ? item.reporter.includes(kw) || item.orgName.includes(kw) || item.project.includes(kw)
-        : true
+      kw ? item.reporter.includes(kw) || item.orgName.includes(kw) || item.project.includes(kw) : true
     )
-
-  return mockResolve(filtered)
 }
 
-// 审核详情
-export function getReviewDetail(id) {
-  const all = [...reports.map(toReviewItem), ...demoReviews]
-  return mockResolve(all.find((item) => item.id === id) || null)
+export async function getReviewDetail(id) {
+  const lookups = await loadLookups()
+  const currentUser = getCurrentUser()
+  const report = await request(`/api/admin/reports/${id}`)
+  if (!report) return null
+
+  const pointsLog = report.status === 'APPROVED' ? await fetchPointsByReportId(id) : null
+  return toReviewItem(report, lookups, pointsLog, currentUser)
 }
 
-// 审核通过：后端据此进入积分引擎计算并加入排名
-// payload: { comment, bigOrder, bigOrderPoints }
-export function approveReview(id, payload = {}) {
-  // 接后端时改为：
-  // return request(`/api/admin/performance-reviews/${id}/approve`, {
-  //   method: 'POST',
-  //   body: JSON.stringify(payload)
-  // })
-  return mockResolve({ success: true, id, status: 'approved', ...payload })
+export async function approveReview(id, payload = {}) {
+  const reviewer = payload.reviewer || 'admin'
+  const comment = payload.comment || '审核通过'
+  const qs = new URLSearchParams({ reviewer, comment })
+
+  await request(`/api/admin/reports/${id}/approve?${qs.toString()}`, { method: 'POST' })
+
+  clearReviewCache()
+  const pointsLog = await fetchPointsByReportId(id)
+  const points = pointsLog ? Number(pointsLog.pointsDelta) : 0
+
+  return {
+    success: true,
+    id,
+    status: 'approved',
+    points,
+    totalPoints: points,
+    calcDetail: pointsLog?.calcDetail || null
+  }
 }
 
-// 审核驳回：不加分、不进排名
-// payload: { comment }
-export function rejectReview(id, payload = {}) {
-  // 接后端时改为：
-  // return request(`/api/admin/performance-reviews/${id}/reject`, {
-  //   method: 'POST',
-  //   body: JSON.stringify(payload)
-  // })
-  return mockResolve({ success: true, id, status: 'rejected', ...payload })
+export async function rejectReview(id, payload = {}) {
+  const reviewer = payload.reviewer || 'admin'
+  const reason = payload.comment || '已驳回'
+  const qs = new URLSearchParams({ reviewer, reason })
+
+  await request(`/api/admin/reports/${id}/reject?${qs.toString()}`, { method: 'POST' })
+
+  clearReviewCache()
+  return { success: true, id, status: 'rejected' }
 }

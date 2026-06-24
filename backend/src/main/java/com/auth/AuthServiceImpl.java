@@ -59,7 +59,7 @@ public class AuthServiceImpl implements AuthService {
             );
         }
 
-        Employee employee = employeeRepository.findById(account.getEmployeeId())
+        Employee employee = employeeRepository.findByIdWithOrganization(account.getEmployeeId())
                 .orElseThrow(() -> new AuthException(
                         HttpStatus.FORBIDDEN,
                         403,

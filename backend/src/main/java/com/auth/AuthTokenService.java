@@ -47,7 +47,7 @@ public class AuthTokenService {
             throw new AuthException(HttpStatus.UNAUTHORIZED, 401, "Auth token expired");
         }
 
-        return employeeRepository.findById(session.getEmployeeId())
+        return employeeRepository.findByIdWithOrganization(session.getEmployeeId())
                 .orElseThrow(() -> new AuthException(HttpStatus.UNAUTHORIZED, 401, "Login employee not found"));
     }
 

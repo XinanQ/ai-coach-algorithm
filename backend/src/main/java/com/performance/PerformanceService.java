@@ -1,15 +1,17 @@
 package com.performance;
 
+import com.performance.dto.ReportReviewItemResponse;
+
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
 public interface PerformanceService {
     TaskResult submitReport(TaskResult report);
-    List<TaskResult> listAll();
-    List<TaskResult> listByStatus(TaskResultStatus status);
-    List<TaskResult> listBySubmitter(Long submitterId);
-    List<TaskResult> listByDateRange(LocalDate from, LocalDate to);
+    List<ReportReviewItemResponse> listAll();
+    List<ReportReviewItemResponse> listByStatus(TaskResultStatus status);
+    List<ReportReviewItemResponse> listBySubmitter(Long submitterId);
+    List<ReportReviewItemResponse> listByDateRange(LocalDate from, LocalDate to);
     Optional<TaskResult> findById(Long id);
     TaskResult updateReport(Long id, TaskResult report);
     void deleteById(Long id);

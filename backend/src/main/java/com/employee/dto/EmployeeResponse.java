@@ -16,16 +16,20 @@ public class EmployeeResponse {
     private Boolean isNew;
     private String workType;
     private Boolean isAdmin;
+    private String employeeNo;
     private Boolean isInProject;
 
     public static EmployeeResponse from(Employee employee) {
+        return from(employee, null);
+    }
+
+    public static EmployeeResponse from(Employee employee, String employeeNo) {
         EmployeeResponse response = new EmployeeResponse();
         response.setId(employee.getId());
         response.setName(employee.getName());
         response.setAge(employee.getAge());
         response.setDepartment(employee.getDepartment());
         response.setEmail(employee.getEmail());
-        response.setPosition(employee.getPosition());
         response.setPosition(employee.getPosition());
 
         if (employee.getOrganization() != null) {
@@ -34,11 +38,11 @@ public class EmployeeResponse {
         }
 
         response.setLevel(employee.getLevel());
-        response.setLevel(employee.getLevel());
         response.setIsNew(employee.getIsNew());
         response.setWorkType(employee.getWorkType());
         response.setIsAdmin(employee.getIsAdmin());
         response.setIsInProject(employee.getIsInProject());
+        response.setEmployeeNo(employeeNo);
         return response;
     }
 
@@ -136,6 +140,14 @@ public class EmployeeResponse {
 
     public void setIsInProject(Boolean isInProject) {
         this.isInProject = isInProject;
+    }
+
+    public String getEmployeeNo() {
+        return employeeNo;
+    }
+
+    public void setEmployeeNo(String employeeNo) {
+        this.employeeNo = employeeNo;
     }
 
     public String getOrganizationName() { return organizationName;}

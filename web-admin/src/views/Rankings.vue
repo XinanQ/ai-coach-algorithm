@@ -13,6 +13,7 @@
         <button
           v-for="tab in rankingTabs"
           :key="tab.id"
+          type="button"
           @click="activeLevel = tab.id"
           :class="['ranking-tab', { active: activeLevel === tab.id }]"
         >
@@ -20,64 +21,83 @@
         </button>
       </div>
 
-      <div class="toolbar">
-        <select v-model="filters.indicator" class="select" @change="handleIndicatorChange">
-          <option value="">全部任务</option>
-          <option v-for="indicator in indicators" :key="indicator.id" :value="indicator.id">{{ indicator.name }}</option>
-        </select>
-      </div>
+      <div class="filter-panel">
+        <p class="filter-title">筛选条件</p>
+        <div class="filter-row">
+          <label class="filter-item">
+            <span class="filter-label">项目</span>
+            <select v-model="filters.projectId" class="select" @change="onProjectChange">
+              <option value="">全部项目</option>
+              <option v-for="p in projects" :key="p.id" :value="String(p.id)">{{ p.name }}</option>
+            </select>
+          </label>
 
-      <div v-if="!filters.indicator" class="indicator-grid">
-        <div
-          v-for="indicator in indicators"
-          :key="indicator.id"
-          @click="selectIndicator(indicator.id)"
-          class="indicator-card"
-        >
-          <div class="indicator-header">
-            <h3>{{ indicator.name }}</h3>
-          </div>
-          <div class="indicator-footer">
-            <button class="view-btn">查看排名</button>
-          </div>
+          <label class="filter-item">
+            <span class="filter-label">指标</span>
+            <select v-model="filters.indicatorId" class="select" @change="loadRankings">
+              <option value="">{{ indicatorAllLabel }}</option>
+              <option v-for="ind in indicatorOptions" :key="ind.optionKey" :value="String(ind.id)">
+                {{ ind.label }}
+              </option>
+            </select>
+          </label>
+
+          <label class="filter-item">
+            <span class="filter-label">周期</span>
+            <select v-model="filters.period" class="select" @change="loadRankings">
+              <option value="DAY">日</option>
+              <option value="WEEK">周</option>
+              <option value="MONTH">月</option>
+            </select>
+          </label>
+
+          <label class="filter-item">
+            <span class="filter-label">日期</span>
+            <input v-model="filters.date" class="field" type="date" @change="loadRankings" />
+          </label>
+
+          <button type="button" class="button primary query-btn" @click="loadRankings">查询排名</button>
+        </div>
+
+        <p class="filter-hint">{{ filterHint }}</p>
+
+        <div class="filter-tags">
+          <span class="tag" :class="{ active: !filters.projectId && !filters.indicatorId }">全部项目</span>
+          <span class="tag" :class="{ active: !!filters.projectId && !filters.indicatorId }">整项目</span>
+          <span class="tag" :class="{ active: !filters.projectId && !!filters.indicatorId }">跨项目单指标</span>
+          <span class="tag" :class="{ active: !!filters.projectId && !!filters.indicatorId }">单项目单指标</span>
         </div>
       </div>
 
-      <div v-else>
-        <div class="ranking-header">
-          <h2>{{ currentIndicatorName }} - {{ levelTitle }}{{ modeTitle }}</h2>
-          <button @click="backToAll" class="back-btn">返回全部任务</button>
-        </div>
-
-        <div v-if="filteredRankings.length === 0" class="no-data">
-          <p>暂无排名数据</p>
-        </div>
-
-        <table v-else class="table">
-          <thead>
-            <tr>
-              <th>排名</th>
-              <th>{{ levelTitle }}</th>
-              <th v-if="activeLevel === 'employee'">机构</th>
-              <th>完成量</th>
-              <th>{{ activeMode === 'amount' ? '金额' : '积分' }}</th>
-              <th>完成率</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="row in filteredRankings" :key="row.rank">
-              <td>
-                <span :class="['rank-badge', { 'top-3': row.rank <= 3 }]">{{ row.rank }}</span>
-              </td>
-              <td>{{ row.name }}</td>
-              <td v-if="activeLevel === 'employee'">{{ row.organization }}</td>
-              <td>{{ row.achievement }}</td>
-              <td><strong>{{ row.points }}</strong></td>
-              <td><ProgressBar :value="row.completionRate" /></td>
-            </tr>
-          </tbody>
-        </table>
+      <div class="ranking-header">
+        <h2>{{ rankingTitle }} · {{ levelTitle }}</h2>
       </div>
+
+      <div v-if="loading" class="no-data"><p>加载中…</p></div>
+      <div v-else-if="rankingRows.length === 0" class="no-data">
+        <p>暂无排名数据（需先有审核通过的上报并产生积分）</p>
+      </div>
+
+      <table v-else class="table">
+        <thead>
+          <tr>
+            <th>排名</th>
+            <th>{{ levelTitle }}</th>
+            <th v-if="activeLevel === 'employee'">机构</th>
+            <th>积分</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="row in rankingRows" :key="`${row.rank}-${row.id}`">
+            <td>
+              <span :class="['rank-badge', { 'top-3': row.rank <= 3 }]">{{ row.rank }}</span>
+            </td>
+            <td>{{ row.name }}</td>
+            <td v-if="activeLevel === 'employee'">{{ row.organization }}</td>
+            <td><strong>{{ row.points }}</strong></td>
+          </tr>
+        </tbody>
+      </table>
     </section>
   </div>
 </template>
@@ -85,18 +105,26 @@
 <script setup>
 import { computed, reactive, ref, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import ProgressBar from '../components/ProgressBar.vue'
 import { getCurrentUser } from '../auth/permissions'
-import { getRankingOptions, getRankings } from '../api/rankings'
+import { getProjects, getProjectIndicators, getIndicatorLibrary, getRankings } from '../api/rankings'
 
-const indicators = ref([])
 const projects = ref([])
+const projectIndicators = ref([])
+const indicatorLibrary = ref([])
 const rankingRows = ref([])
+const loading = ref(false)
 const currentUser = getCurrentUser()
 const route = useRoute()
 
 const activeLevel = ref('employee')
 const activeMode = ref('points')
+
+const filters = reactive({
+  projectId: '',
+  indicatorId: '',
+  period: 'MONTH',
+  date: new Date().toISOString().slice(0, 10)
+})
 
 const allRankingTabs = [
   { id: 'employee', name: '员工层级' },
@@ -107,107 +135,108 @@ const allRankingTabs = [
 
 const rankingTabs = computed(() => {
   if (currentUser?.role === 'employee') {
-    return allRankingTabs.filter(tab => tab.id === 'employee')
+    return allRankingTabs.filter((tab) => tab.id === 'employee')
   }
   return allRankingTabs
 })
 
-const filters = reactive({
-  indicator: ''
-})
+const canChangeLevel = computed(() => currentUser?.role !== 'employee')
 
 const levelTitle = computed(() => {
-  const titles = {
-    employee: '人员',
-    outlet: '网点',
-    branch: '支行',
-    city: '市行'
-  }
+  const titles = { employee: '人员', outlet: '网点', branch: '支行', city: '市行' }
   return titles[activeLevel.value]
 })
 
-const modeTitle = computed(() => {
-  if (currentUser?.role !== 'city_admin') return ''
-  return activeMode.value === 'amount' ? '（金额）' : ''
-})
-
-const pageTitle = computed(() => {
-  if (activeMode.value === 'amount') return '金额排名'
-  if (activeMode.value === 'points') return '积分排名'
-  return '项目排名'
-})
+const pageTitle = computed(() => (activeMode.value === 'amount' ? '金额排名' : '积分排名'))
 
 const pageDescription = computed(() => {
-  const roleMap = {
-    head_admin: '总行',
-    province_admin: '省行',
-    city_admin: '市行',
-    branch_admin: '支行',
-    outlet_admin: '网点',
-    employee: '员工'
+  return '项目、指标均可不选：不选项目=全部项目；选了项目但不选指标=整项目汇总'
+})
+
+const indicatorAllLabel = computed(() => {
+  if (filters.projectId) return '整项目（汇总全部指标）'
+  return '全部指标'
+})
+
+const indicatorOptions = computed(() => {
+  if (filters.projectId) {
+    return projectIndicators.value.map((ind) => ({
+      id: ind.id,
+      label: ind.name,
+      optionKey: `p${filters.projectId}-i${ind.id}`
+    }))
   }
-  const roleLabel = roleMap[currentUser?.role] || '用户'
-  const modeLabel = activeMode.value === 'amount' ? '金额' : '积分'
-  return `您好，${roleLabel}，请查看${modeLabel}排名`
+  return indicatorLibrary.value.map((ind) => ({
+    id: ind.id,
+    label: ind.name,
+    optionKey: `i${ind.id}`
+  }))
 })
 
-const currentIndicatorName = computed(() => {
-  if (!filters.indicator) return ''
-  const indicator = indicators.value.find(ind => String(ind.id) === String(filters.indicator))
-  return indicator ? indicator.name : ''
+const filterHint = computed(() => {
+  const hasP = !!filters.projectId
+  const hasI = !!filters.indicatorId
+  if (!hasP && !hasI) return '当前：全部项目 + 全部指标加总'
+  if (hasP && !hasI) return '当前：所选项目下全部指标加总（整项目排名）'
+  if (!hasP && hasI) return '当前：全部项目下，所选指标加总'
+  return '当前：所选项目 + 所选指标'
 })
 
-const filteredRankings = computed(() => {
-  return rankingRows.value
+const rankingTitle = computed(() => {
+  const p = projects.value.find((item) => String(item.id) === String(filters.projectId))
+  const ind = indicatorOptions.value.find((item) => String(item.id) === String(filters.indicatorId))
+  const parts = []
+  parts.push(p ? p.name : '全部项目')
+  parts.push(ind ? ind.label : filters.projectId ? '整项目' : '全部指标')
+  return parts.join(' · ')
 })
 
-const selectIndicator = (indicatorId) => {
-  filters.indicator = String(indicatorId)
-  loadRankings()
+async function loadProjects() {
+  projects.value = await getProjects()
 }
 
-const backToAll = () => {
-  filters.indicator = ''
-  loadRankings()
+async function loadIndicatorLibrary() {
+  indicatorLibrary.value = await getIndicatorLibrary()
 }
 
-const handleIndicatorChange = () => {
-  loadRankings()
+async function loadProjectIndicators() {
+  if (!filters.projectId) {
+    projectIndicators.value = []
+    return
+  }
+  projectIndicators.value = await getProjectIndicators(filters.projectId)
 }
 
-const loadRankings = async () => {
-  rankingRows.value = await getRankings(currentUser, activeLevel.value, '', filters.indicator, activeMode.value)
+async function onProjectChange() {
+  filters.indicatorId = ''
+  await loadProjectIndicators()
+  await loadRankings()
 }
 
-const loadOptionsAndData = async () => {
-  const options = await getRankingOptions(currentUser, activeMode.value)
-  projects.value = options.projects
-  indicators.value = options.indicators
-  loadRankings()
+async function loadRankings() {
+  loading.value = true
+  try {
+    rankingRows.value = await getRankings(
+      currentUser,
+      activeLevel.value,
+      filters.projectId,
+      filters.indicatorId,
+      { period: filters.period, date: filters.date }
+    )
+  } finally {
+    loading.value = false
+  }
 }
-
-const canChangeLevel = computed(() => {
-  return currentUser?.role !== 'employee'
-})
 
 onMounted(async () => {
   if (route.query.mode && ['points', 'amount'].includes(route.query.mode)) {
     activeMode.value = route.query.mode
   }
-  loadOptionsAndData()
+  await Promise.all([loadProjects(), loadIndicatorLibrary()])
+  await loadRankings()
 })
 
-watch(activeLevel, () => {
-  loadRankings()
-})
-
-watch(() => route.query.mode, (newMode) => {
-  if (newMode && ['points', 'amount'].includes(newMode)) {
-    activeMode.value = newMode
-    filters.indicator = ''
-    loadOptionsAndData()
-  }
-})
+watch(activeLevel, () => loadRankings())
 </script>
 
 <style scoped>
@@ -226,13 +255,7 @@ watch(() => route.query.mode, (newMode) => {
   background: #fff;
   color: #6b7280;
   cursor: pointer;
-  transition: all 0.2s;
   font-size: 14px;
-}
-
-.ranking-tab:hover {
-  background: #f9fafb;
-  border-color: #9ca3af;
 }
 
 .ranking-tab.active {
@@ -241,134 +264,79 @@ watch(() => route.query.mode, (newMode) => {
   color: #fff;
 }
 
-.ranking-tab:disabled {
-  cursor: not-allowed;
-  opacity: 1;
-}
-
-.indicator-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 20px;
-  margin-top: 20px;
-}
-
-.indicator-card {
+.filter-panel {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: #f9fafb;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
-  padding: 20px;
-  background: #fff;
-  cursor: pointer;
-  transition: all 0.3s;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.indicator-card:hover {
-  border-color: #0f766e;
-  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.15);
-  transform: translateY(-2px);
-}
-
-.indicator-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 16px;
-}
-
-.indicator-header h3 {
-  margin: 0;
-  font-size: 16px;
+.filter-title {
+  margin: 0 0 12px;
+  font-size: 14px;
   font-weight: 600;
-  color: #111827;
-  line-height: 1.4;
+  color: #374151;
 }
 
-.indicator-type {
-  padding: 4px 8px;
-  border-radius: 4px;
-  background: #eef2ff;
-  color: #3730a3;
-  font-size: 12px;
-  font-weight: 500;
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px;
 }
 
-.indicator-info {
+.filter-item {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 16px;
+  gap: 6px;
+  min-width: 160px;
 }
 
-.info-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.info-item .label {
+.filter-label {
+  font-size: 13px;
   color: #6b7280;
+}
+
+.query-btn {
+  height: 38px;
+}
+
+.filter-hint {
+  margin: 12px 0 0;
   font-size: 13px;
+  color: #0f766e;
 }
 
-.info-item .value {
-  color: #111827;
-  font-size: 13px;
-  font-weight: 500;
+.filter-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
 }
 
-.indicator-footer {
-  text-align: center;
+.tag {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  background: #e5e7eb;
+  color: #6b7280;
 }
 
-.view-btn {
-  width: 100%;
-  padding: 8px 16px;
-  border: 1px solid #0f766e;
-  border-radius: 6px;
-  background: #0f766e;
-  color: #fff;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.view-btn:hover {
-  background: #0d655f;
-  border-color: #0d655f;
+.tag.active {
+  background: #ccfbf1;
+  color: #0f766e;
+  font-weight: 600;
 }
 
 .ranking-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 16px;
 }
 
 .ranking-header h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
-  color: #111827;
-}
-
-.back-btn {
-  padding: 8px 16px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  background: #fff;
-  color: #6b7280;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-size: 14px;
-}
-
-.back-btn:hover {
-  background: #f9fafb;
-  border-color: #9ca3af;
   color: #111827;
 }
 
@@ -388,17 +356,11 @@ watch(() => route.query.mode, (newMode) => {
 .rank-badge.top-3 {
   background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
   color: #fff;
-  box-shadow: 0 2px 4px rgba(251, 191, 36, 0.3);
 }
 
 .no-data {
   text-align: center;
   padding: 40px 20px;
   color: #6b7280;
-}
-
-.no-data p {
-  font-size: 16px;
-  margin: 0;
 }
 </style>

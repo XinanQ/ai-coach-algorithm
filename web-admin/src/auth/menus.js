@@ -32,16 +32,12 @@ export const menuItems = [
   {
     label: '业绩审核',
     path: '/performance-review',
-    roles: ['head_admin', 'province_admin', 'city_admin', 'branch_admin', 'outlet_admin', 'employee']
+    roles: ['head_admin', 'province_admin', 'city_admin', 'branch_admin', 'outlet_admin']
   },
   {
     label: '项目排名',
     path: '/rankings',
-    roles: ['head_admin', 'province_admin', 'city_admin', 'branch_admin', 'outlet_admin', 'employee'],
-    children: [
-      { label: '积分排名', path: '/rankings?mode=points' },
-      { label: '金额排名', path: '/rankings?mode=amount' }
-    ]
+    roles: ['head_admin', 'province_admin', 'city_admin', 'branch_admin', 'outlet_admin', 'employee']
   }
 ]
 
