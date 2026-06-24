@@ -122,7 +122,7 @@
               <input v-model.trim="indicator.unit" class="field" placeholder="万元 / 户 / 次" />
             </label>
             <label class="form-field">
-              占比（%）
+              权重占比（%）
               <input v-model.number="indicator.weight" class="field" type="number" min="0" max="100" />
             </label>
             <label class="form-field">
@@ -191,7 +191,7 @@
               <label v-for="org in availableOrgs" :key="org.id" class="org-check-item">
                 <input type="checkbox" :value="org.id" v-model="config.participatingOrgIds" />
                 {{ org.name }}
-                <span class="org-level-tag">{{ org.level }}</span>
+                <span class="org-level-tag">{{ orgLevelLabel(org.level) }}</span>
               </label>
             </div>
             <p v-else class="muted">当前账号下暂无可选机构。</p>
@@ -270,10 +270,8 @@
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { getCurrentUser } from '../auth/permissions'
-import { resolveOrgId } from '../auth/orgScope'
-import { createProject, deleteProject, getProjects, saveProjectConfig } from '../api/projects'
+import { createProject, deleteProject, getOrganizations, getProjects, saveProjectConfig } from '../api/projects'
 import { saveIndicators } from '../api/indicators'
-import { organizations } from '../data/mockData'
 
 const projects = ref([])
 const currentUser = getCurrentUser()
@@ -373,29 +371,21 @@ function clearAttachment() {
   }
 }
 
-// 当前账号机构下属的支行/网点，用于「参与机构范围」勾选
-function findNode(orgId, nodes) {
-  for (const node of nodes) {
-    if (node.id === orgId) return node
-    if (node.children) {
-      const found = findNode(orgId, node.children)
-      if (found) return found
-    }
-  }
-  return null
+// 参与机构范围：来自后端「当前用户可见的机构」（本级 + 下级），id 为后端真实机构 id
+const availableOrgs = ref([])
+
+const orgLevelMap = { HEADQUARTERS: '总行', PROVINCE: '省行', CITY: '市行', BRANCH: '支行', OUTLET: '网点' }
+function orgLevelLabel(level) {
+  return orgLevelMap[level] || level || ''
 }
 
-const availableOrgs = computed(() => {
-  const node = findNode(resolveOrgId(currentUser), organizations)
-  if (!node) return []
-  const result = []
-  const walk = (current) => current.children?.forEach((child) => {
-    result.push(child)
-    walk(child)
-  })
-  walk(node)
-  return result
-})
+async function loadAvailableOrgs() {
+  try {
+    availableOrgs.value = await getOrganizations()
+  } catch {
+    availableOrgs.value = []
+  }
+}
 
 function validateBaseInfo() {
   if (!form.name) return '项目名称不能为空。'
@@ -436,6 +426,7 @@ function openWizard() {
   resetForm()
   message.value = ''
   showCreateForm.value = true
+  loadAvailableOrgs()
 }
 
 function cancelWizard() {
@@ -458,7 +449,10 @@ async function saveProject() {
   }
 
   try {
-    const result = await createProject({ ...form, attachment: undefined }, currentUser)
+    const result = await createProject(
+      { ...form, attachment: undefined, visibleOrgIds: config.participatingOrgIds },
+      currentUser
+    )
 
     // 详细指标与分解设置按项目 id 持久化
     const indicatorsToSave = indicatorList.value.map((indicator, index) => ({

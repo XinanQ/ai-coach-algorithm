@@ -12,8 +12,14 @@ function normalizeProjectPayload(project, user) {
     ...project,
     startDate: normalizeDate(project.startDate),
     endDate: normalizeDate(project.endDate),
-    organizationId: user?.organizationId
+    organizationId: user?.organizationId,
+    visibleOrgIds: (project.visibleOrgIds || []).map(Number)
   }
+}
+
+// 当前用户可见的机构列表（后端按 本级 + 下级 返回），用于「参与机构范围」勾选
+export async function getOrganizations() {
+  return await request('/api/admin/organizations')
 }
 
 function getLocalTempProjects() {

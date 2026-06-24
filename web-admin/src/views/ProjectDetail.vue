@@ -60,16 +60,25 @@
 <script setup>
 import { onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { getProject } from '../api/projects'
-import { getIndicators } from '../api/indicators'
+import { getProject, getProjectIndicators } from '../api/projects'
 
 const route = useRoute()
 const project = ref({})
 const projectIndicators = ref([])
 
+const indicatorTypeMap = { PROCESS: '过程指标', RESULT: '结果指标' }
+
 async function loadProject() {
   project.value = await getProject(route.params.id)
-  projectIndicators.value = await getIndicators(route.params.id)
+  const raw = await getProjectIndicators(route.params.id)
+  projectIndicators.value = (raw || []).map((ind) => ({
+    id: ind.id,
+    name: ind.indicatorName,
+    indicatorType: indicatorTypeMap[ind.indicatorType] || ind.indicatorType || '',
+    unit: ind.unit,
+    pointRule: Number(ind.pointsStandard),
+    weight: Math.round(Number(ind.ratio) * 100)
+  }))
 }
 
 onMounted(loadProject)

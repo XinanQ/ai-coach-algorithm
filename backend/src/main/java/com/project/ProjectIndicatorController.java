@@ -18,13 +18,19 @@ import java.util.List;
 public class ProjectIndicatorController {
 
     private final ProjectIndicatorService service;
+    private final ProjectService projectService;
 
-    public ProjectIndicatorController(ProjectIndicatorService service) {
+    public ProjectIndicatorController(ProjectIndicatorService service, ProjectService projectService) {
         this.service = service;
+        this.projectService = projectService;
     }
 
     @GetMapping
     public List<ProjectIndicatorResponse> list(@PathVariable Long projectId) {
+        // 项目对当前用户不可见时，不暴露其指标
+        if (!projectService.isVisibleToCurrentUser(projectId)) {
+            return java.util.Collections.emptyList();
+        }
         return service.listByProject(projectId);
     }
 
