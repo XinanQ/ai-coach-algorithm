@@ -5,7 +5,7 @@
         <h1>项目管理</h1>
         <p>创建并维护营销项目，项目下继续配置指标和分解任务。</p>
       </div>
-      <button class="button primary" :disabled="!canCreateProject" @click="showCreateForm = !showCreateForm">
+      <button class="button primary" :disabled="!canCreateProject" @click="openWizard">
         创建项目
       </button>
     </header>
@@ -18,12 +18,19 @@
       <div class="section-heading">
         <div>
           <h2>创建项目</h2>
-          <p>项目会保存到后端数据库，并显示在项目管理列表中。</p>
+          <p>分三步完成：填写基础信息 → 配置指标 → 设置分解。</p>
         </div>
         <span class="badge neutral">{{ currentUser.organization }}</span>
       </div>
 
-      <div class="form-grid">
+      <div class="wizard-steps">
+        <div class="wizard-step" :class="{ active: currentStep === 1, done: currentStep > 1 }">1 · 基础信息</div>
+        <div class="wizard-step" :class="{ active: currentStep === 2, done: currentStep > 2 }">2 · 指标配置</div>
+        <div class="wizard-step" :class="{ active: currentStep === 3 }">3 · 分解设置</div>
+      </div>
+
+      <!-- 步骤 1：基础信息 -->
+      <div v-show="currentStep === 1" class="form-grid">
         <label class="form-field">
           项目名称
           <input v-model.trim="form.name" class="field" placeholder="例如：端午客户拓展项目" />
@@ -35,6 +42,14 @@
             <option>进行中</option>
             <option>已结束</option>
           </select>
+        </label>
+        <label class="form-field">
+          项目归属机构
+          <input :value="form.ownerOrg" class="field" readonly />
+        </label>
+        <label class="form-field">
+          项目负责人
+          <input v-model.trim="form.manager" class="field" placeholder="负责人姓名" />
         </label>
         <label class="form-field">
           开始日期
@@ -57,26 +72,6 @@
           <input v-model.trim="form.description" class="field" placeholder="说明项目目标和业务范围" />
         </label>
         <div class="form-field full">
-          <div class="form-label">指标设置</div>
-          <div class="indicator-list">
-            <div v-for="(indicator, index) in form.indicators" :key="index" class="indicator-row">
-              <input v-model.trim="indicator.name" class="field" placeholder="指标名称，例如：保险" />
-              <input v-model.trim="indicator.unit" class="field" placeholder="单位，例如：万元" />
-              <input v-model.number="indicator.amount" class="field" type="number" min="0" step="0.01" placeholder="数额" />
-              <span class="indicator-equals">=</span>
-              <input v-model.number="indicator.points" class="field" type="number" min="0" step="0.1" placeholder="积分" />
-              <input v-model.number="indicator.weight" class="field" type="number" min="0" max="100" placeholder="占比%" />
-              <button class="button danger-button" type="button" @click="removeIndicator(index)">删除</button>
-            </div>
-            <p v-if="!form.indicators.length" class="muted">暂未设置指标，可点击下方按钮添加。</p>
-            <button class="button" type="button" @click="addIndicator">新增指标</button>
-            <p class="indicator-hint">
-              示例：名称「保险」、单位「万元」、数额 100、积分 100，表示每 100 万元保险积 100 分。
-              占比合计建议为 100%，当前合计 {{ indicatorWeightTotal }}%。
-            </p>
-          </div>
-        </div>
-        <div class="form-field full">
           <div class="form-label">项目附件</div>
           <div class="upload-section">
             <input ref="fileInput" type="file" class="file-input" @change="handleFileChange" />
@@ -89,9 +84,142 @@
         </div>
       </div>
 
-      <div class="form-actions">
-        <button class="button primary" @click="saveProject">保存项目</button>
-        <button class="button" @click="resetForm">清空</button>
+      <!-- 步骤 2：指标配置 -->
+      <div v-show="currentStep === 2" class="step-body">
+        <div class="step-heading">
+          <div>
+            <h3>指标配置</h3>
+            <p>过程指标用于日常触达，结果指标参与积分和排名。占比合计建议 100%，当前合计 {{ indicatorWeightTotal }}%。</p>
+          </div>
+        </div>
+
+        <div v-for="(indicator, index) in indicatorList" :key="index" class="indicator-card">
+          <div class="indicator-card-head">
+            <strong>指标 {{ index + 1 }}</strong>
+            <button class="button danger-button" type="button" @click="removeIndicator(index)">删除</button>
+          </div>
+          <div class="form-grid">
+            <label class="form-field">
+              指标名称
+              <input v-model.trim="indicator.name" class="field" placeholder="例如：定期存款" />
+            </label>
+            <label class="form-field">
+              指标类型
+              <select v-model="indicator.indicatorType" class="select">
+                <option>过程指标</option>
+                <option>结果指标</option>
+              </select>
+            </label>
+            <label class="form-field">
+              数值类型
+              <select v-model="indicator.valueType" class="select">
+                <option>金额</option>
+                <option>数量</option>
+              </select>
+            </label>
+            <label class="form-field">
+              单位
+              <input v-model.trim="indicator.unit" class="field" placeholder="万元 / 户 / 次" />
+            </label>
+            <label class="form-field">
+              占比（%）
+              <input v-model.number="indicator.weight" class="field" type="number" min="0" max="100" />
+            </label>
+            <label class="form-field">
+              积分标准
+              <input v-model.number="indicator.pointRule" class="field" type="number" min="0" step="0.1" />
+            </label>
+            <label class="form-field">
+              达人数量
+              <input v-model.number="indicator.talentCount" class="field" type="number" min="0" />
+            </label>
+            <label class="form-field switch-field">
+              大单奖
+              <input v-model="indicator.bigOrderEnabled" type="checkbox" />
+            </label>
+            <label class="form-field">
+              大单奖起征点
+              <input
+                v-model.number="indicator.bigOrderThreshold"
+                class="field"
+                type="number"
+                min="0"
+                :disabled="!indicator.bigOrderEnabled"
+              />
+            </label>
+          </div>
+        </div>
+
+        <p v-if="!indicatorList.length" class="muted">暂未设置指标，可点击下方按钮添加。</p>
+        <button class="button" type="button" @click="addIndicator">新增指标</button>
+      </div>
+
+      <!-- 步骤 3：分解设置 -->
+      <div v-show="currentStep === 3" class="step-body">
+        <div class="step-heading">
+          <div>
+            <h3>分解设置</h3>
+            <p>配置本项目的分解层级、参与范围与上报模板。</p>
+          </div>
+        </div>
+
+        <div class="config-grid">
+          <label class="config-field">
+            分解层级规则
+            <select v-model="config.decompositionLevel" class="select">
+              <option>市行→支行→网点</option>
+              <option>市行→支行→员工</option>
+              <option>省行→市行→支行→网点</option>
+              <option>支行→网点→员工</option>
+              <option>直接下发到员工</option>
+            </select>
+          </label>
+
+          <div class="config-field">
+            <div class="form-label">上报指标模板</div>
+            <textarea
+              v-model="config.reportTemplate"
+              class="field"
+              rows="3"
+              placeholder="说明员工每次上报需填写的字段，例如：日期、客户姓名、金额、凭证照片"
+            ></textarea>
+          </div>
+
+          <div class="config-field full">
+            <div class="form-label">参与机构范围</div>
+            <div v-if="availableOrgs.length" class="org-checklist">
+              <label v-for="org in availableOrgs" :key="org.id" class="org-check-item">
+                <input type="checkbox" :value="org.id" v-model="config.participatingOrgIds" />
+                {{ org.name }}
+                <span class="org-level-tag">{{ org.level }}</span>
+              </label>
+            </div>
+            <p v-else class="muted">当前账号下暂无可选机构。</p>
+          </div>
+
+          <div class="config-field full">
+            <div class="form-label">参与员工范围</div>
+            <div class="radio-group">
+              <label><input type="radio" v-model="config.employeeScope" value="auto" /> 由参与机构员工自动覆盖</label>
+              <label><input type="radio" v-model="config.employeeScope" value="manual" /> 手动指定员工</label>
+            </div>
+            <textarea
+              v-if="config.employeeScope === 'manual'"
+              v-model="config.manualEmployees"
+              class="field"
+              rows="2"
+              placeholder="输入员工姓名或工号，多个用逗号分隔"
+            ></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- 底部导航 -->
+      <div class="wizard-actions">
+        <button v-if="currentStep > 1" class="button" @click="prevStep">上一步</button>
+        <button v-if="currentStep < 3" class="button primary" @click="nextStep">下一步</button>
+        <button v-if="currentStep === 3" class="button primary" @click="saveProject">完成创建</button>
+        <button class="button" @click="cancelWizard">取消</button>
         <p v-if="message" class="form-message" :class="{ danger: messageType === 'error' }">{{ message }}</p>
       </div>
     </section>
@@ -126,9 +254,6 @@
         </dl>
         <div class="toolbar">
           <router-link class="button primary" :to="`/projects/${project.id}`">查看详情</router-link>
-          <router-link v-if="project.canConfigureIndicators" class="button" :to="`/projects/${project.id}/indicators`">
-            指标配置
-          </router-link>
           <router-link v-if="project.canDecompose" class="button" :to="`/projects/${project.id}/decompose`">
             下发分解
           </router-link>
@@ -143,41 +268,89 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { getCurrentUser } from '../auth/permissions'
-import { createProject, deleteProject, getProjects } from '../api/projects'
+import { resolveOrgId } from '../auth/orgScope'
+import { createProject, deleteProject, getProjects, saveProjectConfig } from '../api/projects'
+import { saveIndicators } from '../api/indicators'
+import { organizations } from '../data/mockData'
 
 const projects = ref([])
 const currentUser = getCurrentUser()
 const showCreateForm = ref(false)
+const currentStep = ref(1)
 const message = ref('')
 const messageType = ref('success')
 const canCreateProject = computed(() =>
   ['总行', '省行', '市行', '支行'].includes(currentUser?.level)
 )
 
-const form = reactive({
-  name: '',
-  description: '',
-  startDate: '',
-  endDate: '',
-  reportDeadline: '00:00',
-  attachmentRequired: false,
-  status: '未开始',
-  attachment: null,
-  indicators: []
+function formatDate(date) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function addMonths(dateStr, months) {
+  if (!dateStr) return ''
+  const [year, month, day] = dateStr.split('-').map(Number)
+  return formatDate(new Date(year, month - 1 + months, day))
+}
+
+const baseForm = () => {
+  const startDate = formatDate(new Date())
+  return {
+    name: '',
+    description: '',
+    startDate,
+    endDate: addMonths(startDate, 2),
+    reportDeadline: '00:00',
+    attachmentRequired: false,
+    status: '未开始',
+    attachment: null,
+    ownerOrg: currentUser?.organization || '',
+    manager: currentUser?.name || ''
+  }
+}
+
+const baseConfig = () => ({
+  decompositionLevel: '市行→支行→网点',
+  participatingOrgIds: [],
+  employeeScope: 'auto',
+  manualEmployees: '',
+  reportTemplate: ''
+})
+
+const form = reactive(baseForm())
+const indicatorList = ref([])
+const config = reactive(baseConfig())
+
+// 开始日期变化时，结束日期自动设为其两个月后
+watch(() => form.startDate, (value) => {
+  form.endDate = addMonths(value, 2)
 })
 
 const indicatorWeightTotal = computed(() =>
-  form.indicators.reduce((sum, indicator) => sum + Number(indicator.weight || 0), 0)
+  indicatorList.value.reduce((sum, indicator) => sum + Number(indicator.weight || 0), 0)
 )
 
 function addIndicator() {
-  form.indicators.push({ name: '', unit: '万元', amount: 0, points: 0, weight: 0 })
+  indicatorList.value.push({
+    name: '',
+    indicatorType: '结果指标',
+    valueType: '金额',
+    unit: '万元',
+    weight: 0,
+    pointRule: 0,
+    bigOrderEnabled: false,
+    bigOrderThreshold: 0,
+    talentCount: 0
+  })
 }
 
 function removeIndicator(index) {
-  form.indicators.splice(index, 1)
+  indicatorList.value.splice(index, 1)
 }
 
 const fileInput = ref(null)
@@ -200,22 +373,75 @@ function clearAttachment() {
   }
 }
 
-function resetForm({ keepMessage = false } = {}) {
-  Object.assign(form, {
-    name: '',
-    description: '',
-    startDate: '',
-    endDate: '',
-    reportDeadline: '00:00',
-    attachmentRequired: false,
-    status: '未开始',
-    attachment: null,
-    indicators: []
+// 当前账号机构下属的支行/网点，用于「参与机构范围」勾选
+function findNode(orgId, nodes) {
+  for (const node of nodes) {
+    if (node.id === orgId) return node
+    if (node.children) {
+      const found = findNode(orgId, node.children)
+      if (found) return found
+    }
+  }
+  return null
+}
+
+const availableOrgs = computed(() => {
+  const node = findNode(resolveOrgId(currentUser), organizations)
+  if (!node) return []
+  const result = []
+  const walk = (current) => current.children?.forEach((child) => {
+    result.push(child)
+    walk(child)
   })
+  walk(node)
+  return result
+})
+
+function validateBaseInfo() {
+  if (!form.name) return '项目名称不能为空。'
+  if (!form.startDate || !form.endDate) return '项目周期不能为空。'
+  if (form.endDate < form.startDate) return '结束日期不能早于开始日期。'
+  return ''
+}
+
+function nextStep() {
+  if (currentStep.value === 1) {
+    const error = validateBaseInfo()
+    if (error) {
+      message.value = error
+      messageType.value = 'error'
+      return
+    }
+  }
+  message.value = ''
+  if (currentStep.value < 3) currentStep.value += 1
+}
+
+function prevStep() {
+  message.value = ''
+  if (currentStep.value > 1) currentStep.value -= 1
+}
+
+function resetForm() {
+  Object.assign(form, baseForm())
+  Object.assign(config, baseConfig())
+  indicatorList.value = []
+  currentStep.value = 1
   if (fileInput.value) {
     fileInput.value.value = ''
   }
-  if (!keepMessage) message.value = ''
+}
+
+function openWizard() {
+  resetForm()
+  message.value = ''
+  showCreateForm.value = true
+}
+
+function cancelWizard() {
+  showCreateForm.value = false
+  resetForm()
+  message.value = ''
 }
 
 async function loadProjects() {
@@ -223,54 +449,49 @@ async function loadProjects() {
 }
 
 async function saveProject() {
-  if (!form.name) {
-    message.value = '项目名称不能为空。'
+  const error = validateBaseInfo()
+  if (error) {
+    currentStep.value = 1
+    message.value = error
     messageType.value = 'error'
     return
   }
 
-  if (!form.startDate || !form.endDate) {
-    message.value = '项目周期不能为空。'
-    messageType.value = 'error'
-    return
-  }
-
-  if (form.endDate < form.startDate) {
-    message.value = '结束日期不能早于开始日期。'
-    messageType.value = 'error'
-    return
-  }
   try {
-    const result = await createProject(
-        { ...form, attachment: undefined },
-        currentUser
-    )
+    const result = await createProject({ ...form, attachment: undefined }, currentUser)
+
+    // 详细指标与分解设置按项目 id 持久化
+    const indicatorsToSave = indicatorList.value.map((indicator, index) => ({
+      ...indicator,
+      id: `${result.id}-${index}`,
+      projectId: result.id
+    }))
+    await saveIndicators(result.id, indicatorsToSave)
+    await saveProjectConfig(result.id, { ...config })
 
     await loadProjects()
 
-    message.value = `项目“${result.name}”创建成功，已保存到数据库。`
+    message.value = `项目“${result.name}”创建成功。`
     messageType.value = 'success'
-
-    resetForm({ keepMessage: true })
     showCreateForm.value = false
-  } catch (error) {
-    message.value = error.message || '创建项目失败。'
+    resetForm()
+  } catch (err) {
+    message.value = err.message || '创建项目失败。'
     messageType.value = 'error'
   }
-
 }
 
 async function removeProject(project) {
-  const confirmed = window.confirm(`确定删除项目“${project.name}”吗？该操作会从临时文件中移除该项目。`)
+  const confirmed = window.confirm(`确定删除项目“${project.name}”吗？`)
   if (!confirmed) return
 
   try {
-    const result = await deleteProject(project.id)
+    await deleteProject(project.id)
     await loadProjects()
-    message.value = `项目已删除，临时文件已更新：${result.filePath}。`
+    message.value = `项目“${project.name}”已删除。`
     messageType.value = 'success'
-  } catch (error) {
-    message.value = error.message
+  } catch (err) {
+    message.value = err.message
     messageType.value = 'error'
   }
 }
@@ -344,6 +565,49 @@ dd {
   font-size: 13px;
 }
 
+.wizard-steps {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.wizard-step {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #f3f4f6;
+  color: #6b7280;
+  font-size: 14px;
+  text-align: center;
+}
+
+.wizard-step.active {
+  background: #0f766e;
+  color: #fff;
+}
+
+.wizard-step.done {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.step-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.step-heading h3 {
+  margin: 0 0 4px;
+  font-size: 15px;
+}
+
+.step-heading p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 13px;
+}
+
 .switch-field {
   display: flex;
   min-height: 36px;
@@ -356,12 +620,14 @@ dd {
   height: 18px;
 }
 
-.form-actions {
+.wizard-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
   align-items: center;
-  margin-top: 16px;
+  margin-top: 20px;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 16px;
 }
 
 .form-message {
@@ -409,28 +675,75 @@ dd {
   font-size: 14px;
 }
 
-.indicator-list {
+.indicator-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.indicator-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.indicator-card-head strong {
+  color: #111827;
+}
+
+.config-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.config-field {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-}
-
-.indicator-row {
-  display: grid;
-  grid-template-columns: 1.4fr 1fr 1fr auto 1fr 0.8fr auto;
   gap: 8px;
+}
+
+.config-field.full {
+  grid-column: 1 / -1;
+}
+
+.org-checklist {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 2px;
+}
+
+.org-check-item {
+  display: flex;
   align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  cursor: pointer;
 }
 
-.indicator-equals {
-  text-align: center;
+.org-level-tag {
+  font-size: 11px;
   color: #6b7280;
+  background: #f3f4f6;
+  padding: 1px 5px;
+  border-radius: 4px;
 }
 
-.indicator-hint {
-  margin: 4px 0 0;
-  color: #6b7280;
-  font-size: 13px;
+.radio-group {
+  display: flex;
+  gap: 16px;
+  font-size: 14px;
+}
+
+.radio-group label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
 }
 
 .muted {
@@ -439,12 +752,16 @@ dd {
 }
 
 @media (max-width: 900px) {
-  .indicator-row {
-    grid-template-columns: 1fr 1fr;
+  .config-grid {
+    grid-template-columns: 1fr;
   }
 
-  .indicator-equals {
-    display: none;
+  .org-checklist {
+    grid-template-columns: 1fr;
+  }
+
+  .wizard-steps {
+    flex-direction: column;
   }
 }
 </style>

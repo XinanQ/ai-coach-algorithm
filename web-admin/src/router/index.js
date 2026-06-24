@@ -8,7 +8,6 @@ import Users from '../views/Users.vue'
 import EmployeeCRUD from '../views/EmployeeCRUD.vue'
 import Projects from '../views/Projects.vue'
 import ProjectDetail from '../views/ProjectDetail.vue'
-import Indicators from '../views/Indicators.vue'
 import Decompose from '../views/Decompose.vue'
 import Report from '../views/Report.vue'
 import PerformanceReview from '../views/PerformanceReview.vue'
@@ -83,6 +82,7 @@ const routes = [
     component: ProjectDetail,
     meta: {
       roles: ['head_admin', 'province_admin', 'city_admin', 'branch_admin']
+<<<<<<< HEAD
     }
   },
   {
@@ -90,6 +90,8 @@ const routes = [
     component: Indicators,
     meta: {
       roles: ['head_admin', 'province_admin', 'city_admin', 'branch_admin']
+=======
+>>>>>>> 8266f79764faec18502c87e1687d15a4402729c8
     }
   },
   {
@@ -125,6 +127,13 @@ const routes = [
     component: Rankings,
     meta: {
       roles: ['head_admin', 'province_admin', 'city_admin', 'branch_admin', 'outlet_admin', 'employee']
+    }
+  },
+  {
+    path: '/users/employee-manage',
+    component: EmployeeCRUD,
+    meta: {
+      roles: ['city_admin', 'branch_admin', 'outlet_admin']
     }
   }
 ]
