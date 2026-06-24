@@ -1,5 +1,7 @@
-import { decompositionPlans, decompositionRows, projects } from '../data/mockData'
+import { decompositionPlans, decompositionRows, organizations, projects } from '../data/mockData'
 import { mockResolve } from './request'
+import { resolveOrgId } from '../auth/orgScope'
+import { getProject, getProjectIndicators } from './projects'
 
 const receivedKey = 'receivedDecompositions'
 
@@ -112,4 +114,60 @@ export function saveDecomposition(plan) {
   }
 
   return mockResolve({ success: true, plan })
+}
+
+function findOrgNode(orgId, nodes) {
+  for (const node of nodes) {
+    if (node.id === orgId) return node
+    if (node.children) {
+      const found = findOrgNode(orgId, node.children)
+      if (found) return found
+    }
+  }
+  return null
+}
+
+// 后端项目在 mock 中没有预置分解计划时，按「当前机构的直属下级 × 项目指标」动态生成一个待分解计划。
+// 让来自后端的项目也能进入下发分解流程；保存后走 saveDecomposition 生成下级的只读任务。
+export async function buildPlanForProject(projectId, user) {
+  const orgId = resolveOrgId(user)
+  const node = findOrgNode(orgId, organizations)
+  if (!node || !node.children || node.children.length === 0) return null
+
+  const [project, rawIndicators] = await Promise.all([
+    getProject(projectId),
+    getProjectIndicators(projectId)
+  ])
+  if (!project) return null
+
+  const indicators = (rawIndicators || []).map((ind) => ({
+    indicatorId: ind.indicatorId ?? ind.id,
+    indicator: ind.indicatorName || ind.indicator || `指标 ${ind.indicatorId ?? ind.id}`,
+    totalTask: Number(ind.targetValue) || 0,
+    allocated: 0,
+    currentAllocation: 0,
+    unit: ind.unit || ''
+  }))
+  if (indicators.length === 0) return null
+
+  return {
+    id: `dynamic-${projectId}`,
+    projectId: String(projectId),
+    projectName: project.name,
+    ownerRole: user?.role,
+    originType: 'created',
+    receivedFrom: '',
+    currentOrganization: node.name,
+    currentOrgId: orgId,
+    currentLevel: node.level,
+    nextLevel: node.children[0]?.level || '下级',
+    status: '待分解',
+    project,
+    targets: node.children.map((child) => ({
+      id: child.id,
+      target: child.name,
+      level: child.level,
+      indicators: indicators.map((item) => ({ ...item }))
+    }))
+  }
 }
