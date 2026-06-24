@@ -35,8 +35,6 @@ export function getProjectRelation(project, user) {
   }
 
   return project.distributionStatus || '可见项目'
-<<<<<<< HEAD
-=======
 }
 
 // 把登录用户解析成前端 mock 机构树里的 orgId：优先按机构名匹配
@@ -56,5 +54,4 @@ export function resolveOrgId(user) {
   }
 
   return findByName(user.organization, organizations) || user.orgId || null
->>>>>>> 8266f79764faec18502c87e1687d15a4402729c8
 }
