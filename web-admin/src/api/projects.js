@@ -1,10 +1,5 @@
-<<<<<<< HEAD
-import { decompositionPlans, indicators } from '../data/mockData'
-import { mockResolve, request } from './request'
-=======
 import { decompositionPlans, indicators, organizations, projects as mockProjects } from '../data/mockData'
 import { mockResolve } from './request'
->>>>>>> 8266f79764faec18502c87e1687d15a4402729c8
 
 const deletedIdsKey = 'deletedProjectIds'
 const localProjectsKey = 'localProjects'
@@ -13,18 +8,6 @@ function normalizeDate(value) {
   return value ? String(value).replaceAll('/', '-') : value
 }
 
-<<<<<<< HEAD
-function normalizeProjectPayload(project, user) {
-  return {
-    ...project,
-    startDate: normalizeDate(project.startDate),
-    endDate: normalizeDate(project.endDate),
-    organizationId: user?.organizationId
-  }
-}
-
-function getLocalTempProjects() {
-=======
 // 把登录用户解析成前端 mock 机构树里的 orgId。
 // 优先用机构名匹配（兼容后端账号的 orgId 与前端 mock id 不一致的情况），名字找不到再用原 orgId。
 function findOrgIdByName(name, nodes) {
@@ -44,7 +27,6 @@ function resolveOrgId(user) {
 }
 
 function getDeletedIds() {
->>>>>>> 8266f79764faec18502c87e1687d15a4402729c8
   try {
     return new Set(JSON.parse(localStorage.getItem(deletedIdsKey) || '[]'))
   } catch {
@@ -82,15 +64,6 @@ function canDecomposeProject(project, orgId) {
   return assignedToOrg || createdByCurrentOrg
 }
 
-<<<<<<< HEAD
-
-export async function getProjects(user) {
-  const data = await request('/api/admin/projects')
-
-  return data.map((project) => {
-    const sameOrg = Number(project.organizationId) === Number(user?.organizationId)
-
-=======
 export async function getProjects(user) {
   const orgId = resolveOrgId(user)
   const deletedIds = getDeletedIds()
@@ -98,39 +71,26 @@ export async function getProjects(user) {
 
   return data.map((project) => {
     const sameOrg = project.ownerOrgId === orgId
->>>>>>> 8266f79764faec18502c87e1687d15a4402729c8
     return {
       ...project,
       relation: sameOrg ? '本级创建' : project.distributionStatus || '可见项目',
       canConfigureIndicators: sameOrg,
-<<<<<<< HEAD
-      canDecompose: sameOrg,
-      canDelete: false,
-      canCreateProject: user
-          ? ['总行', '省行', '市行', '支行'].includes(user.level)
-          : false
-=======
       canDecompose: canDecomposeProject(project, orgId),
       canDelete: true,
       canCreateProject: user ? ['总行', '省行', '市行', '支行'].includes(user.level) : false
->>>>>>> 8266f79764faec18502c87e1687d15a4402729c8
     }
   })
 }
 
 export async function getProject(projectId) {
-<<<<<<< HEAD
-  return await request(`/api/admin/projects/${projectId}`)
-=======
   return mockResolve(allProjects().find((p) => p.id === projectId) ?? null)
->>>>>>> 8266f79764faec18502c87e1687d15a4402729c8
 }
 
 export function getProjectIndicators(projectId) {
-  const local = getLocalProjects().find((p) => p.id === projectId)
+  const local = getLocalProjects().find((project) => project.id === projectId)
   if (local) {
-    const mapped = (local.indicators || []).map((ind, i) => ({
-      id: `${projectId}-${i}`,
+    const mapped = (local.indicators || []).map((ind, index) => ({
+      id: `${projectId}-${index}`,
       projectId,
       name: ind.name,
       indicatorType: '业务指标',
@@ -144,12 +104,6 @@ export function getProjectIndicators(projectId) {
 }
 
 export async function createProject(project, user) {
-<<<<<<< HEAD
-  return await request('/api/admin/projects', {
-    method: 'POST',
-    body: JSON.stringify(normalizeProjectPayload(project, user))
-  })
-=======
   const list = getLocalProjects()
   const newProject = {
     id: `local-${Date.now()}`,
@@ -171,7 +125,6 @@ export async function createProject(project, user) {
   list.push(newProject)
   setLocalProjects(list)
   return mockResolve(newProject)
->>>>>>> 8266f79764faec18502c87e1687d15a4402729c8
 }
 
 export async function deleteProject(projectId) {
