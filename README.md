@@ -351,6 +351,10 @@ database/
 mysql -u root -p stage_one < database/mock_organization_data.sql
 mysql -u root -p stage_one < database/mock_employee_data.sql
 mysql -u root -p stage_one < database/mock_user_account_data.sql
+mysql -u root -p stage_one < database/mock_project_data.sql
+mysql -u root -p stage_one < database/mock_project_indicators_data.sql
+mysql -u root -p stage_one < database/mock_performance_data.sql
+mysql -u root -p stage_one < database/mock_indicator_data.sql
 ```
 
 导入顺序不要调换：
