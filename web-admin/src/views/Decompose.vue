@@ -5,7 +5,8 @@
         <h1>{{ isWorkbench ? '分解工作台' : '下发分解' }}</h1>
         <p>{{ headerDescription }}</p>
       </div>
-      <button class="button primary" :disabled="!activePlan" @click="saveDecompositionPlan">保存分解</button>
+      <button v-if="!activePlan?.readOnly" class="button primary" :disabled="!activePlan" @click="saveDecompositionPlan">保存分解</button>
+      <span v-else class="badge neutral">上级下发 · 仅供查看</span>
     </header>
 
     <section v-if="isWorkbench && plans.length" class="panel">
@@ -38,12 +39,16 @@
             <td><span class="badge">{{ planItem.status }}</span></td>
             <td>
               <button class="button" @click="selectPlan(planItem.id)">
-                {{ planItem.id === activePlan?.id ? '正在编辑' : '进入分解' }}
+                {{ planItem.readOnly ? '查看' : (planItem.id === activePlan?.id ? '正在编辑' : '进入分解') }}
               </button>
             </td>
           </tr>
         </tbody>
       </table>
+    </section>
+
+    <section v-if="activePlan?.readOnly" class="panel readonly-banner">
+      <strong>该任务由 {{ activePlan.receivedFrom }} 下发，仅供查看，不能修改分配。</strong>
     </section>
 
     <section v-if="activePlan" class="grid grid-4">
@@ -129,6 +134,7 @@
                 class="field allocation-input"
                 min="0"
                 type="number"
+                :disabled="activePlan.readOnly"
               />
               {{ row.allocation.unit }}
             </td>
@@ -150,6 +156,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { getCurrentUser } from '../auth/permissions'
+import { resolveOrgId } from '../auth/orgScope'
 import { getDecomposition, saveDecomposition } from '../api/decomposition'
 
 const route = useRoute()
@@ -183,7 +190,7 @@ const indicatorSummaries = computed(() => {
     )
     const currentTotal = rows.reduce((sum, row) => sum + Number(row?.currentAllocation || 0), 0)
     const allocatedTotal = rows.reduce((sum, row) => sum + Number(row?.allocated || 0), 0)
-    const totalTask = rows[0]?.totalTask || 0
+    const totalTask = rows.reduce((sum, row) => sum + Number(row?.totalTask || 0), 0)
     const usedTotal = allocatedTotal + currentTotal
     const remaining = totalTask - usedTotal
 
@@ -246,7 +253,7 @@ async function loadDecomposition() {
   const result = await getDecomposition({
     projectId,
     role: currentUser?.role,
-    organizationId: currentUser?.organizationId
+    organizationId: resolveOrgId(currentUser)
   })
   plans.value = Array.isArray(result) ? result : result ? [result] : []
   selectPlan(plans.value[0]?.id || '')
@@ -336,6 +343,12 @@ watch(() => route.params.id, loadDecomposition)
 
 .allocation-input {
   width: 120px;
+}
+
+.readonly-banner {
+  border-left: 4px solid #f59e0b;
+  background: #fffbeb;
+  color: #92400e;
 }
 
 .form-message {

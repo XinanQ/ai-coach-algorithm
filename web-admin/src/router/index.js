@@ -126,6 +126,13 @@ const routes = [
     meta: {
       roles: ['head_admin', 'province_admin', 'city_admin', 'branch_admin', 'outlet_admin', 'employee']
     }
+  },
+  {
+    path: '/users/employee-manage',
+    component: EmployeeCRUD,
+    meta: {
+      roles: ['city_admin', 'branch_admin', 'outlet_admin']
+    }
   }
 ]
 

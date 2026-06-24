@@ -36,3 +36,22 @@ export function getProjectRelation(project, user) {
 
   return project.distributionStatus || '可见项目'
 }
+
+// 把登录用户解析成前端 mock 机构树里的 orgId：优先按机构名匹配
+// （兼容后端账号的 orgId 与前端 mock id 不一致），名字找不到再用原 orgId。
+export function resolveOrgId(user) {
+  if (!user) return null
+
+  const findByName = (name, nodes) => {
+    for (const node of nodes) {
+      if (name && node.name === name) return node.id
+      if (node.children) {
+        const found = findByName(name, node.children)
+        if (found) return found
+      }
+    }
+    return null
+  }
+
+  return findByName(user.organization, organizations) || user.orgId || null
+}
