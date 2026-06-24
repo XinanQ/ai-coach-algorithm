@@ -143,6 +143,7 @@ import {
   getReportOptions,
   submitReport as submitReportApi
 } from '../api/reports'
+import { decimal, decimalToFixed } from '../utils/decimal'
 
 const projects = ref([])
 const projectIndicators = ref([])
@@ -172,8 +173,10 @@ const estimatedPoints = computed(() => {
   const ind = selectedIndicator.value
   const amount = form.amount
   if (!ind || !amount || amount <= 0) return '—'
-  const pts = Number(amount) * Number(ind.pointsStandard) * Number(ind.ratio)
-  return Number.isFinite(pts) ? pts.toFixed(4) : '—'
+  const pts = decimal(amount)
+    .times(ind.pointsStandard || 0)
+    .times(ind.ratio || 0)
+  return pts.isFinite() ? decimalToFixed(pts, 4) : '—'
 })
 
 async function loadReports() {

@@ -81,8 +81,28 @@ export async function getProject(projectId) {
   return await request(`/api/admin/projects/${projectId}`)
 }
 
-export function getProjectIndicators(projectId) {
-  return mockResolve(indicators.filter((indicator) => indicator.projectId === projectId))
+export async function getProjectIndicators(projectId) {
+  return await request(`/api/admin/projects/${projectId}/indicators`)
+}
+
+export async function createProjectIndicator(projectId, payload) {
+  return await request(`/api/admin/projects/${projectId}/indicators`, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  })
+}
+
+export async function updateProjectIndicator(projectId, id, payload) {
+  return await request(`/api/admin/projects/${projectId}/indicators/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload)
+  })
+}
+
+export async function deleteProjectIndicator(projectId, id) {
+  return await request(`/api/admin/projects/${projectId}/indicators/${id}`, {
+    method: 'DELETE'
+  })
 }
 
 export async function createProject(project, user) {
