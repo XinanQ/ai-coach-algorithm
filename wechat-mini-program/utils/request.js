@@ -22,8 +22,17 @@ function request(method, url, data, options) {
         const statusCode = res.statusCode
         const body = res.data
 
-        // 登录态失效：清登录态并回登录页
+        // 401 分两类处理：
+        // 1. 登录接口返回 401：表示工号或密码错误，不触发登录过期跳转。
+        // 2. 其他业务接口返回 401：表示 token 失效，清除登录态并回到登录页。
         if (statusCode === 401) {
+          const isLoginRequest = url === '/auth/login'
+        
+          if (isLoginRequest || options.skipAuthRedirect) {
+            reject(new Error('工号或密码错误'))
+            return
+          }
+        
           wx.removeStorageSync('token')
           wx.removeStorageSync('userInfo')
           wx.removeStorageSync('role')

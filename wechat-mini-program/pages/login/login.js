@@ -1,3 +1,4 @@
+const config = require('../../config')
 const auth = require('../../utils/auth')
 
 Page({
@@ -38,11 +39,18 @@ Page({
 
     this.setData({ loading: true })
     auth.login(empId, password)
-      .then(() => {
+      .then((userInfo) => {
         wx.showToast({ title: '登录成功', icon: 'success' })
+      
         setTimeout(() => {
-          // 登录成功后进入角色选择页
-          wx.reLaunch({ url: '/pages/role/role' })
+          if (config.USE_MOCK) {
+            wx.reLaunch({ url: '/pages/role/role' })
+            return
+          }
+      
+          wx.reLaunch({
+            url: auth.homeUrl(userInfo.role)
+          })
         }, 600)
       })
       .catch((err) => {
