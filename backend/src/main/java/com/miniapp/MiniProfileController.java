@@ -2,6 +2,7 @@ package com.miniapp;
 
 import com.miniapp.dto.MiniApiResponse;
 import com.miniapp.dto.MiniProfileResponse;
+import com.miniapp.dto.MiniProfileSummaryResponse;
 import com.miniapp.service.MiniProfileService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -16,8 +17,14 @@ public class MiniProfileController {
     }
 
     @GetMapping("/api/mini/profile")
-    public MiniApiResponse<MiniProfileResponse> getProfile() {
-        MiniProfileResponse response = miniProfileService.getCurrentUserProfile();
+    public MiniApiResponse<MiniProfileSummaryResponse> getProfile() {
+        MiniProfileSummaryResponse response = miniProfileService.getCurrentUserProfile();
+        return MiniApiResponse.success(response);
+    }
+
+    @GetMapping("/api/mini/account")
+    public MiniApiResponse<MiniProfileResponse> getAccount() {
+        MiniProfileResponse response = miniProfileService.getCurrentUserAccount();
         return MiniApiResponse.success(response);
     }
 }
