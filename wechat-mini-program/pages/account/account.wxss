@@ -1,0 +1,62 @@
+.id-card {
+  display: flex;
+  align-items: center;
+  margin-bottom: 32rpx;
+}
+.id-card .avatar {
+  width: 104rpx;
+  height: 104rpx;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--primary);
+  font-size: 44rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 28rpx;
+}
+.id-main {
+  display: flex;
+  flex-direction: column;
+}
+.id-name {
+  font-size: 40rpx;
+  font-weight: 700;
+  letter-spacing: -0.5rpx;
+}
+.id-sub {
+  font-size: 24rpx;
+  opacity: 0.75;
+  margin-top: 10rpx;
+}
+
+.info-list {
+  border-top: 1rpx solid var(--border);
+}
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 32rpx 0;
+  border-bottom: 1rpx solid var(--border);
+}
+.info-label {
+  font-size: 28rpx;
+  color: var(--text-secondary);
+}
+.info-value {
+  font-size: 30rpx;
+  font-weight: 500;
+  color: var(--text);
+  max-width: 60%;
+  text-align: right;
+}
+
+.readonly-tip {
+  display: block;
+  margin-top: 40rpx;
+  font-size: 24rpx;
+  color: var(--text-secondary);
+  text-align: center;
+}

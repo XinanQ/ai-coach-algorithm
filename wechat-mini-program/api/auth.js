@@ -20,7 +20,7 @@ function wxLogin(code) {
 // 完整账号资料后续走 /mini/account。
 function getProfile() {
   if (config.USE_MOCK) return Promise.resolve(mock.profile())
-  return request.get('/mini/profile')
+  return request.get('/mini/profile', {}, { silent: true })
 }
 
 // 退出登录：真实接口可选；如果后端暂未实现，utils/auth.js 仍会清除本地登录态。
