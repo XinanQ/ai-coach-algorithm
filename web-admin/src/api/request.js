@@ -31,7 +31,6 @@ export async function request(path, options = {}) {
 }
 
 export function mockResolve(data) {
-  // structuredClone 无法克隆 Vue 响应式（Proxy）对象，失败时回退到 JSON 深拷贝
   try {
     return Promise.resolve(structuredClone(data))
   } catch {

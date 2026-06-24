@@ -4,6 +4,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 
 @Repository
@@ -25,4 +26,6 @@ public interface PointsLogRepository extends JpaRepository<PointsLog, Long> {
     boolean existsByReportId(Long reportId);
 
     List<PointsLog> findByEmployeeIdAndProjectIdOrderByCreatedAtAsc(Long employeeId, Long projectId);
+
+    List<PointsLog> findByOrganizationIdInOrderByCreatedAtDesc(Collection<Long> organizationIds);
 }

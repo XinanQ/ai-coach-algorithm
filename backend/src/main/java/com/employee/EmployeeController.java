@@ -1,5 +1,7 @@
 package com.employee;
 
+import com.auth.UserAccount;
+import com.auth.UserAccountRepository;
 import com.employee.dto.EmployeeCreateRequest;
 import com.employee.dto.EmployeeResponse;
 import com.employee.dto.EmployeeUpdateRequest;
@@ -11,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
@@ -18,22 +21,31 @@ import java.util.stream.Collectors;
 public class EmployeeController {
 
     private final EmployeeService service;
+    private final UserAccountRepository userAccountRepository;
 
-    public EmployeeController(EmployeeService service) {
+    public EmployeeController(EmployeeService service, UserAccountRepository userAccountRepository) {
         this.service = service;
+        this.userAccountRepository = userAccountRepository;
     }
 
     @GetMapping
     public List<EmployeeResponse> list() {
-        return service.findVisibleEmployees().stream()
-                .map(EmployeeResponse::from)
+        List<Employee> employees = service.findVisibleEmployees();
+        Map<Long, String> employeeNos = loadEmployeeNos(employees);
+        return employees.stream()
+                .map(employee -> EmployeeResponse.from(employee, employeeNos.get(employee.getId())))
                 .collect(Collectors.toList());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<EmployeeResponse> get(@PathVariable Long id) {
         return service.findVisibleById(id)
-                .map(EmployeeResponse::from)
+                .map(employee -> {
+                    String employeeNo = userAccountRepository.findByEmployeeId(employee.getId())
+                            .map(UserAccount::getEmployeeNo)
+                            .orElse(null);
+                    return EmployeeResponse.from(employee, employeeNo);
+                })
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
@@ -84,5 +96,14 @@ public class EmployeeController {
         } catch (Exception ex) {
             return ResponseEntity.internalServerError().build();
         }
+    }
+
+    private Map<Long, String> loadEmployeeNos(List<Employee> employees) {
+        if (employees.isEmpty()) {
+            return Map.of();
+        }
+        List<Long> ids = employees.stream().map(Employee::getId).collect(Collectors.toList());
+        return userAccountRepository.findByEmployeeIdIn(ids).stream()
+                .collect(Collectors.toMap(UserAccount::getEmployeeId, UserAccount::getEmployeeNo, (a, b) -> a));
     }
 }

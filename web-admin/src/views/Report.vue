@@ -3,7 +3,7 @@
     <header class="page-header">
       <div>
         <h1>每日上报</h1>
-        <p>员工选择项目与指标，填写完成数量，必要时上传附件。</p>
+        <p>员工选择项目与指标，填写完成数量，提交后等待管理员审核。</p>
       </div>
       <span class="badge">上报表单</span>
     </header>
@@ -12,89 +12,121 @@
       <form class="panel form-grid" @submit.prevent="submitReport">
         <label class="form-field">
           项目
-          <select v-model="form.projectId" class="select">
+          <select v-model="form.projectId" class="select" @change="onProjectChange">
             <option value="">请选择项目</option>
-            <option v-for="project in projects" :key="project.id" :value="project.id">
-              {{ project.name }} · {{ project.assignedFrom }}下发
+            <option v-for="project in projects" :key="project.id" :value="String(project.id)">
+              {{ project.name }}
             </option>
           </select>
         </label>
 
         <label class="form-field">
           指标
-          <select v-model="form.indicatorId" class="select">
+          <select v-model="form.indicatorId" class="select" :disabled="!form.projectId">
             <option value="">请选择指标</option>
-            <option v-for="indicator in availableIndicators" :key="indicator.id" :value="indicator.id">
+            <option v-for="indicator in projectIndicators" :key="indicator.id" :value="String(indicator.id)">
               {{ indicator.name }}
             </option>
           </select>
         </label>
 
         <label class="form-field">
+          上报日期
+          <input v-model="form.reportDate" class="field" type="date" />
+        </label>
+
+        <label class="form-field">
           上报数量
-          <input v-model.number="form.amount" class="field" type="number" min="0" />
+          <input v-model.number="form.amount" class="field" type="number" min="0" step="any" />
         </label>
 
         <label class="form-field">
           附件
-          <input class="field" type="file" @change="form.hasAttachment = true" />
+          <input class="field" type="file" disabled title="附件上传暂未接入" />
+          <span class="field-hint">附件上传暂未接入，不影响提交</span>
         </label>
 
         <div class="form-field full">
-          <button class="button primary" type="submit" :disabled="selectedProject?.status === '已结束'">
-            提交上报
+          <button
+            class="button primary"
+            type="submit"
+            :disabled="submitting || !canSubmitSelectedProject"
+          >
+            {{ submitting ? '提交中…' : '提交上报' }}
           </button>
-          <p v-if="message" class="form-message">{{ message }}</p>
+          <p v-if="message" :class="['form-message', messageType]">{{ message }}</p>
         </div>
       </form>
 
       <div class="panel">
-        <h2>当前项目规则</h2>
-        <p class="muted" v-if="!selectedProject">请选择项目后查看规则。</p>
+        <h2>当前指标规则</h2>
+        <p class="muted" v-if="!selectedIndicator">请选择项目和指标后查看计分规则。</p>
         <dl v-else class="rules">
           <div>
-            <dt>任务来源</dt>
-            <dd>{{ selectedProject.assignedFrom }}下发</dd>
-          </div>
-          <div>
             <dt>项目状态</dt>
-            <dd>{{ selectedProject.status }}</dd>
+            <dd>{{ selectedProject?.status || '—' }}</dd>
           </div>
           <div>
-            <dt>每日截止</dt>
-            <dd>{{ selectedProject.reportDeadline }}</dd>
+            <dt>计分标准</dt>
+            <dd>{{ selectedIndicator.pointsStandard }} {{ selectedIndicator.pointsUnit }}</dd>
           </div>
           <div>
-            <dt>附件要求</dt>
-            <dd>{{ selectedProject.attachmentRequired ? '必须上传附件' : '不强制附件' }}</dd>
+            <dt>权重 ratio</dt>
+            <dd>{{ selectedIndicator.ratio }}</dd>
+          </div>
+          <div>
+            <dt>单位</dt>
+            <dd>{{ selectedIndicator.unit || '—' }}</dd>
+          </div>
+          <div>
+            <dt>预估积分</dt>
+            <dd>{{ estimatedPoints }}</dd>
           </div>
         </dl>
       </div>
     </section>
 
     <section class="panel">
-      <h2>历史上报记录</h2>
-      <table class="table">
+      <h2>我的上报记录</h2>
+      <div v-if="loading" class="muted">加载中…</div>
+      <div v-else-if="reports.length === 0" class="muted">暂无上报记录</div>
+      <table v-else class="table report-table">
         <thead>
           <tr>
             <th>项目</th>
             <th>指标</th>
-            <th>上报人</th>
             <th>数量</th>
+            <th>状态</th>
             <th>积分</th>
             <th>时间</th>
-            <th>附件</th>
+            <th>审核意见</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="report in reports" :key="report.id">
+          <tr
+            v-for="report in reports"
+            :key="report.id"
+            :class="['report-row', `report-row--${report.statusCode}`]"
+          >
             <td>{{ report.project }}</td>
             <td>{{ report.indicator }}</td>
-            <td>{{ report.reporter }}</td>
             <td>{{ report.amount }} {{ report.unit }}</td>
+            <td>
+              <span class="status-badge" :class="`status-${report.statusCode}`">
+                {{ report.status }}
+              </span>
+            </td>
             <td>{{ report.points }}</td>
             <td>{{ report.reportedAt }}</td>
-            <td>{{ report.attachment }}</td>
+            <td class="review-cell">
+              <span v-if="report.statusCode === 'rejected'" class="reject-reason">
+                {{ report.reviewComment || '未填写驳回原因' }}
+              </span>
+              <span v-else-if="report.statusCode === 'approved' && report.reviewComment" class="approve-note">
+                {{ report.reviewComment }}
+              </span>
+              <span v-else class="muted">—</span>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -105,80 +137,189 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
 import { getCurrentUser } from '../auth/permissions'
-import { getMyReports, getReportOptions, submitReport as submitReportApi } from '../api/reports'
+import {
+  getMyReports,
+  getProjectIndicators,
+  getReportOptions,
+  submitReport as submitReportApi
+} from '../api/reports'
 
-const indicators = ref([])
 const projects = ref([])
+const projectIndicators = ref([])
 const reports = ref([])
+const loading = ref(false)
+const submitting = ref(false)
 const currentUser = getCurrentUser()
 const form = reactive({
   projectId: '',
   indicatorId: '',
-  amount: null,
-  hasAttachment: false
+  reportDate: new Date().toISOString().slice(0, 10),
+  amount: null
 })
 const message = ref('')
+const messageType = ref('success')
 
-const selectedProject = computed(() => projects.value.find((project) => project.id === form.projectId))
-const availableIndicators = computed(() =>
-  indicators.value.filter((indicator) => indicator.projectId === form.projectId)
+const selectedProject = computed(() =>
+  projects.value.find((project) => String(project.id) === String(form.projectId))
 )
 
+const canSubmitSelectedProject = computed(() => selectedProject.value?.statusCode === 'ACTIVE')
+const selectedIndicator = computed(() =>
+  projectIndicators.value.find((indicator) => String(indicator.id) === String(form.indicatorId))
+)
+
+const estimatedPoints = computed(() => {
+  const ind = selectedIndicator.value
+  const amount = form.amount
+  if (!ind || !amount || amount <= 0) return '—'
+  const pts = Number(amount) * Number(ind.pointsStandard) * Number(ind.ratio)
+  return Number.isFinite(pts) ? pts.toFixed(4) : '—'
+})
+
+async function loadReports() {
+  loading.value = true
+  try {
+    reports.value = await getMyReports(currentUser)
+  } finally {
+    loading.value = false
+  }
+}
+
+async function onProjectChange() {
+  form.indicatorId = ''
+  projectIndicators.value = form.projectId ? await getProjectIndicators(form.projectId) : []
+}
+
 async function submitReport() {
+  message.value = ''
   if (!form.projectId) {
-    message.value = '项目不能为空。'
+    message.value = '请选择项目。'
+    messageType.value = 'error'
     return
   }
   if (!form.indicatorId) {
-    message.value = '指标不能为空。'
+    message.value = '请选择指标。'
+    messageType.value = 'error'
+    return
+  }
+  if (!form.reportDate) {
+    message.value = '请选择上报日期。'
+    messageType.value = 'error'
     return
   }
   if (!form.amount || form.amount <= 0) {
     message.value = '上报数量必须大于 0。'
-    return
-  }
-  if (selectedProject.value?.attachmentRequired && !form.hasAttachment) {
-    message.value = '该项目要求上传附件。'
+    messageType.value = 'error'
     return
   }
 
-  await submitReportApi({ ...form })
-  message.value = '上报内容已通过前端校验，等待接入后端提交接口。'
+  submitting.value = true
+  try {
+    await submitReportApi({ ...form }, currentUser)
+    message.value = '上报已提交，请等待管理员审核。'
+    messageType.value = 'success'
+    form.indicatorId = ''
+    form.amount = null
+    await loadReports()
+  } catch (err) {
+    message.value = err.message || '提交失败，请稍后重试。'
+    messageType.value = 'error'
+  } finally {
+    submitting.value = false
+  }
 }
 
 onMounted(async () => {
   const options = await getReportOptions(currentUser)
   projects.value = options.projects
-  indicators.value = options.indicators
-  reports.value = await getMyReports(currentUser)
+  await loadReports()
 })
 </script>
 
 <style scoped>
 .form-message {
-  margin: 0;
+  margin: 8px 0 0;
+}
+.form-message.success {
   color: #0f766e;
 }
-
+.form-message.error {
+  color: #b91c1c;
+}
+.field-hint {
+  font-size: 12px;
+  color: #6b7280;
+}
 .rules {
   display: grid;
   gap: 12px;
 }
-
 .rules div {
   display: flex;
   justify-content: space-between;
   padding-bottom: 12px;
   border-bottom: 1px solid #e5e7eb;
 }
-
 dt {
   color: #6b7280;
 }
-
 dd {
   margin: 0;
   color: #111827;
   font-weight: 600;
+}
+
+.report-table .report-row--pending {
+  background: #f9fafb;
+}
+
+.report-table .report-row--approved {
+  background: #f0fdf4;
+}
+
+.report-table .report-row--rejected {
+  background: #fef2f2;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.status-badge.status-pending {
+  background: #e5e7eb;
+  color: #4b5563;
+}
+
+.status-badge.status-approved {
+  background: #bbf7d0;
+  color: #047857;
+}
+
+.status-badge.status-rejected {
+  background: #fecaca;
+  color: #b91c1c;
+}
+
+.review-cell {
+  max-width: 220px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.reject-reason {
+  color: #b91c1c;
+}
+
+.approve-note {
+  color: #047857;
+}
+
+.muted {
+  color: #9ca3af;
 }
 </style>

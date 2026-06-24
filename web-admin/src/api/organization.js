@@ -1,6 +1,25 @@
 import { request, mockResolve } from './request'
+import { getRankings } from './rankings'
 
 const BASE_URL = '/api/admin/organizations'
+
+const CHILD_LEVEL_TO_RANKING = {
+  CITY: 'city',
+  BRANCH: 'branch',
+  OUTLET: 'outlet',
+  HEADQUARTERS: 'city',
+  PROVINCE: 'city'
+}
+
+function todayIsoDate() {
+  return new Date().toISOString().slice(0, 10)
+}
+
+function resolveChildRankingLevel(node) {
+  const child = node?.children?.[0]
+  if (!child?.level) return null
+  return CHILD_LEVEL_TO_RANKING[String(child.level).toUpperCase()] || null
+}
 
 export function getOrganizations() {
   return request(BASE_URL)
@@ -62,14 +81,28 @@ export function getOrgStaffBreakdown(node) {
   })
 }
 
-export function getChildrenRanking(node, indicatorId = '') {
+export async function getChildrenRanking(node, user) {
   const children = node?.children || []
-  return mockResolve(
-    children.map((child, index) => ({
-      name: child.name,
-      points: Math.max(20, 100 - index * 15)
+  if (!children.length || !user) return []
+
+  const level = resolveChildRankingLevel(node)
+  if (!level) return []
+
+  const childIds = new Set(children.map((child) => Number(child.id)))
+  const rankings = await getRankings(user, level, '', '', {
+    period: 'MONTH',
+    date: todayIsoDate()
+  })
+
+  return rankings
+    .filter((row) => childIds.has(Number(row.organizationId)))
+    .sort((a, b) => Number(b.points) - Number(a.points))
+    .slice(0, 5)
+    .map((row) => ({
+      name: row.name,
+      points: Number(row.points || 0),
+      rank: row.rank
     }))
-  )
 }
 
 export function getOrgIndicatorStats(node) {

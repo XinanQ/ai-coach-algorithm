@@ -11,21 +11,15 @@ import java.util.List;
 @RequestMapping("/api/admin/points-logs")
 public class PointsLogController {
 
-    private final PointsLogRepository repo;
+    private final PointsLogService service;
 
-    public PointsLogController(PointsLogRepository repo) {
-        this.repo = repo;
+    public PointsLogController(PointsLogService service) {
+        this.service = service;
     }
 
     @GetMapping
     public List<PointsLog> list(@RequestParam(required = false) Long reportId,
                                 @RequestParam(required = false) Long employeeId) {
-        if (reportId != null) {
-            return repo.findByReportId(reportId);
-        }
-        if (employeeId != null) {
-            return repo.findByEmployeeIdOrderByCreatedAtDesc(employeeId);
-        }
-        return repo.findAll();
+        return service.listVisible(reportId, employeeId);
     }
 }

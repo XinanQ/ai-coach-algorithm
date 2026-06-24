@@ -1,5 +1,6 @@
 package com.performance;
 
+import com.performance.dto.ReportReviewItemResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -29,7 +30,7 @@ public class PerformanceController {
     }
 
     @GetMapping
-    public List<TaskResult> list(
+    public List<ReportReviewItemResponse> list(
             @RequestParam(required = false) TaskResultStatus status,
             @RequestParam(required = false) Long submitterId,
             @RequestParam(required = false) String from,

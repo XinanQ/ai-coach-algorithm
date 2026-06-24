@@ -14,15 +14,15 @@ const ROLE_BY_BACKEND_LEVEL = {
 function resolveFrontendRole(loginData) {
   const level = String(loginData.level || '').trim().toUpperCase()
 
-  if (!loginData.isAdmin) {
-    return 'employee'
+  if (ROLE_BY_BACKEND_LEVEL[level] && loginData.isAdmin !== false) {
+    return ROLE_BY_BACKEND_LEVEL[level]
   }
 
-  if (!ROLE_BY_BACKEND_LEVEL[level]) {
-    console.warn(`[auth] Unknown backend level "${loginData.level}", fallback to outlet_admin`)
+  if (loginData.isAdmin && ROLE_BY_BACKEND_LEVEL[level]) {
+    return ROLE_BY_BACKEND_LEVEL[level]
   }
 
-  return ROLE_BY_BACKEND_LEVEL[level] || 'outlet_admin'
+  return 'employee'
 }
 
 function normalizeLoginUser(loginData) {
