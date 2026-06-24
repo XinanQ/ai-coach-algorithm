@@ -157,7 +157,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { getCurrentUser } from '../auth/permissions'
 import { resolveOrgId } from '../auth/orgScope'
-import { getDecomposition, saveDecomposition } from '../api/decomposition'
+import { buildPlanForProject, getDecomposition, saveDecomposition } from '../api/decomposition'
 
 const route = useRoute()
 const currentUser = getCurrentUser()
@@ -250,11 +250,17 @@ function sourceLabel(plan) {
 async function loadDecomposition() {
   message.value = ''
   const projectId = route.params.id
-  const result = await getDecomposition({
+  let result = await getDecomposition({
     projectId,
     role: currentUser?.role,
     organizationId: resolveOrgId(currentUser)
   })
+
+  // 后端项目在 mock 中没有预置分解计划时，按机构下属 + 项目指标动态生成
+  if (!result && projectId) {
+    result = await buildPlanForProject(projectId, currentUser)
+  }
+
   plans.value = Array.isArray(result) ? result : result ? [result] : []
   selectPlan(plans.value[0]?.id || '')
 }

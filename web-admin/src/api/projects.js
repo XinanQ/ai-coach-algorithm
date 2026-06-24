@@ -69,7 +69,7 @@ export async function getProjects(user) {
       relation: sameOrg ? '本级创建' : project.distributionStatus || '可见项目',
       canConfigureIndicators: sameOrg,
       canDecompose: sameOrg,
-      canDelete: false,
+      canDelete: true,
       canCreateProject: user
           ? ['总行', '省行', '市行', '支行'].includes(user.level)
           : false
@@ -113,15 +113,9 @@ export async function createProject(project, user) {
 }
 
 export async function deleteProject(projectId) {
-  const response = await fetch(`/api/temp/projects?id=${encodeURIComponent(projectId)}`, {
+  return await request(`/api/admin/projects/${projectId}`, {
     method: 'DELETE'
   })
-
-  if (!response.ok) throw new Error('删除临时项目失败。')
-
-  const result = await response.json()
-  setLocalTempProjects(result.projects || [])
-  return result
 }
 
 // --- 组员项目管理向导依赖（localStorage，原样保留其逻辑）---
