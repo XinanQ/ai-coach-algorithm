@@ -21,6 +21,7 @@
     "pages/admin/employees/employees",
     "pages/admin/employee-detail/employee-detail",
     "pages/profile/profile",
+    "pages/account/account",
     "pages/logs/logs",
     "pages/login/login",
     "pages/role/role"

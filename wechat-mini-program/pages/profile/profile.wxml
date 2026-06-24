@@ -4,12 +4,13 @@
     <text class="big-title">我的</text>
   </view>
 
-  <view class="hero-card user-card">
+  <view class="hero-card user-card" hover-class="card-hover" bindtap="goAccount">
     <view class="avatar">{{userName[0]}}</view>
     <view class="info">
       <text class="name">{{userName}}</text>
       <text class="branch">{{branch}} · {{roleLabel}}</text>
     </view>
+    <text class="card-arrow">></text>
   </view>
 
   <!-- 员工菜单 -->

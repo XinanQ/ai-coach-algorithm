@@ -1,0 +1,23 @@
+<view class="page">
+  <view class="page-head">
+    <text class="eyebrow">账户</text>
+    <text class="big-title">账户信息</text>
+  </view>
+
+  <view class="hero-card id-card">
+    <view class="avatar">{{name[0]}}</view>
+    <view class="id-main">
+      <text class="id-name">{{name}}</text>
+      <text class="id-sub">{{org}}</text>
+    </view>
+  </view>
+
+  <view class="info-list">
+    <view class="info-row" wx:for="{{fields}}" wx:key="label">
+      <text class="info-label">{{item.label}}</text>
+      <text class="info-value">{{item.value}}</text>
+    </view>
+  </view>
+
+  <text class="readonly-tip">以上信息仅供查看，如需修改请联系管理员</text>
+</view>

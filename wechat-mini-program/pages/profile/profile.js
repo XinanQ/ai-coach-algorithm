@@ -18,6 +18,10 @@ Page({
       roleLabel: role === 'manager' ? '管理员' : '普通员工'
     })
   },
+  // 账户信息（只读详情）
+  goAccount() {
+    wx.navigateTo({ url: '/pages/account/account' })
+  },
   // 员工菜单
   goHistory() {
     wx.navigateTo({ url: '/pages/history/history' })

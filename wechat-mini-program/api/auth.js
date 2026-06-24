@@ -16,9 +16,10 @@ function wxLogin(code) {
 }
 
 // 当前登录用户资料（含真实角色/权限）
+// silent：失败不弹 toast，调用方（账户页）已有本地登录态兜底
 function getProfile() {
   if (config.USE_MOCK) return Promise.resolve(mock.profile())
-  return request.get('/mini/profile')
+  return request.get('/mini/profile', {}, { silent: true })
 }
 
 function logout() {
