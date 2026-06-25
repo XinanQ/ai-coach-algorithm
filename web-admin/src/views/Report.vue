@@ -176,7 +176,7 @@ const estimatedPoints = computed(() => {
   const pts = decimal(amount)
     .times(ind.pointsStandard || 0)
     .times(ind.ratio || 0)
-  return pts.isFinite() ? decimalToFixed(pts, 4) : '—'
+  return Number.isFinite(pts.toNumber()) ? decimalToFixed(pts, 4) : '—'
 })
 
 async function loadReports() {
@@ -190,7 +190,18 @@ async function loadReports() {
 
 async function onProjectChange() {
   form.indicatorId = ''
-  projectIndicators.value = form.projectId ? await getProjectIndicators(form.projectId) : []
+  message.value = ''
+  if (!form.projectId) {
+    projectIndicators.value = []
+    return
+  }
+  try {
+    projectIndicators.value = await getProjectIndicators(form.projectId)
+  } catch (err) {
+    projectIndicators.value = []
+    message.value = err.message || '加载该项目的指标失败。'
+    messageType.value = 'error'
+  }
 }
 
 async function submitReport() {

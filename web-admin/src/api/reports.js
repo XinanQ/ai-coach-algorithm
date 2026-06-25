@@ -93,8 +93,12 @@ export async function getMyReports(user) {
   const projectIds = [...new Set(list.map((r) => r.projectId).filter(Boolean))]
   await Promise.all(
     projectIds.map(async (projectId) => {
-      const indicators = await getProjectIndicators(projectId)
-      indicators.forEach((ind) => indicatorByKey.set(`${projectId}-${ind.id}`, ind))
+      try {
+        const indicators = await getProjectIndicators(projectId)
+        indicators.forEach((ind) => indicatorByKey.set(`${projectId}-${ind.id}`, ind))
+      } catch {
+        // 历史上报引用的项目可能已被删除（如重新导入数据后 id 变化），跳过其指标，不影响整页加载
+      }
     })
   )
 

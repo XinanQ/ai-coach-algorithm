@@ -17,7 +17,7 @@ export const menuItems = [
   {
     label: '项目管理',
     path: '/projects',
-    roles: ['head_admin', 'province_admin', 'city_admin', 'branch_admin']
+    roles: ['head_admin', 'province_admin', 'city_admin', 'branch_admin', 'outlet_admin']
   },
   {
     label: '分解工作台',
