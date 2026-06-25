@@ -75,14 +75,14 @@ const routes = [
     path: '/projects',
     component: Projects,
     meta: {
-      roles: ['head_admin', 'province_admin', 'city_admin', 'branch_admin']
+      roles: ['head_admin', 'province_admin', 'city_admin', 'branch_admin', 'outlet_admin']
     }
   },
   {
     path: '/projects/:id',
     component: ProjectDetail,
     meta: {
-      roles: ['head_admin', 'province_admin', 'city_admin', 'branch_admin']
+      roles: ['head_admin', 'province_admin', 'city_admin', 'branch_admin', 'outlet_admin']
     }
   },
   {

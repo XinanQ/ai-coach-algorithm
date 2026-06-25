@@ -4,6 +4,7 @@ import com.auth.CurrentUserContext;
 import com.employee.Employee;
 import com.employee.EmployeeRepository;
 import com.performance.dto.ReportReviewItemResponse;
+import com.performance.dto.ReportUpdateRequest;
 import com.points.PointsCalculationService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -96,24 +97,63 @@ public class PerformanceServiceImpl implements PerformanceService {
     }
 
     @Override
-    public TaskResult updateReport(Long id, TaskResult report) {
+    public TaskResult updateReport(Long id, ReportUpdateRequest report) {
         return findById(id).map(existing -> {
             if (existing.getStatus() != TaskResultStatus.PENDING) {
                 throw new IllegalArgumentException("仅待审核记录可修改");
             }
-            Long currentId = CurrentUserContext.getEmployeeId();
-            if (currentId == null || !currentId.equals(existing.getSubmitterId())) {
-                throw new IllegalArgumentException("仅上报人本人可修改待审核记录");
+            if (!canUpdateReport(existing)) {
+                throw new IllegalArgumentException("无权限修改该上报记录");
             }
 
-            existing.setTaskId(report.getTaskId());
-            existing.setProjectId(report.getProjectId());
-            existing.setIndicatorId(report.getIndicatorId());
-            existing.setOrganizationId(report.getOrganizationId());
-            existing.setSubmitter(report.getSubmitter());
-            existing.setReportDate(report.getReportDate());
-            existing.setResult(report.getResult());
-            existing.setAttachmentUrl(report.getAttachmentUrl());
+            Long currentId = CurrentUserContext.getEmployeeId();
+            boolean isSubmitter = currentId != null && currentId.equals(existing.getSubmitterId());
+
+            if (isSubmitter) {
+                if (report.getTaskId() != null) {
+                    existing.setTaskId(report.getTaskId());
+                }
+                if (report.getProjectId() != null) {
+                    existing.setProjectId(report.getProjectId());
+                }
+                if (report.getIndicatorId() != null) {
+                    existing.setIndicatorId(report.getIndicatorId());
+                }
+                if (report.getOrganizationId() != null) {
+                    existing.setOrganizationId(report.getOrganizationId());
+                }
+                if (report.getSubmitter() != null) {
+                    existing.setSubmitter(report.getSubmitter());
+                }
+                if (report.getReportDate() != null) {
+                    existing.setReportDate(report.getReportDate());
+                }
+                if (report.getResult() != null) {
+                    existing.setResult(report.getResult());
+                }
+                if (report.getAttachmentUrl() != null) {
+                    existing.setAttachmentUrl(report.getAttachmentUrl());
+                }
+            } else {
+                // 审核管理员修改：与通过/驳回同权限，仅允许改正报内容字段
+                if (report.getReportDate() != null) {
+                    existing.setReportDate(report.getReportDate());
+                }
+                if (report.getResult() != null) {
+                    existing.setResult(report.getResult());
+                }
+                if (report.getAttachmentUrl() != null) {
+                    existing.setAttachmentUrl(report.getAttachmentUrl());
+                }
+            }
+
+            if (existing.getResult() == null || existing.getResult().isBlank()) {
+                throw new IllegalArgumentException("上报数量不能为空");
+            }
+            if (existing.getReportDate() == null) {
+                throw new IllegalArgumentException("上报日期不能为空");
+            }
+
             return repo.save(existing);
         }).orElse(null);
     }
@@ -177,6 +217,17 @@ public class PerformanceServiceImpl implements PerformanceService {
         if (!canReviewReport(report)) {
             throw new IllegalArgumentException("无权限审核该机构的上报记录");
         }
+    }
+
+    private boolean canUpdateReport(TaskResult report) {
+        Long currentId = CurrentUserContext.getEmployeeId();
+        if (currentId == null) {
+            return false;
+        }
+        if (currentId.equals(report.getSubmitterId())) {
+            return true;
+        }
+        return canReviewReport(report);
     }
 
     private boolean canReviewReport(TaskResult report) {

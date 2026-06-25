@@ -30,7 +30,7 @@ public class ProjectController {
 
     @GetMapping
     public List<ProjectResponse> list() {
-        return service.findAll()
+        return service.findVisibleForCurrentUser()
                 .stream()
                 .map(this::toResponse)
                 .toList();
@@ -49,6 +49,7 @@ public class ProjectController {
 
         Project project = toEntity(request);
         Project saved = service.save(project);
+        service.replaceVisibleOrgs(saved.getId(), request.visibleOrgIds());
 
         return ResponseEntity
                 .created(URI.create("/api/admin/projects/" + saved.getId()))
