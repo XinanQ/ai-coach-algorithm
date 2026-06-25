@@ -42,8 +42,20 @@
 
         <label class="form-field">
           附件
-          <input class="field" type="file" disabled title="附件上传暂未接入" />
-          <span class="field-hint">附件上传暂未接入，不影响提交</span>
+          <input
+            ref="fileInputRef"
+            class="field file-input"
+            type="file"
+            :accept="ACCEPTED_ATTACHMENT_TYPES"
+            @change="onAttachmentChange"
+          />
+          <span class="field-hint">
+            选填，支持 PDF、图片、Office 文档、压缩包等常见格式，单个文件不超过 10MB
+          </span>
+          <p v-if="attachmentName" class="attachment-name">
+            已选择：{{ attachmentName }}
+            <button type="button" class="link-button" @click="clearAttachment">移除</button>
+          </p>
         </label>
 
         <div class="form-field full">
@@ -99,6 +111,7 @@
             <th>状态</th>
             <th>积分</th>
             <th>时间</th>
+            <th>附件</th>
             <th>审核意见</th>
           </tr>
         </thead>
@@ -118,6 +131,17 @@
             </td>
             <td>{{ report.points }}</td>
             <td>{{ report.reportedAt }}</td>
+            <td>
+              <div v-if="report.attachmentUrl" class="attachment-actions">
+                <button type="button" class="link-button" @click="previewAttachment(report.attachmentUrl)">
+                  预览
+                </button>
+                <button type="button" class="link-button" @click="downloadAttachment(report.attachmentUrl)">
+                  下载
+                </button>
+              </div>
+              <span v-else class="muted">—</span>
+            </td>
             <td class="review-cell">
               <span v-if="report.statusCode === 'rejected'" class="reject-reason">
                 {{ report.reviewComment || '未填写驳回原因' }}
@@ -138,10 +162,14 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { getCurrentUser } from '../auth/permissions'
 import {
+  ACCEPTED_ATTACHMENT_TYPES,
   getMyReports,
   getProjectIndicators,
   getReportOptions,
-  submitReport as submitReportApi
+  downloadReportAttachment,
+  previewReportAttachment,
+  submitReport as submitReportApi,
+  uploadReportAttachment
 } from '../api/reports'
 import { decimal, decimalToFixed } from '../utils/decimal'
 
@@ -159,6 +187,12 @@ const form = reactive({
 })
 const message = ref('')
 const messageType = ref('success')
+const fileInputRef = ref(null)
+const attachmentFile = ref(null)
+const attachmentUrl = ref('')
+const attachmentName = ref('')
+
+const MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024
 
 const selectedProject = computed(() =>
   projects.value.find((project) => String(project.id) === String(form.projectId))
@@ -191,6 +225,7 @@ async function loadReports() {
 async function onProjectChange() {
   form.indicatorId = ''
   message.value = ''
+  clearAttachment()
   if (!form.projectId) {
     projectIndicators.value = []
     return
@@ -200,6 +235,53 @@ async function onProjectChange() {
   } catch (err) {
     projectIndicators.value = []
     message.value = err.message || '加载该项目的指标失败。'
+    messageType.value = 'error'
+  }
+}
+
+function onAttachmentChange(event) {
+  const file = event.target.files?.[0]
+  if (!file) {
+    clearAttachment()
+    return
+  }
+
+  if (file.size > MAX_ATTACHMENT_SIZE) {
+    message.value = '附件大小不能超过 10MB。'
+    messageType.value = 'error'
+    clearAttachment()
+    return
+  }
+
+  message.value = ''
+  attachmentFile.value = file
+  attachmentUrl.value = ''
+  attachmentName.value = file.name
+}
+
+function clearAttachment() {
+  attachmentFile.value = null
+  attachmentUrl.value = ''
+  attachmentName.value = ''
+  if (fileInputRef.value) {
+    fileInputRef.value.value = ''
+  }
+}
+
+async function previewAttachment(url) {
+  try {
+    await previewReportAttachment(url)
+  } catch (err) {
+    message.value = err.message || '附件预览失败。'
+    messageType.value = 'error'
+  }
+}
+
+async function downloadAttachment(url) {
+  try {
+    await downloadReportAttachment(url)
+  } catch (err) {
+    message.value = err.message || '附件下载失败。'
     messageType.value = 'error'
   }
 }
@@ -229,11 +311,19 @@ async function submitReport() {
 
   submitting.value = true
   try {
-    await submitReportApi({ ...form }, currentUser)
+    let uploadedUrl = attachmentUrl.value
+    if (attachmentFile.value) {
+      const uploaded = await uploadReportAttachment(attachmentFile.value)
+      uploadedUrl = uploaded.url
+      attachmentUrl.value = uploadedUrl
+    }
+
+    await submitReportApi({ ...form, attachmentUrl: uploadedUrl || undefined }, currentUser)
     message.value = '上报已提交，请等待管理员审核。'
     messageType.value = 'success'
     form.indicatorId = ''
     form.amount = null
+    clearAttachment()
     await loadReports()
   } catch (err) {
     message.value = err.message || '提交失败，请稍后重试。'
@@ -263,6 +353,30 @@ onMounted(async () => {
 .field-hint {
   font-size: 12px;
   color: #6b7280;
+}
+.file-input {
+  padding: 8px;
+}
+.attachment-name {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: #374151;
+}
+.link-button {
+  border: none;
+  background: none;
+  padding: 0;
+  color: #2563eb;
+  cursor: pointer;
+  font: inherit;
+}
+.link-button:hover {
+  text-decoration: underline;
+}
+.attachment-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 .rules {
   display: grid;

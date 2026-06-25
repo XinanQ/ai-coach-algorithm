@@ -80,7 +80,13 @@
             <td>{{ item.project }}</td>
             <td>{{ item.indicator }}</td>
             <td>{{ item.amount }} {{ item.unit }}</td>
-            <td>{{ item.attachmentCount }}个</td>
+            <td>
+              <div v-if="item.attachmentUrl" class="attachment-actions">
+                <button class="link-button" type="button" @click="previewAttachment(item)">预览</button>
+                <button class="link-button" type="button" @click="downloadAttachment(item)">下载</button>
+              </div>
+              <span v-else class="muted">无</span>
+            </td>
             <td>{{ item.submittedAt }}</td>
             <td>
               <span class="badge" :class="`status-${item.status}`">
@@ -93,15 +99,21 @@
                   <button class="button primary small" type="button" @click="openReview(item, 'approve')">
                     通过
                   </button>
+                  <button class="button warning small" type="button" @click="openReview(item, 'modify-approve')">
+                    修改并通过
+                  </button>
                   <button class="button danger small" type="button" @click="openReview(item, 'reject')">
                     驳回
                   </button>
                 </template>
                 <template v-else-if="item.status === 'pending'">
-                  <button class="button small disabled" type="button" @click="showNoPermission">
+                  <button class="button small no-permission" type="button" @click="showNoPermission">
                     通过
                   </button>
-                  <button class="button small disabled" type="button" @click="showNoPermission">
+                  <button class="button small no-permission" type="button" @click="showNoPermission">
+                    修改并通过
+                  </button>
+                  <button class="button small no-permission" type="button" @click="showNoPermission">
                     驳回
                   </button>
                 </template>
@@ -116,22 +128,44 @@
       </table>
     </section>
 
-    <!-- 审核（通过 / 驳回）弹窗 -->
+    <p v-if="attachmentMessage" class="attachment-message">{{ attachmentMessage }}</p>
+
+    <!-- 审核（通过 / 驳回 / 修改并通过）弹窗 -->
     <div v-if="reviewDialog.visible" class="modal-overlay" @click.self="closeReview">
       <div class="modal">
-        <h2>{{ reviewDialog.action === 'approve' ? '通过审核' : '驳回审核' }}</h2>
+        <h2>{{ reviewDialogTitle }}</h2>
         <dl class="summary">
           <div><dt>上报人</dt><dd>{{ reviewDialog.item?.reporter }}</dd></div>
           <div><dt>项目</dt><dd>{{ reviewDialog.item?.project }}</dd></div>
-          <div><dt>指标 / 金额</dt><dd>{{ reviewDialog.item?.indicator }} · {{ reviewDialog.item?.amount }} {{ reviewDialog.item?.unit }}</dd></div>
+          <div><dt>指标</dt><dd>{{ reviewDialog.item?.indicator }}</dd></div>
+          <template v-if="reviewDialog.action !== 'modify-approve'">
+            <div><dt>金额</dt><dd>{{ reviewDialog.item?.amount }} {{ reviewDialog.item?.unit }}</dd></div>
+          </template>
         </dl>
+        <template v-if="reviewDialog.action === 'modify-approve'">
+          <label class="form-field">
+            上报数量
+            <input
+              v-model="reviewDialog.editAmount"
+              class="field"
+              type="number"
+              min="0"
+              step="any"
+              :placeholder="`原值 ${reviewDialog.item?.amount}`"
+            />
+          </label>
+          <label class="form-field">
+            上报日期
+            <input v-model="reviewDialog.editReportDate" class="field" type="date" />
+          </label>
+        </template>
         <label class="form-field">
           审核意见{{ reviewDialog.action === 'reject' ? '（必填）' : '（选填）' }}
           <textarea
             v-model="reviewDialog.comment"
             class="field textarea"
             rows="3"
-            :placeholder="reviewDialog.action === 'approve' ? '可填写通过备注' : '请填写驳回原因'"
+            :placeholder="reviewDialogPlaceholder"
           ></textarea>
         </label>
         <p v-if="reviewDialog.error" class="form-message error">{{ reviewDialog.error }}</p>
@@ -139,12 +173,18 @@
           <button class="button" type="button" @click="closeReview">取消</button>
           <button
             class="button"
-            :class="reviewDialog.action === 'approve' ? 'primary' : 'danger'"
+            :class="[
+              reviewDialog.action === 'reject'
+                ? 'danger'
+                : reviewDialog.action === 'modify-approve'
+                  ? 'warning'
+                  : 'primary',
+              { 'is-loading': reviewDialog.submitting }
+            ]"
             type="button"
-            :disabled="reviewDialog.submitting"
             @click="submitReview"
           >
-            {{ reviewDialog.action === 'approve' ? '确认通过' : '确认驳回' }}
+            {{ reviewDialogConfirmLabel }}
           </button>
         </div>
       </div>
@@ -160,7 +200,19 @@
           <div><dt>项目</dt><dd>{{ detailDialog.item?.project }}</dd></div>
           <div><dt>指标</dt><dd>{{ detailDialog.item?.indicator }}</dd></div>
           <div><dt>金额</dt><dd>{{ detailDialog.item?.amount }} {{ detailDialog.item?.unit }}</dd></div>
-          <div><dt>附件</dt><dd>{{ detailDialog.item?.attachment || '无' }}</dd></div>
+          <div>
+            <dt>附件</dt>
+            <dd>
+              <template v-if="detailDialog.item?.attachmentUrl">
+                <span class="attachment-name">{{ detailDialog.item?.attachmentName }}</span>
+                <div class="attachment-actions">
+                  <button class="link-button" type="button" @click="previewAttachment(detailDialog.item)">预览</button>
+                  <button class="link-button" type="button" @click="downloadAttachment(detailDialog.item)">下载</button>
+                </div>
+              </template>
+              <span v-else>无</span>
+            </dd>
+          </div>
           <div><dt>提交时间</dt><dd>{{ detailDialog.item?.submittedAt }}</dd></div>
           <div><dt>说明</dt><dd>{{ detailDialog.item?.description || '—' }}</dd></div>
           <div><dt>状态</dt><dd>{{ statusLabel(detailDialog.item?.status) }}</dd></div>
@@ -183,7 +235,7 @@
     <div v-if="permissionDialog.visible" class="modal-overlay" @click.self="closePermissionDialog">
       <div class="modal">
         <h2>无审核权限</h2>
-        <p class="permission-hint">该上报不在您的审核范围内，无法通过或驳回。审核范围与积分流水权限一致。</p>
+        <p class="permission-hint">该上报不在您的审核范围内，无法修改、通过或驳回。审核范围与积分流水权限一致。</p>
         <div class="modal-actions">
           <button class="button primary" type="button" @click="closePermissionDialog">知道了</button>
         </div>
@@ -199,14 +251,17 @@ import {
   REVIEW_STATUS,
   approveReview,
   getReviewList,
+  modifyAndApproveReview,
   rejectReview
 } from '../api/performanceReview'
+import { downloadReportAttachment, previewReportAttachment } from '../api/reports'
 
 const currentUser = getCurrentUser()
 const list = ref([])
 const activeTab = ref('all')
 const keyword = ref('')
 const dateRange = reactive({ start: '', end: '' })
+const attachmentMessage = ref('')
 
 const tabs = [
   { label: '全部', value: 'all' },
@@ -220,8 +275,28 @@ const reviewDialog = reactive({
   action: 'approve',
   item: null,
   comment: '',
+  editAmount: '',
+  editReportDate: '',
   error: '',
   submitting: false
+})
+
+const reviewDialogTitle = computed(() => {
+  if (reviewDialog.action === 'modify-approve') return '修改并通过'
+  if (reviewDialog.action === 'reject') return '驳回审核'
+  return '通过审核'
+})
+
+const reviewDialogPlaceholder = computed(() => {
+  if (reviewDialog.action === 'reject') return '请填写驳回原因'
+  if (reviewDialog.action === 'modify-approve') return '可填写修正说明，如：数量录入有误已更正'
+  return '可填写通过备注'
+})
+
+const reviewDialogConfirmLabel = computed(() => {
+  if (reviewDialog.action === 'modify-approve') return '确认修改并通过'
+  if (reviewDialog.action === 'reject') return '确认驳回'
+  return '确认通过'
 })
 
 const detailDialog = reactive({
@@ -287,6 +362,8 @@ function openReview(item, action) {
   reviewDialog.action = action
   reviewDialog.item = item
   reviewDialog.comment = ''
+  reviewDialog.editAmount = item.amount != null ? String(item.amount) : ''
+  reviewDialog.editReportDate = item.reportDate || item.submittedAt?.slice(0, 10) || ''
   reviewDialog.error = ''
   reviewDialog.submitting = false
 }
@@ -294,12 +371,27 @@ function openReview(item, action) {
 function closeReview() {
   reviewDialog.visible = false
   reviewDialog.item = null
+  reviewDialog.submitting = false
 }
 
 async function submitReview() {
+  if (reviewDialog.submitting) return
+
   if (reviewDialog.action === 'reject' && !reviewDialog.comment.trim()) {
     reviewDialog.error = '驳回时请填写原因。'
     return
+  }
+
+  if (reviewDialog.action === 'modify-approve') {
+    const amount = Number(reviewDialog.editAmount)
+    if (!reviewDialog.editAmount || Number.isNaN(amount) || amount <= 0) {
+      reviewDialog.error = '请填写大于 0 的上报数量。'
+      return
+    }
+    if (!reviewDialog.editReportDate) {
+      reviewDialog.error = '请选择上报日期。'
+      return
+    }
   }
 
   reviewDialog.submitting = true
@@ -311,11 +403,19 @@ async function submitReview() {
   }
 
   try {
-    await (reviewDialog.action === 'approve'
-      ? approveReview(id, payload)
-      : rejectReview(id, payload))
-    list.value = await getReviewList()
+    if (reviewDialog.action === 'approve') {
+      await approveReview(id, payload)
+    } else if (reviewDialog.action === 'modify-approve') {
+      await modifyAndApproveReview(id, {
+        ...payload,
+        result: reviewDialog.editAmount,
+        reportDate: reviewDialog.editReportDate
+      })
+    } else {
+      await rejectReview(id, payload)
+    }
     closeReview()
+    list.value = await getReviewList()
   } catch (err) {
     reviewDialog.error = err.message || '操作失败，请重试'
   } finally {
@@ -331,6 +431,24 @@ function openDetail(item) {
 function closeDetail() {
   detailDialog.visible = false
   detailDialog.item = null
+}
+
+async function previewAttachment(item) {
+  attachmentMessage.value = ''
+  try {
+    await previewReportAttachment(item?.attachmentUrl)
+  } catch (err) {
+    attachmentMessage.value = err.message || '附件预览失败'
+  }
+}
+
+async function downloadAttachment(item) {
+  attachmentMessage.value = ''
+  try {
+    await downloadReportAttachment(item?.attachmentUrl)
+  } catch (err) {
+    attachmentMessage.value = err.message || '附件下载失败'
+  }
 }
 
 onMounted(async () => {
@@ -472,6 +590,17 @@ onMounted(async () => {
   color: #fff;
 }
 
+.button.warning {
+  border-color: #fde047;
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+.button.warning:hover {
+  border-color: #facc15;
+  background: #fef08a;
+}
+
 .empty {
   text-align: center;
   color: #9ca3af;
@@ -541,12 +670,25 @@ onMounted(async () => {
   color: #b91c1c;
 }
 
-.button.small.disabled {
+.form-field {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 12px;
+  color: #374151;
+  font-size: 14px;
+}
+
+.button.small.no-permission {
   opacity: 0.55;
   cursor: pointer;
   border-color: #d1d5db;
   background: #f3f4f6;
   color: #9ca3af;
+}
+
+.button.is-loading {
+  opacity: 0.7;
+  cursor: wait;
 }
 
 .permission-hint {
@@ -560,5 +702,41 @@ onMounted(async () => {
   justify-content: flex-end;
   gap: 8px;
   margin-top: 8px;
+}
+
+.attachment-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.attachment-name {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  word-break: break-all;
+}
+
+.link-button {
+  border: none;
+  background: none;
+  padding: 0;
+  color: #2563eb;
+  cursor: pointer;
+  font: inherit;
+}
+
+.link-button:hover {
+  text-decoration: underline;
+}
+
+.attachment-message {
+  margin: 0 0 12px;
+  color: #b91c1c;
+  font-size: 14px;
+}
+
+.summary dd .attachment-actions {
+  justify-content: flex-end;
 }
 </style>

@@ -2,12 +2,14 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
 
 export async function request(path, options = {}) {
   const token = localStorage.getItem('authToken')
-  const { headers: optionHeaders = {}, ...restOptions } = options
+  const { headers: optionHeaders = {}, body, ...restOptions } = options
+  const isFormData = typeof FormData !== 'undefined' && body instanceof FormData
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...restOptions,
+    body,
     headers: {
-      'Content-Type': 'application/json',
+      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
       ...(token ? { 'X-Auth-Token': token } : {}),
       ...optionHeaders
     }
