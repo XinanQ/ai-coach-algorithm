@@ -1,4 +1,5 @@
 import { request } from './request'
+import { resolveAttachmentDisplayName } from './reports'
 import { getCurrentUser } from '../auth/permissions'
 
 // 列表可见：本市行及下级；canReview 与积分流水审核范围一致。
@@ -192,6 +193,8 @@ async function toReviewItem(report, lookups, pointsLog = null, currentUser = get
     amount: report.result,
     unit: indicator?.unit || '',
     attachmentCount: report.attachmentUrl ? 1 : 0,
+    attachmentUrl: report.attachmentUrl || '',
+    attachmentName: resolveAttachmentDisplayName(report.attachmentUrl),
     attachment: report.attachmentUrl,
     submittedAt: formatDateTime(report.receivedAt) || `${report.reportDate || ''} 00:00`,
     status,
@@ -288,4 +291,28 @@ export async function rejectReview(id, payload = {}) {
 
   clearReviewCache()
   return { success: true, id, status: 'rejected' }
+}
+
+export async function updateReviewReport(id, payload = {}) {
+  const body = {}
+  if (payload.result != null) body.result = String(payload.result)
+  if (payload.reportDate) body.reportDate = payload.reportDate
+  if (payload.attachmentUrl != null) body.attachmentUrl = payload.attachmentUrl
+
+  const updated = await request(`/api/admin/reports/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(body)
+  })
+
+  clearReviewCache()
+  return updated
+}
+
+export async function modifyAndApproveReview(id, payload = {}) {
+  await updateReviewReport(id, {
+    result: payload.result,
+    reportDate: payload.reportDate,
+    attachmentUrl: payload.attachmentUrl
+  })
+  return approveReview(id, payload)
 }
