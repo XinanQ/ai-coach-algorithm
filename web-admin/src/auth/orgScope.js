@@ -52,5 +52,12 @@ export function resolveOrgId(user) {
     return null
   }
 
+  // Prefer numeric orgId from backend; fall back to mock org tree lookup
+  if (user.organizationId != null && !isNaN(Number(user.organizationId))) {
+    return Number(user.organizationId)
+  }
+  if (user.orgId != null && !isNaN(Number(user.orgId))) {
+    return Number(user.orgId)
+  }
   return findByName(user.organization, organizations) || user.organizationId || user.orgId || null
 }
