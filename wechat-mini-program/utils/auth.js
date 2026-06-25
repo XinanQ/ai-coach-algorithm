@@ -23,7 +23,14 @@ function getRole() {
   return wx.getStorageSync(ROLE_KEY) || ''
 }
 function setRole(role) {
+  const user = getUserInfo() || {}
+
+  if (role === 'manager' && !user.isAdmin) {
+    return false
+  }
+
   wx.setStorageSync(ROLE_KEY, role)
+  return true
 }
 
 // 登录：调用 api 层完成工号密码登录。

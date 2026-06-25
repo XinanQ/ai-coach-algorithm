@@ -1,4 +1,3 @@
-
 const auth = require('../../utils/auth')
 const apiAuth = require('../../api/auth')
 
@@ -7,7 +6,8 @@ Page({
     userName: '员工',
     branch: '',
     role: '',
-    roleLabel: ''
+    roleLabel: '',
+    isAdmin: false
   },
 
   onShow() {
@@ -17,35 +17,36 @@ Page({
 
   loadProfile() {
     apiAuth.getProfile()
-      .then((profile) => {
-        console.log('我的页 profile 返回：', profile)
+        .then((profile) => {
+          console.log('我的页 profile 返回：', profile)
 
-        const isAdmin = Boolean(profile.isAdmin)
-        const role = isAdmin ? 'manager' : 'staff'
+          const isAdmin = Boolean(profile.isAdmin)
+          const role = isAdmin ? 'manager' : 'staff'
 
-        this.setData({
-          userName: profile.name || '员工',
-          branch: profile.organizationName || '',
-          role: role,
-          roleLabel: profile.roleName || (isAdmin ? '管理员' : '普通员工')
+          this.setData({
+            userName: profile.name || '员工',
+            branch: profile.organizationName || '',
+            role: role,
+            roleLabel: profile.roleName || (isAdmin ? '管理员' : '普通员工'),
+            isAdmin: isAdmin
+          })
+
+          wx.setStorageSync('userInfo', profile)
+          wx.setStorageSync('role', role)
         })
-
-        wx.setStorageSync('userInfo', profile)
-        wx.setStorageSync('role', role)
-      })
-      .catch((err) => {
-        console.error('加载我的页信息失败：', err)
-        wx.showToast({
-          title: err.message || '加载个人信息失败',
-          icon: 'none'
+        .catch((err) => {
+          console.error('加载我的页信息失败：', err)
+          wx.showToast({
+            title: err.message || '加载个人信息失败',
+            icon: 'none'
+          })
         })
-      })
   },
-  // 账户信息（只读详情）
+
   goAccount() {
     wx.navigateTo({ url: '/pages/account/account' })
   },
-  // 员工菜单
+
   goHistory() {
     wx.navigateTo({ url: '/pages/history/history' })
   },
@@ -58,7 +59,6 @@ Page({
     wx.navigateTo({ url: '/pages/news/list/list' })
   },
 
-  // 管理员菜单
   goAnalysis() {
     wx.reLaunch({ url: '/pages/admin/analysis/analysis' })
   },
@@ -72,6 +72,14 @@ Page({
   },
 
   switchRole() {
+    if (!this.data.isAdmin) {
+      wx.showToast({
+        title: '无管理员权限',
+        icon: 'none'
+      })
+      return
+    }
+
     wx.reLaunch({ url: '/pages/role/role' })
   },
 

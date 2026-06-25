@@ -45,7 +45,8 @@
     </view>
   </view>
 
-  <button class="ghost-btn" hover-class="ghost-hover" bindtap="switchRole">切换角色</button>
+  <!-- <button class="ghost-btn" hover-class="ghost-hover" bindtap="switchRole">切换角色</button> -->
+  <button wx:if="{{isAdmin}}" class="ghost-btn" hover-class="ghost-hover" bindtap="switchRole">切换角色</button>
   <button class="logout-btn" hover-class="logout-btn-hover" bindtap="logout">退出登录</button>
 </view>
 
