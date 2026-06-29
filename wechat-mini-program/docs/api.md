@@ -47,7 +47,7 @@
 | practice | `GET /api/mini/practice/result/{taskId}` | 🟡 Mock（`finish` 已返回完整结果，冗余） |
 | practice | `GET /api/mini/practice/review/{taskId}` | 🟡 Mock |
 | practice | `GET /api/mini/practice/history` | 🟡 Mock |
-| report | `GET /api/admin/projects`、`GET /api/admin/projects/{projectId}/indicators`、`POST /api/admin/reports/submit`、`GET /api/admin/reports`、`POST /api/admin/reports/attachments` | ✅ 已接入 Web 端同一套业绩上报/审核数据 |
+| report | `GET /api/admin/projects`、`GET /api/admin/projects/{projectId}/indicators`、`POST /api/admin/reports/submit`、`GET /api/mini/reports/history`、`POST /api/admin/reports/attachments` | ✅ 小程序上报接入 Web 同一套数据；历史页只看本人记录 |
 | ranking | `GET /api/mini/ranking` | 🟡 Mock（后端仅 `/api/admin/rankings`） |
 | news | `GET /api/news`、`GET /api/news/{id}` | 🟡 Mock |
 | script | `GET /api/mini/scripts[/{id}]`、`POST /api/mini/scripts` | 🟡 Mock |
@@ -149,8 +149,9 @@
 - Body：`{ "projectId":1, "indicatorId":1, "reportDate":"2026-06-25", "result":"8.5", "attachmentUrl":"/api/admin/reports/attachments/files/..." }`
 - data：后端 `task_results` 记录。
 
-### ✅ GET /api/admin/reports — 本人上报历史
-- 员工账号返回本人上报记录；审核账号按审核范围返回可见记录。
+### ✅ GET /api/mini/reports/history — 本人上报历史
+- 小程序历史页专用接口，只返回当前登录人的上报记录。
+- Web 审核页继续使用 `/api/admin/reports` 按审核范围查看记录。
 - 小程序历史页会映射为：`project / indicator / value / time / status / reason / attachmentUrl`。
 
 ### ✅ POST /api/admin/reports/attachments — 文件上传
@@ -359,7 +360,7 @@
 | auth | `api.auth.getProfile` | `GET /api/mini/profile` | ✅ |
 | auth | `api.auth.logout` | `POST /api/auth/logout` | 🟡 |
 | home | `api.home.getSummary` | `GET /api/mini/home` | ✅ |
-| report | `api.report.getReportOptions/getProjectIndicators/uploadAttachment/submit/getHistory` | `/api/admin/projects/*`、`/api/admin/reports/*` | ✅ |
+| report | `api.report.getReportOptions/getProjectIndicators/uploadAttachment/submit/getHistory` | `/api/admin/projects/*`、`/api/admin/reports/*`、`/api/mini/reports/history` | ✅ |
 | ranking | `api.ranking.getRanking` | `GET /api/mini/ranking` | 🟡 |
 | news | `api.news.getList/getDetail` | `/api/news` | 🟡 |
 | practice | `api.practice.getTasks/getTaskDetail/startDialog/replyDialog/finishDialog` | `/api/mini/practice/*` | ✅ |

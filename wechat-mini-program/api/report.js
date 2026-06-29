@@ -112,7 +112,7 @@ async function submit(payload) {
 async function getHistory() {
   if (config.USE_MOCK) return Promise.resolve(mock.history())
 
-  const reports = await request.get('/admin/reports')
+  const reports = await request.get('/mini/reports/history')
   const projects = await getProjects()
   const projectMap = {}
   projects.forEach((project) => {

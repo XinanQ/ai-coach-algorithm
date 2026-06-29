@@ -173,6 +173,22 @@ paths:
               schema:
                 type: array
                 items: { $ref: '#/components/schemas/ReportRecord' }
+  /mini/reports/history:
+    get:
+      tags: [report]
+      summary: 小程序本人上报历史
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/ReportRecord' }
   /admin/reports/attachments:
     post:
       tags: [report]

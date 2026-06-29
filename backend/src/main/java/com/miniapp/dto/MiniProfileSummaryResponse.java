@@ -6,6 +6,9 @@ public class MiniProfileSummaryResponse {
     private String organizationName;
     private String roleName;
     private Boolean isAdmin;
+    private Long employeeId;
+    private String level;
+    private String organizationLevel;
 
     public MiniProfileSummaryResponse() {
     }
@@ -40,5 +43,29 @@ public class MiniProfileSummaryResponse {
 
     public void setIsAdmin(Boolean isAdmin) {
         this.isAdmin = isAdmin;
+    }
+
+    public Long getEmployeeId() {
+        return employeeId;
+    }
+
+    public void setEmployeeId(Long employeeId) {
+        this.employeeId = employeeId;
+    }
+
+    public String getLevel() {
+        return level;
+    }
+
+    public void setLevel(String level) {
+        this.level = level;
+    }
+
+    public String getOrganizationLevel() {
+        return organizationLevel;
+    }
+
+    public void setOrganizationLevel(String organizationLevel) {
+        this.organizationLevel = organizationLevel;
     }
 }
