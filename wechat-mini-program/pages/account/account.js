@@ -1,5 +1,5 @@
 const auth = require('../../utils/auth')
-const api = require('../../api/index')
+const apiAuth = require('../../api/auth')
 
 Page({
   data: {
@@ -7,19 +7,37 @@ Page({
     org: '',
     fields: []
   },
+
   onLoad() {
     if (!auth.requireLogin()) return
-    this.loadProfile()
+    this.loadAccount()
   },
-  loadProfile() {
-    // 规范个人信息接口 GET /api/mini/profile；失败回退本地登录态
-    api.auth.getProfile()
-      .then((d) => this.render(d))
-      .catch(() => this.render(auth.getUserInfo() || {}))
+
+  loadAccount() {
+    apiAuth.getAccount()
+        .then((account) => {
+          console.log('账号详情 account 返回：', account)
+          this.render(account)
+        })
+        .catch((err) => {
+          console.error('加载账号详情失败：', err)
+          wx.showToast({
+            title: err.message || '加载账号信息失败',
+            icon: 'none'
+          })
+
+          // 兜底：如果接口失败，至少显示本地缓存里的摘要信息
+          this.render(auth.getUserInfo() || {})
+        })
   },
+
   render(d) {
     if (!d) return
-    const dash = (v) => (v === undefined || v === null || v === '') ? '—' : v
+
+    const dash = (v) => {
+      return v === undefined || v === null || v === '' ? '—' : v
+    }
+
     this.setData({
       name: d.name || '—',
       org: d.organizationName || '',
@@ -30,6 +48,7 @@ Page({
         { label: '职务', value: dash(d.position) },
         { label: '等级', value: dash(d.level) },
         { label: '组织名称', value: dash(d.organizationName) }
+
       ]
     })
   }

@@ -23,7 +23,14 @@ function getRole() {
   return wx.getStorageSync(ROLE_KEY) || ''
 }
 function setRole(role) {
+  const user = getUserInfo() || {}
+
+  if (role === 'manager' && !user.isAdmin) {
+    return false
+  }
+
   wx.setStorageSync(ROLE_KEY, role)
+  return true
 }
 
 // 登录：调用 api 层完成工号密码登录。
@@ -50,7 +57,7 @@ function login(empId, password) {
 
 // 退出登录：通知后端（尽力而为）并清除本地登录态与角色
 function logout() {
-  apiAuth.logout().catch(() => {})
+  // apiAuth.logout().catch(() => {})
   wx.removeStorageSync(TOKEN_KEY)
   wx.removeStorageSync(USER_KEY)
   wx.removeStorageSync(ROLE_KEY)

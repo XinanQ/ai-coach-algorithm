@@ -41,9 +41,19 @@ function request(method, url, data, options) {
           return
         }
 
-        // 后端约定：业务成功码为 200（不是 0）
-        if (statusCode >= 200 && statusCode < 300 && body && body.code === 200) {
-          resolve(body.data)
+        if (statusCode >= 200 && statusCode < 300) {
+          if (body && typeof body === 'object' && Object.prototype.hasOwnProperty.call(body, 'code')) {
+            if (body.code === 200) {
+              resolve(body.data)
+              return
+            }
+            const msg = body.message || ('请求失败(' + body.code + ')')
+            if (!options.silent) wx.showToast({ title: msg, icon: 'none' })
+            reject(new Error(msg))
+            return
+          }
+
+          resolve(body)
           return
         }
 
@@ -71,8 +81,14 @@ function upload(url, filePath, name, formData) {
       success(res) {
         try {
           const body = JSON.parse(res.data)
-          if (body && body.code === 200) {
-            resolve(body.data)
+          if (body && typeof body === 'object' && Object.prototype.hasOwnProperty.call(body, 'code')) {
+            if (body.code === 200) {
+              resolve(body.data)
+            } else {
+              reject(new Error((body && body.message) || '上传失败'))
+            }
+          } else if (res.statusCode >= 200 && res.statusCode < 300) {
+            resolve(body)
           } else {
             reject(new Error((body && body.message) || '上传失败'))
           }

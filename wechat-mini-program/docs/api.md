@@ -47,7 +47,7 @@
 | practice | `GET /api/mini/practice/result/{taskId}` | 🟡 Mock（`finish` 已返回完整结果，冗余） |
 | practice | `GET /api/mini/practice/review/{taskId}` | 🟡 Mock |
 | practice | `GET /api/mini/practice/history` | 🟡 Mock |
-| report | `GET /api/report/indicators`、`POST /api/report`、`GET /api/report/history`、`POST /api/upload` | 🟡 Mock（后端 `/api/admin/reports` 为管理端，小程序口径未实现） |
+| report | `GET /api/admin/projects`、`GET /api/admin/projects/{projectId}/indicators`、`POST /api/admin/reports/submit`、`GET /api/mini/reports/history`、`POST /api/admin/reports/attachments` | ✅ 小程序上报接入 Web 同一套数据；历史页只看本人记录 |
 | ranking | `GET /api/mini/ranking` | 🟡 Mock（后端仅 `/api/admin/rankings`） |
 | news | `GET /api/news`、`GET /api/news/{id}` | 🟡 Mock |
 | script | `GET /api/mini/scripts[/{id}]`、`POST /api/mini/scripts` | 🟡 Mock |
@@ -134,24 +134,29 @@
 
 ---
 
-## 3. 业绩上报 `api.report` 🟡（后端未实现，前端 mock）
+## 3. 业绩上报 `api.report` ✅
 
-> 后端已有管理端 `/api/admin/reports`（提交/审核/积分），但**小程序口径的 `/report/*` 未实现**，前端暂走本地 mock。
+> 小程序已接入 Web 端同一套项目、指标、业绩上报和审核记录。提交后 Web 端业绩审核页可直接查看并通过/驳回；CITY、BRANCH 角色不提交业绩，只做审核。
 
-### 🟡 GET /api/report/indicators — 上报指标
-- data：`[ { "id":1,"name":"存款净增额","unit":"万元" }, ... ]`
+### ✅ GET /api/admin/projects — 可选择项目
+- data：项目列表，用于上报页项目下拉选择。
 
-### 🟡 POST /api/report — 提交上报
+### ✅ GET /api/admin/projects/{projectId}/indicators — 项目指标
+- data：项目下已配置指标列表。
+
+### ✅ POST /api/admin/reports/submit — 提交上报
 - 调用页：[pages/report](../pages/report/report.js)
-- Body：`{ "indicatorId":1, "value":"8.5", "images":["https://.../a.jpg"] }`
-- data：`{ "id": 123 }`；图片先经 `POST /upload` 换取 url 再放入 `images`。
+- Body：`{ "projectId":1, "indicatorId":1, "reportDate":"2026-06-25", "result":"8.5", "attachmentUrl":"/api/admin/reports/attachments/files/..." }`
+- data：后端 `task_results` 记录。
 
-### 🟡 GET /api/report/history — 本人上报历史
-- data：`[ { "id":1,"date":"2026-06-14","indicator":"存款净增额","value":"8.5万元","status":"已通过","statusClass":"approved","reason":"" } ]`
-- `statusClass`：`approved|rejected|pending`。
+### ✅ GET /api/mini/reports/history — 本人上报历史
+- 小程序历史页专用接口，只返回当前登录人的上报记录。
+- Web 审核页继续使用 `/api/admin/reports` 按审核范围查看记录。
+- 小程序历史页会映射为：`project / indicator / value / time / status / reason / attachmentUrl`。
 
-### 🟡 POST /api/upload — 文件上传（multipart，字段 `file`）
-- 配合 `wx.uploadFile`；data：`{ "url":"https://.../a.jpg" }`
+### ✅ POST /api/admin/reports/attachments — 文件上传
+- multipart 字段：`file`。
+- 配合 `wx.uploadFile`；data：`{ "url":"/api/admin/reports/attachments/files/...", "fileName":"..." }`。
 
 ---
 
@@ -355,7 +360,7 @@
 | auth | `api.auth.getProfile` | `GET /api/mini/profile` | ✅ |
 | auth | `api.auth.logout` | `POST /api/auth/logout` | 🟡 |
 | home | `api.home.getSummary` | `GET /api/mini/home` | ✅ |
-| report | `api.report.getIndicators/submit/getHistory` | `/api/report/*` | 🟡 |
+| report | `api.report.getReportOptions/getProjectIndicators/uploadAttachment/submit/getHistory` | `/api/admin/projects/*`、`/api/admin/reports/*`、`/api/mini/reports/history` | ✅ |
 | ranking | `api.ranking.getRanking` | `GET /api/mini/ranking` | 🟡 |
 | news | `api.news.getList/getDetail` | `/api/news` | 🟡 |
 | practice | `api.practice.getTasks/getTaskDetail/startDialog/replyDialog/finishDialog` | `/api/mini/practice/*` | ✅ |

@@ -31,6 +31,10 @@
 
   <!-- 管理员菜单 -->
   <view class="menu" wx:else>
+    <view class="menu-item" wx:if="{{canViewReportHistory}}" bindtap="goHistory">
+      <text>业绩上报历史</text>
+      <text class="arrow">></text>
+    </view>
     <view class="menu-item" bindtap="goAnalysis">
       <text>团队数据分析</text>
       <text class="arrow">></text>
@@ -45,7 +49,8 @@
     </view>
   </view>
 
-  <button class="ghost-btn" hover-class="ghost-hover" bindtap="switchRole">切换角色</button>
+  <!-- <button class="ghost-btn" hover-class="ghost-hover" bindtap="switchRole">切换角色</button> -->
+  <button wx:if="{{isAdmin}}" class="ghost-btn" hover-class="ghost-hover" bindtap="switchRole">切换角色</button>
   <button class="logout-btn" hover-class="logout-btn-hover" bindtap="logout">退出登录</button>
 </view>
 

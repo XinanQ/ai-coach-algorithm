@@ -89,9 +89,16 @@ public class MiniProfileService {
 
         MiniProfileSummaryResponse response = new MiniProfileSummaryResponse();
 
+        response.setEmployeeId(employee.getId());
         response.setName(employee.getName());
         response.setOrganizationName(organization == null ? null : organization.getName());
         response.setIsAdmin(employee.getIsAdmin());
+        response.setLevel(employee.getLevel());
+        response.setOrganizationLevel(
+                organization == null || organization.getLevel() == null
+                        ? null
+                        : organization.getLevel().name()
+        );
 
         String roleName = Boolean.TRUE.equals(employee.getIsAdmin())
                 ? "管理员"

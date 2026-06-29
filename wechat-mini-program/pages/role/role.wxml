@@ -5,7 +5,8 @@
   </view>
 
   <view class="roles">
-    <view class="role-card" hover-class="role-card-hover" bindtap="choose" data-role="manager">
+    <!-- <view class="role-card" hover-class="role-card-hover" bindtap="choose" data-role="manager"> -->
+      <view wx:if="{{isAdmin}}" class="role-card" hover-class="role-card-hover" bindtap="choose" data-role="manager">
       <view class="role-top">
         <text class="role-name">管理员</text>
         <text class="role-badge">团队</text>
@@ -30,3 +31,4 @@
     </view>
   </view>
 </view>
+
