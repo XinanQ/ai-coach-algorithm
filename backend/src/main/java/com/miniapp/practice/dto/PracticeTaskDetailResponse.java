@@ -5,6 +5,7 @@ import java.util.List;
 public class PracticeTaskDetailResponse {
 
     private String taskId;
+    private String aiSceneId;
     private String title;
     private String scene;
     private Integer rounds;
@@ -13,6 +14,7 @@ public class PracticeTaskDetailResponse {
     private List<String> tags;
     private String background;
     private String goal;
+    private String difficulty;
     private List<String> requirements;
     private String duration;
     private Integer progress;
@@ -27,6 +29,14 @@ public class PracticeTaskDetailResponse {
 
     public void setTaskId(String taskId) {
         this.taskId = taskId;
+    }
+
+    public String getAiSceneId() {
+        return aiSceneId;
+    }
+
+    public void setAiSceneId(String aiSceneId) {
+        this.aiSceneId = aiSceneId;
     }
 
     public String getTitle() {
@@ -91,6 +101,14 @@ public class PracticeTaskDetailResponse {
 
     public void setGoal(String goal) {
         this.goal = goal;
+    }
+
+    public String getDifficulty() {
+        return difficulty;
+    }
+
+    public void setDifficulty(String difficulty) {
+        this.difficulty = difficulty;
     }
 
     public List<String> getRequirements() {

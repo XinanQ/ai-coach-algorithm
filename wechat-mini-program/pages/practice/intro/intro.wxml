@@ -29,7 +29,7 @@
     <text class="block-text">{{goal}}</text>
   </view>
 
-  <view class="block">
+  <view class="block" wx:if="{{requirements.length > 0}}">
     <text class="block-title">完成要求</text>
     <view class="req-wrap">
       <view class="req-list">
@@ -37,7 +37,7 @@
           <text class="req-dot"></text>
           <text class="req-text">{{item}}</text>
         </view>
-        <text class="req-duration">预计时长 {{duration}}</text>
+        <text class="req-duration" wx:if="{{duration}}">预计时长 {{duration}}</text>
       </view>
       <view class="prog-ring" style="background: conic-gradient(var(--primary) {{progress}}%, var(--surface-2) {{progress}}%);">
         <view class="prog-inner">
@@ -49,7 +49,7 @@
   </view>
 
   <view class="footer">
-    <button class="ghost-btn" bindtap="viewStandard">查看标准话术</button>
+    <button class="ghost-btn" wx:if="{{scriptId}}" bindtap="viewStandard">查看标准话术</button>
     <button class="start-btn" bindtap="startPractice">开始陪练</button>
   </view>
 </view>

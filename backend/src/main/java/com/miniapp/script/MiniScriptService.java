@@ -63,7 +63,7 @@ public class MiniScriptService {
                 "稳健型客户风险揭示",
                 Arrays.asList("合规表达", "风险提示"),
                 "您关注本金安全是非常合理的。这款产品主要投资于高评级债券与货币工具，整体波动较低，过去三年最大回撤控制在较小范围；同时它支持灵活赎回，兼顾收益与流动性。",
-                "t1",
+                "practice-risk-disclosure-001",
                 "这款产品风险不大，主要投债券，历史上波动也比较小，您可以放心一些。",
                 SOURCE_RULE_BASED
         );
@@ -76,7 +76,7 @@ public class MiniScriptService {
                 "流动性需求应对",
                 Arrays.asList("异议处理"),
                 "如果您担心后续临时用钱，我们可以优先选择支持灵活支取或分层配置的产品方案。这样既能保留一部分资金流动性，也可以让暂时不用的资金获得相对稳健的收益。",
-                "t2",
+                "practice-high-net-worth-needs-001",
                 "您可以先放一部分活期，剩下的做收益高一点的产品，这样用钱也比较方便。",
                 SOURCE_RULE_BASED
         );
