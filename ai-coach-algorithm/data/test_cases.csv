@@ -1,0 +1,5 @@
+case_id,scene_id,customer_profile,question_id,employee_answer,expected_focus
+TC_DEP_RATE_GOOD,DEP_001,CUST_RATE,Q_DEP_RATE,您关注利率很正常，具体利率要以当天系统或网点公示为准。除了利率，也可以看资金安全、网点服务和办理便利性，我可以帮您查询当前可办理期限。,应覆盖利率公示、综合优势和查询引导
+TC_DEP_LIQUIDITY_MISSING,DEP_001,CUST_LIQUIDITY,Q_DEP_LIQUIDITY,可以提前取出来，问题不大。,应缺失利息影响、资金计划和活期/分笔方案
+TC_DEP_MATURITY_GOOD,DEP_001,CUST_LIQUIDITY,Q_DEP_MATURITY,是否自动转存取决于办理时的设置，到期后可能按规则续存，也可能转到活期账户，建议办理前确认转存方式并设置到期提醒。,应覆盖到期转存流程
+TC_DEP_COMPLIANCE_RISK,DEP_001,CUST_RATE,Q_DEP_RATE,我们这里利率最高，肯定最划算，您放心存。,应命中中风险合规表达并限制总分

@@ -1,102 +1,56 @@
 package com.miniapp.practice;
 
+import com.miniapp.practice.client.AiCoachClient;
+import com.miniapp.practice.client.AiCoachProperties;
+import com.miniapp.practice.client.dto.AiCoachDialogFinishRequest;
+import com.miniapp.practice.client.dto.AiCoachDialogFinishResponse;
+import com.miniapp.practice.client.dto.AiCoachDialogReplyRequest;
+import com.miniapp.practice.client.dto.AiCoachDialogReplyResponse;
+import com.miniapp.practice.client.dto.AiCoachDialogStartRequest;
+import com.miniapp.practice.client.dto.AiCoachDialogStartResponse;
 import com.miniapp.practice.dto.PracticeDialogFinishResponse;
 import com.miniapp.practice.dto.PracticeDialogReplyResponse;
 import com.miniapp.practice.dto.PracticeDialogStartResponse;
-import com.miniapp.practice.dto.PracticeDimensionScoreResponse;
-import com.miniapp.practice.dto.PracticeMessageResponse;
 import com.miniapp.practice.dto.PracticeTaskDetailResponse;
 import com.miniapp.practice.dto.PracticeTaskListResponse;
 import com.miniapp.practice.dto.PracticeTaskSummaryResponse;
+import com.miniapp.practice.metadata.AiCoachMetadataService;
+import com.miniapp.practice.metadata.AiCoachMetadataService.BusinessSceneMetadata;
+import com.miniapp.practice.metadata.AiCoachMetadataService.CustomerProfile;
+import com.miniapp.practice.model.PracticeTask;
+import com.miniapp.practice.repository.PracticeTaskRepository;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 @Service
 public class MiniPracticeService {
-    private static final int TOTAL_ROUNDS = 3;
-    private static final String SOURCE_RULE_BASED = "RULE_BASED";
+    private static final String DEFAULT_USER_ID = "U_DEMO";
 
-    private final Map<String, PracticeSession> sessions = new ConcurrentHashMap<>();
+    private final AiCoachClient aiCoachClient;
+    private final AiCoachProperties aiCoachProperties;
+    private final PracticeTaskRepository practiceTaskRepository;
+    private final AiCoachMetadataService aiCoachMetadataService;
+
+    public MiniPracticeService(
+            AiCoachClient aiCoachClient,
+            AiCoachProperties aiCoachProperties,
+            PracticeTaskRepository practiceTaskRepository,
+            AiCoachMetadataService aiCoachMetadataService) {
+        this.aiCoachClient = aiCoachClient;
+        this.aiCoachProperties = aiCoachProperties;
+        this.practiceTaskRepository = practiceTaskRepository;
+        this.aiCoachMetadataService = aiCoachMetadataService;
+    }
 
     public PracticeTaskListResponse getTasks(String tab) {
-        List<PracticeTaskSummaryResponse> tasks = new ArrayList<>();
-
-        if ("self".equals(tab)) {
-            tasks.add(new PracticeTaskSummaryResponse(
-                    "l1",
-                    "信用卡分期回访",
-                    "信用卡",
-                    "recommend",
-                    "强烈推荐",
-                    "PENDING",
-                    "待完成",
-                    "",
-                    40
-            ));
-            tasks.add(new PracticeTaskSummaryResponse(
-                    "l2",
-                    "贷款逾期提醒",
-                    "贷款",
-                    "recommend",
-                    "强烈推荐",
-                    "PENDING",
-                    "待完成",
-                    "",
-                    40
-            ));
-            tasks.add(new PracticeTaskSummaryResponse(
-                    "l3",
-                    "客户投诉安抚",
-                    "投诉",
-                    "recommend",
-                    "强烈推荐",
-                    "PENDING",
-                    "待完成",
-                    "",
-                    40
-            ));
-        } else if ("done".equals(tab)) {
-            tasks.add(new PracticeTaskSummaryResponse(
-                    "t0",
-                    "存款推荐话术",
-                    "存款推荐",
-                    "must",
-                    "必须完成",
-                    "DONE",
-                    "已完成",
-                    "2026-06-10",
-                    50
-            ));
-        } else {
-            tasks.add(new PracticeTaskSummaryResponse(
-                    "t1",
-                    "风险揭示话术",
-                    "理财产品风险揭示",
-                    "must",
-                    "必须完成",
-                    "IN_PROGRESS",
-                    "进行中",
-                    "2026-06-28",
-                    50
-            ));
-            tasks.add(new PracticeTaskSummaryResponse(
-                    "t2",
-                    "高净值客户需求挖掘",
-                    "需求挖掘",
-                    "recommend",
-                    "强烈推荐",
-                    "PENDING",
-                    "待完成",
-                    "2026-07-05",
-                    60
-            ));
-        }
+        String tabType = (tab == null || tab.trim().isEmpty()) ? "assigned" : tab;
+        List<PracticeTaskSummaryResponse> tasks = practiceTaskRepository.findByTabTypeOrderByIdAsc(tabType)
+                .stream()
+                .map(this::toSummaryResponse)
+                .collect(Collectors.toList());
 
         return new PracticeTaskListResponse(
                 "Lv5 专业进阶",
@@ -109,228 +63,175 @@ public class MiniPracticeService {
     }
 
     public PracticeTaskDetailResponse getTaskDetail(String taskId) {
+        PracticeTask task = findTask(taskId);
+        CustomerProfile profile = findProfile(task);
+        BusinessSceneMetadata businessSceneMetadata = aiCoachMetadataService.findBusinessConfigBySceneId(task.getAiSceneId())
+                .orElse(null);
+
         PracticeTaskDetailResponse response = new PracticeTaskDetailResponse();
-
-        response.setTaskId(taskId);
-        response.setTitle(resolveTitle(taskId));
-        response.setScene(resolveScene(taskId));
-        response.setRounds(3);
-
-        response.setCustomerName("王女士");
-        response.setCustomerDesc("35岁，企业白领，有一笔闲置资金");
-        response.setTags(Arrays.asList("流动性担忧", "利率敏感", "风险厌恶"));
-
-        response.setBackground("客户近期有一笔闲置资金，关注收益的同时担心资金随时可能需要支取。请你结合客户情况，推荐合适的产品并打消其顾虑。");
-        response.setGoal("完成 3 轮对话，覆盖产品收益、流动性方案与风险说明。");
-        response.setRequirements(Arrays.asList("完成 3 轮对话", "综合得分 ≥ 80 分"));
-
-        response.setDuration("15-20 分钟");
-        response.setProgress(0);
-        response.setScriptId("s1");
-
+        response.setTaskId(task.getTaskId());
+        response.setAiSceneId(profile.getSceneId());
+        response.setTitle(profile.getSceneName());
+        response.setScene(resolveSceneName(profile, businessSceneMetadata));
+        response.setRounds(resolveRounds(task));
+        response.setCustomerName(profile.getCustomerType());
+        response.setCustomerDesc(firstNonBlank(profile.getPersonality(), profile.getConcern()));
+        response.setTags(profile.getExpectedIntents());
+        response.setBackground(profile.getOpeningQuestion());
+        response.setGoal(profile.getFollowupStrategy());
+        response.setDifficulty(profile.getDifficultyLevel());
+        // 展示口径待产品或算法 metadata 明确，当前不展示内部评分 must_points，避免误导员工。
+        response.setRequirements(Collections.emptyList());
+        response.setDuration("");
+        response.setProgress(task.getProgress());
+        response.setScriptId("");
         return response;
     }
 
     public PracticeDialogStartResponse startDialog(String taskId) {
-        String sessionId = "s-" + UUID.randomUUID();
-
-        PracticeSession session = new PracticeSession();
-        session.setSessionId(sessionId);
-        session.setTaskId(taskId);
-        session.setCurrentRound(1);
-        session.getMessages().add(new PracticeMessageResponse(
-                "ai",
-                buildFirstQuestion(taskId)
+        PracticeTask task = findTask(taskId);
+        if (task.getAiSceneId() == null || task.getAiSceneId().trim().isEmpty()) {
+            throw new RuntimeException("陪练任务未配置 AI 场景：" + taskId);
+        }
+        Integer totalRounds = task.getRounds() == null ? aiCoachProperties.getDefaultTotalRounds() : task.getRounds();
+        String customerId = task.getCustomerId();
+        if (customerId != null && customerId.trim().isEmpty()) {
+            customerId = null;
+        }
+        AiCoachDialogStartResponse aiResponse = aiCoachClient.start(new AiCoachDialogStartRequest(
+                DEFAULT_USER_ID,
+                task.getAiSceneId(),
+                task.getTaskId(),
+                customerId,
+                totalRounds
         ));
-
-        sessions.put(sessionId, session);
-
         PracticeDialogStartResponse response = new PracticeDialogStartResponse();
-        response.setSessionId(sessionId);
-        response.setTaskId(taskId);
-        response.setRound(1);
-        response.setTotalRounds(TOTAL_ROUNDS);
-        response.setLiveScore(70);
-        response.setMessages(session.getMessages());
-        response.setSource(SOURCE_RULE_BASED);
-
+        response.setSessionId(aiResponse.getSessionId());
+        response.setTaskId(aiResponse.getTaskId());
+        response.setRound(aiResponse.getRound());
+        response.setTotalRounds(aiResponse.getTotalRounds());
+        response.setLiveScore(aiResponse.getLiveScore());
+        response.setMessages(aiResponse.getMessages());
+        response.setSource(aiResponse.getSource());
         return response;
     }
 
-    public PracticeDialogReplyResponse replyDialog(String sessionId, String text) {
-        PracticeSession session = sessions.get(sessionId);
+    private PracticeTaskSummaryResponse toSummaryResponse(PracticeTask task) {
+        CustomerProfile profile = findProfile(task);
+        BusinessSceneMetadata businessSceneMetadata = aiCoachMetadataService.findBusinessConfigBySceneId(task.getAiSceneId())
+                .orElse(null);
+        return new PracticeTaskSummaryResponse(
+                task.getTaskId(),
+                profile.getSceneName(),
+                resolveSceneName(profile, businessSceneMetadata),
+                firstNonBlank(task.getLevel(), "recommend"),
+                resolveLevelText(task.getLevel()),
+                task.getStatus(),
+                resolveStatusText(task.getStatus()),
+                task.getDeadline(),
+                task.getRewardPoints()
+        );
+    }
 
-        if (session == null) {
-            throw new RuntimeException("Practice session not found");
+    private PracticeTask findTask(String taskId) {
+        return practiceTaskRepository.findByTaskId(taskId)
+                .orElseThrow(() -> new RuntimeException("未找到陪练任务：" + taskId));
+    }
+
+    private CustomerProfile findProfile(PracticeTask task) {
+        return aiCoachMetadataService.findProfileBySceneId(task.getAiSceneId())
+                .orElseThrow(() -> new RuntimeException("AI 陪练元数据不可用，请稍后重试"));
+    }
+
+    private String resolveSceneName(CustomerProfile profile, BusinessSceneMetadata businessSceneMetadata) {
+        if (businessSceneMetadata != null && !businessSceneMetadata.getBusinessName().isEmpty()) {
+            return businessSceneMetadata.getBusinessName();
         }
+        return profile.getSceneName();
+    }
 
+    private Integer resolveRounds(PracticeTask task) {
+        return task.getRounds() == null ? aiCoachProperties.getDefaultTotalRounds() : task.getRounds();
+    }
+
+    private String resolveLevelText(String level) {
+        if ("must".equals(level)) {
+            return "必须完成";
+        }
+        if ("recommend".equals(level)) {
+            return "强烈推荐";
+        }
+        return "";
+    }
+
+    private String resolveStatusText(String status) {
+        if ("IN_PROGRESS".equals(status)) {
+            return "进行中";
+        }
+        if ("DONE".equals(status) || "FINISHED".equals(status)) {
+            return "已完成";
+        }
+        if ("PENDING".equals(status) || "NOT_STARTED".equals(status)) {
+            return "待完成";
+        }
+        return "";
+    }
+
+    private String firstNonBlank(String primary, String fallback) {
+        if (primary != null && !primary.trim().isEmpty()) {
+            return primary;
+        }
+        if (fallback != null && !fallback.trim().isEmpty()) {
+            return fallback;
+        }
+        return "";
+    }
+
+    public PracticeDialogReplyResponse replyDialog(String sessionId, String text) {
+        if (sessionId == null || sessionId.trim().isEmpty()) {
+            throw new RuntimeException("Session id cannot be empty");
+        }
         if (text == null || text.trim().isEmpty()) {
             throw new RuntimeException("Reply text cannot be empty");
         }
 
-        session.getMessages().add(new PracticeMessageResponse("user", text));
-
-        int answeredRound = session.getCurrentRound();
-
+        AiCoachDialogReplyResponse aiResponse = aiCoachClient.reply(new AiCoachDialogReplyRequest(sessionId, text));
         PracticeDialogReplyResponse response = new PracticeDialogReplyResponse();
-        response.setTotalRounds(TOTAL_ROUNDS);
-        response.setSource(SOURCE_RULE_BASED);
-
-        if (answeredRound >= TOTAL_ROUNDS) {
-            response.setRound(TOTAL_ROUNDS);
-            response.setLiveScore(84);
-            response.setMessage(null);
-            response.setFinished(true);
-            return response;
-        }
-
-        int nextRound = answeredRound + 1;
-        session.setCurrentRound(nextRound);
-
-        PracticeMessageResponse aiMessage = new PracticeMessageResponse(
-                "ai",
-                buildFollowUpQuestion(nextRound)
-        );
-        session.getMessages().add(aiMessage);
-
-        response.setRound(nextRound);
-        response.setLiveScore(calculateMockLiveScore(nextRound));
-        response.setMessage(aiMessage);
-        response.setFinished(false);
-
+        response.setRound(aiResponse.getRound());
+        response.setTotalRounds(aiResponse.getTotalRounds());
+        response.setLiveScore(aiResponse.getLiveScore());
+        response.setMessage(aiResponse.getMessage());
+        response.setFinished(aiResponse.getFinished());
+        response.setSource(aiResponse.getSource());
         return response;
     }
 
     public PracticeDialogFinishResponse finishDialog(String sessionId) {
-        PracticeSession session = sessions.get(sessionId);
-
-        if (session == null) {
-            throw new RuntimeException("Practice session not found");
+        if (sessionId == null || sessionId.trim().isEmpty()) {
+            throw new RuntimeException("Session id cannot be empty");
         }
 
+        AiCoachDialogFinishResponse aiResponse = aiCoachClient.finish(new AiCoachDialogFinishRequest(sessionId));
         PracticeDialogFinishResponse response = new PracticeDialogFinishResponse();
 
-        response.setResultId("r-" + UUID.randomUUID());
-        response.setTaskId(session.getTaskId());
-        response.setScore(82);
-        response.setScoreDelta(6);
-        response.setCertificationTitle("新晋「合规揭示达人」");
-        response.setCertificationDesc("合规表达达标，完成专项认证");
+        // resultId 暂作为算法结果引用；taskId 是 start 时传入并由算法会话原样返回的业务任务 ID。
+        response.setResultId(aiResponse.getResultId());
+        response.setTaskId(aiResponse.getTaskId());
 
-        response.setDimensionScores(Arrays.asList(
-                new PracticeDimensionScoreResponse("合规度", 92, "优秀"),
-                new PracticeDimensionScoreResponse("共情力", 84, "良好"),
-                new PracticeDimensionScoreResponse("逻辑结构", 86, "优秀"),
-                new PracticeDimensionScoreResponse("异议处理", 80, "良好")
-        ));
+        // 以下为算法真实评分字段，直接透传。
+        response.setScore(aiResponse.getScore());
+        response.setDimensionScores(aiResponse.getDimensionScores());
+        response.setWeakTags(aiResponse.getWeakTags());
+        response.setSuggestion(aiResponse.getSuggestion());
+        response.setSource(aiResponse.getSource());
 
-        response.setRewardPoints(80);
-        response.setRewardExp(120);
-        response.setWeakTags(Arrays.asList("流动性解释不足", "风险提示不足"));
-        response.setSuggestion("回答基本覆盖了产品要点，但对客户流动性需求的应对不够具体，建议补充活期与定期搭配方案的说明。");
-        response.setSource(SOURCE_RULE_BASED);
-
+        // 以下字段当前是算法联调占位或 Java 业务字段，暂为兼容透传；后续由历史、积分、经验和认证模块覆盖。
+        response.setScoreDelta(aiResponse.getScoreDelta());
+        response.setRewardPoints(aiResponse.getRewardPoints());
+        response.setRewardExp(aiResponse.getRewardExp());
+        response.setCertificationTitle(aiResponse.getCertificationTitle());
+        response.setCertificationDesc(aiResponse.getCertificationDesc());
         return response;
     }
 
-    private String buildFirstQuestion(String taskId) {
-        return "您好，我最近想了解一下存款产品，有没有收益比较高又安全的推荐？";
-    }
-
-    private String buildFollowUpQuestion(int round) {
-        if (round == 2) {
-            return "如果资金需要随时支取，您会怎么建议呢？";
-        }
-        return "如果我比较担心风险，您能再具体说明一下安全吗？";
-    }
-
-    private Integer calculateMockLiveScore(int round) {
-        if (round == 2) {
-            return 78;
-        }
-        if (round == 3) {
-            return 84;
-        }
-        return 70;
-    }
-
-    private String resolveTitle(String taskId) {
-        if ("t1".equals(taskId)) {
-            return "风险揭示话术";
-        }
-        if ("t2".equals(taskId)) {
-            return "高净值客户需求挖掘";
-        }
-        if ("l1".equals(taskId)) {
-            return "信用卡分期回访";
-        }
-        if ("l2".equals(taskId)) {
-            return "贷款逾期提醒";
-        }
-        if ("l3".equals(taskId)) {
-            return "客户投诉安抚";
-        }
-        if ("t0".equals(taskId)) {
-            return "存款推荐话术";
-        }
-        return "存款推荐";
-    }
-
-    private String resolveScene(String taskId) {
-        if ("t1".equals(taskId)) {
-            return "理财产品风险揭示";
-        }
-        if ("t2".equals(taskId)) {
-            return "需求挖掘";
-        }
-        if ("l1".equals(taskId)) {
-            return "信用卡";
-        }
-        if ("l2".equals(taskId)) {
-            return "贷款";
-        }
-        if ("l3".equals(taskId)) {
-            return "投诉";
-        }
-        if ("t0".equals(taskId)) {
-            return "存款推荐";
-        }
-        return "存款推荐";
-    }
-
-    private static class PracticeSession {
-
-        private String sessionId;
-        private String taskId;
-        private Integer currentRound;
-        private final List<PracticeMessageResponse> messages = new ArrayList<>();
-
-        public String getSessionId() {
-            return sessionId;
-        }
-
-        public void setSessionId(String sessionId) {
-            this.sessionId = sessionId;
-        }
-
-        public String getTaskId() {
-            return taskId;
-        }
-
-        public void setTaskId(String taskId) {
-            this.taskId = taskId;
-        }
-
-        public Integer getCurrentRound() {
-            return currentRound;
-        }
-
-        public void setCurrentRound(Integer currentRound) {
-            this.currentRound = currentRound;
-        }
-
-        public List<PracticeMessageResponse> getMessages() {
-            return messages;
-        }
-    }
 }

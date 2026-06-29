@@ -1,0 +1,7 @@
+chunk_id,scene_id,customer_profile,knowledge_type,question_id,question,standard_answer,must_points,keywords,compliance_notes,weakness_tags,version,enabled
+DEP_001_RATE_001,DEP_001,CUST_RATE,standard_script,Q_DEP_RATE,别的银行利率可能更高，我为什么要存你们这里？,您关注利率很正常。建议除了利率，也一起考虑资金安全、网点服务、办理便利性和到期管理。具体利率以当日系统或网点公示为准，我可以帮您查询当前可办理的期限。,认可客户关注|说明利率以系统或网点公示为准|说明安全服务便利等综合因素|引导查询当前可办理期限,利率|系统公示|网点公示|安全|服务|便利|查询,不能承诺利率最高|不能使用肯定最划算等绝对化表达,利率说明不足|产品优势说明不足,KB_W2_DEP_001,true
+DEP_001_LIQ_001,DEP_001,CUST_LIQUIDITY,standard_script,Q_DEP_LIQUIDITY,如果我提前取出来会不会有损失？,定期存款支持提前支取，但提前支取部分通常会影响利息收益。建议您结合资金使用计划选择期限，也可以考虑保留一部分活期或分笔存入。,说明支持提前支取|说明利息收益可能受影响|结合资金使用计划选择期限|建议保留活期或分笔存入,提前支取|利息|资金计划|期限|活期|分笔,不能承诺随时取都不影响利息|具体规则以银行系统为准,流动性说明不足|替代方案不足,KB_W2_DEP_001,true
+DEP_001_MATURITY_001,DEP_001,CUST_LIQUIDITY,standard_script,Q_DEP_MATURITY,到期之后是不是自动转存？,是否自动转存要看办理时选择的设置。如果您选择自动转存，到期后系统会按规则续存；如果没有选择，通常会转到活期账户。建议办理前确认转存方式和到期提醒。,说明自动转存取决于办理设置|说明到期后可能续存或转活期|提醒确认转存方式|提醒关注到期提醒,自动转存|到期|设置|续存|活期|到期提醒,不能绝对承诺一定自动转存|规则以系统设置为准,流程说明不足|到期安排说明不足,KB_W2_DEP_001,true
+DEP_001_REJECT_001,DEP_001,CUST_REJECT,standard_script,Q_DEP_REJECT,我再考虑一下吧，现在不太想存。,没问题，您可以再考虑一下。我想先了解您主要顾虑是资金可能要用，还是对期限和利率不确定。定期存款适合一段时间暂时不用的资金，如果您希望灵活一些，也可以保留部分活期，后续需要时我再帮您查询。,认可客户犹豫|询问顾虑或资金安排|说明定期适合暂时不用资金|提供保留活期等灵活方案|给出后续查询或办理选择,考虑|顾虑|资金安排|暂时不用|活期|查询,不能催促或诱导强办|不能承诺收益最高,客户需求回应不足|办理引导不足,KB_W2_DEP_001,true
+WM_001_PLACEHOLDER_001,WM_001,CUST_RISK,placeholder,Q_WM_RISK,这个理财会不会亏？,,,,理财样例保留到 W6 embedding RAG 阶段展开,KB_W2_DEP_001,false
+CC_001_PLACEHOLDER_001,CC_001,CUST_COST,placeholder,Q_CC_COST,信用卡不用会不会扣钱？,,,,信用卡样例保留到 W7 场景扩展阶段展开,KB_W2_DEP_001,false

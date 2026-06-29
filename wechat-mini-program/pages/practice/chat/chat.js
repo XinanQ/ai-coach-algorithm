@@ -76,8 +76,14 @@ Page({
     // 规范：finish 用 sessionId，直接返回最终评分
     api.practice.finishDialog(this.data.sessionId).then((r) => {
       wx.hideLoading()
-      const score = (r && r.score != null) ? r.score : this.data.liveScore
-      wx.redirectTo({ url: `/pages/practice/result/result?taskId=${this.data.taskId}&score=${score}` })
+      const sessionId = this.data.sessionId
+      const taskId = this.data.taskId
+      const cacheKey = `practiceFinishResult:${sessionId}`
+      const result = Object.assign({}, r, { taskId })
+      wx.setStorageSync(cacheKey, result)
+      wx.redirectTo({
+        url: `/pages/practice/result/result?sessionId=${encodeURIComponent(sessionId)}&taskId=${encodeURIComponent(taskId)}`
+      })
     }).catch(() => wx.hideLoading())
   }
 })

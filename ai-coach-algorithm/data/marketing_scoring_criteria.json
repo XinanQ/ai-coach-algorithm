@@ -1,0 +1,2189 @@
+{
+  "summary": {
+    "step": "marketing_chunks_to_scoring_criteria",
+    "version": "MSC_MARKETING_V1",
+    "input_file": "C:\\Users\\Terre\\Desktop\\2026_Summer_intern\\ai陪练\\ai-coach-algorithm-W1\\data\\marketing_chunks.json",
+    "output_file": "C:\\Users\\Terre\\Desktop\\2026_Summer_intern\\ai陪练\\ai-coach-algorithm-W1\\data\\marketing_scoring_criteria.json",
+    "source_chunk_count": 171,
+    "source_chunk_summary": {
+      "run_at": "2026-06-23T11:13:45",
+      "step": "review_sections_to_marketing_chunks",
+      "input_file": "C:\\Users\\Terre\\Desktop\\2026_Summer_intern\\ai陪练\\ai-coach-algorithm-W1\\data\\marketing_sections.json",
+      "output_file": "C:\\Users\\Terre\\Desktop\\2026_Summer_intern\\ai陪练\\ai-coach-algorithm-W1\\data\\marketing_chunks.json",
+      "version": "KB_MARKETING_V1",
+      "section_count": 157,
+      "chunk_count": 171,
+      "skipped_section_count": 2,
+      "rag_ready_count": 0,
+      "risk_detected_count": 21,
+      "by_business_type": {
+        "FUND": 41,
+        "INS": 111,
+        "WM": 19
+      },
+      "by_scene_id": {
+        "FUND_FIXED_INVEST": 13,
+        "FUND_GENERAL": 18,
+        "FUND_INVITE": 2,
+        "FUND_OBJECTION": 6,
+        "FUND_SALE": 2,
+        "INS_DIVIDEND": 10,
+        "INS_GENERAL": 38,
+        "INS_INVITE": 14,
+        "INS_OBJECTION": 2,
+        "INS_PERIODIC": 42,
+        "INS_PROCESS": 5,
+        "WM_ASSET": 15,
+        "WM_GENERAL": 3,
+        "WM_PRODUCT": 1
+      },
+      "by_knowledge_type": {
+        "compliance_note": 4,
+        "objection_handling": 20,
+        "phone_invitation": 37,
+        "product_intro": 61,
+        "raw_script": 37,
+        "sales_process": 12
+      },
+      "by_review_status": {
+        "pending": 171
+      },
+      "by_compliance_status": {
+        "pass": 150,
+        "risk_detected": 21
+      },
+      "by_quality_flag": {
+        "absolute_performance_review": 3,
+        "customer_view_fallback": 132,
+        "sales_pressure_review": 13
+      }
+    },
+    "criteria_count": 31,
+    "by_business_type": {
+      "FUND": 10,
+      "INS": 16,
+      "WM": 5
+    },
+    "by_knowledge_type": {
+      "compliance_note": 2,
+      "objection_handling": 5,
+      "phone_invitation": 6,
+      "product_intro": 7,
+      "raw_script": 6,
+      "sales_process": 5
+    },
+    "review_status": "pending"
+  },
+  "criteria": [
+    {
+      "criterion_id": "MSC_FUND_FUND_FIXED_INVEST_PHONE_INVITATION",
+      "business_type": "FUND",
+      "business_name": "基金营销",
+      "scene_id": "FUND_FIXED_INVEST",
+      "scene_name": "基金定投营销",
+      "knowledge_type": "phone_invitation",
+      "answer_goal": "在基金营销-基金定投营销场景下，完成合规、清晰的客户邀约。",
+      "must_points": [
+        "说明定投是分批、长期参与的投资方式。",
+        "提示基金净值波动和投资风险。",
+        "结合客户风险承受能力和投资期限判断是否适合。",
+        "确认客户身份和沟通场景。",
+        "说明联系客户的原因或服务背景。",
+        "提出清晰的下一步邀约或办理动作。",
+        "避免夸大收益、权益或承诺结果。",
+        "基金净值存在波动，不能承诺固定收益。",
+        "需要结合客户风险承受能力和投资期限判断是否适合。"
+      ],
+      "key_terms": [
+        "基金",
+        "定投",
+        "保险",
+        "理财产品",
+        "分红"
+      ],
+      "compliance_red_lines": [
+        "零违约风险",
+        "大可放心",
+        "保证本金",
+        "锁定收益",
+        "一定赚钱",
+        "保证兑现",
+        "无风险",
+        "稳赚",
+        "保本"
+      ],
+      "business_boundaries": [
+        "基金净值存在波动，不能承诺固定收益。",
+        "需要结合客户风险承受能力和投资期限判断是否适合。"
+      ],
+      "scoring_weights": {
+        "keyword_score": 20,
+        "semantic_score": 25,
+        "completeness_score": 20,
+        "fluency_score": 15,
+        "compliance_score": 20
+      },
+      "source_chunk_ids": [
+        "MCH_000133",
+        "MCH_000134",
+        "MCH_000139"
+      ],
+      "source_titles": [
+        "为子女存钱客户(强制储蓄)",
+        "年轻流入类业务客户(存款/理财)(以小博大)",
+        "【客户构成】基金、保险、理财持有,AUM20万以上"
+      ],
+      "source_chunk_count": 3,
+      "risk_chunk_count": 0,
+      "review_status": "pending",
+      "enabled": true,
+      "version": "MSC_MARKETING_V1"
+    },
+    {
+      "criterion_id": "MSC_FUND_FUND_FIXED_INVEST_PRODUCT_INTRO",
+      "business_type": "FUND",
+      "business_name": "基金营销",
+      "scene_id": "FUND_FIXED_INVEST",
+      "scene_name": "基金定投营销",
+      "knowledge_type": "product_intro",
+      "answer_goal": "在基金营销-基金定投营销场景下，介绍产品核心信息并提示风险边界。",
+      "must_points": [
+        "说明定投是分批、长期参与的投资方式。",
+        "提示基金净值波动和投资风险。",
+        "结合客户风险承受能力和投资期限判断是否适合。",
+        "说明产品或服务的核心特点。",
+        "说明期限、收益、费用、资产投向或适用条件等关键信息。",
+        "提示风险、限制条件或不确定性。",
+        "结合客户需求判断适配性。",
+        "提醒以正式产品说明、合同或业务规则为准。",
+        "基金净值存在波动，不能承诺固定收益。",
+        "需要结合客户风险承受能力和投资期限判断是否适合。"
+      ],
+      "key_terms": [
+        "定投",
+        "基金",
+        "理财产品"
+      ],
+      "compliance_red_lines": [
+        "零违约风险",
+        "大可放心",
+        "保证本金",
+        "锁定收益",
+        "一定赚钱",
+        "保证兑现",
+        "无风险",
+        "稳赚",
+        "保本"
+      ],
+      "business_boundaries": [
+        "基金净值存在波动，不能承诺固定收益。",
+        "需要结合客户风险承受能力和投资期限判断是否适合。"
+      ],
+      "scoring_weights": {
+        "keyword_score": 20,
+        "semantic_score": 25,
+        "completeness_score": 20,
+        "fluency_score": 15,
+        "compliance_score": 20
+      },
+      "source_chunk_ids": [
+        "MCH_000120",
+        "MCH_000130",
+        "MCH_000131",
+        "MCH_000140"
+      ],
+      "source_titles": [
+        "1.厅堂柜面转介话术.",
+        "常用基金定投营销话术XX 先生/女士/姐/哥/叔:",
+        "这款产品的名称叫做基金定投.",
+        "基金定投微沙龙参考话术"
+      ],
+      "source_chunk_count": 4,
+      "risk_chunk_count": 0,
+      "review_status": "pending",
+      "enabled": true,
+      "version": "MSC_MARKETING_V1"
+    },
+    {
+      "criterion_id": "MSC_FUND_FUND_FIXED_INVEST_RAW_SCRIPT",
+      "business_type": "FUND",
+      "business_name": "基金营销",
+      "scene_id": "FUND_FIXED_INVEST",
+      "scene_name": "基金定投营销",
+      "knowledge_type": "raw_script",
+      "answer_goal": "在基金营销-基金定投营销场景下，围绕客户需求完成基础营销沟通。",
+      "must_points": [
+        "说明定投是分批、长期参与的投资方式。",
+        "提示基金净值波动和投资风险。",
+        "结合客户风险承受能力和投资期限判断是否适合。",
+        "围绕客户需求展开沟通。",
+        "覆盖话术中的核心业务信息。",
+        "给出明确但不强迫的下一步建议。",
+        "保持合规表达，避免绝对化承诺。",
+        "基金净值存在波动，不能承诺固定收益。",
+        "需要结合客户风险承受能力和投资期限判断是否适合。"
+      ],
+      "key_terms": [
+        "基金",
+        "定投",
+        "长期投资"
+      ],
+      "compliance_red_lines": [
+        "零违约风险",
+        "大可放心",
+        "保证本金",
+        "锁定收益",
+        "一定赚钱",
+        "保证兑现",
+        "无风险",
+        "稳赚",
+        "保本"
+      ],
+      "business_boundaries": [
+        "基金净值存在波动，不能承诺固定收益。",
+        "需要结合客户风险承受能力和投资期限判断是否适合。"
+      ],
+      "scoring_weights": {
+        "keyword_score": 20,
+        "semantic_score": 25,
+        "completeness_score": 20,
+        "fluency_score": 15,
+        "compliance_score": 20
+      },
+      "source_chunk_ids": [
+        "MCH_000121",
+        "MCH_000122",
+        "MCH_000123",
+        "MCH_000132",
+        "MCH_000135",
+        "MCH_000141"
+      ],
+      "source_titles": [
+        "(1)针对新客户(未做过基金定投的客户).",
+        "(2)针对于做过基金、基金定投或者股票的客户亏损的客户.",
+        "(3)针对做过基金、基金定投盈利的客户.",
+        "新开卡客户",
+        "定投中断的提前防范",
+        "3、长期投资,收益高.只要您选好基金,在掌银或网银签约,长期投资,收益可观."
+      ],
+      "source_chunk_count": 6,
+      "risk_chunk_count": 0,
+      "review_status": "pending",
+      "enabled": true,
+      "version": "MSC_MARKETING_V1"
+    },
+    {
+      "criterion_id": "MSC_FUND_FUND_GENERAL_PRODUCT_INTRO",
+      "business_type": "FUND",
+      "business_name": "基金营销",
+      "scene_id": "FUND_GENERAL",
+      "scene_name": "基金综合营销",
+      "knowledge_type": "product_intro",
+      "answer_goal": "在基金营销-基金综合营销场景下，介绍产品核心信息并提示风险边界。",
+      "must_points": [
+        "说明产品或服务的核心特点。",
+        "说明期限、收益、费用、资产投向或适用条件等关键信息。",
+        "提示风险、限制条件或不确定性。",
+        "结合客户需求判断适配性。",
+        "提醒以正式产品说明、合同或业务规则为准。",
+        "基金净值存在波动，不能承诺固定收益。",
+        "需要结合客户风险承受能力和投资期限判断是否适合。"
+      ],
+      "key_terms": [
+        "保险",
+        "理财产品",
+        "期限",
+        "债券",
+        "锁定收益",
+        "期交",
+        "保单",
+        "基金",
+        "现金价值",
+        "合同",
+        "费用",
+        "分红"
+      ],
+      "compliance_red_lines": [
+        "零违约风险",
+        "大可放心",
+        "保证本金",
+        "锁定收益",
+        "一定赚钱",
+        "保证兑现",
+        "无风险",
+        "稳赚",
+        "保本"
+      ],
+      "business_boundaries": [
+        "基金净值存在波动，不能承诺固定收益。",
+        "需要结合客户风险承受能力和投资期限判断是否适合。"
+      ],
+      "scoring_weights": {
+        "keyword_score": 20,
+        "semantic_score": 25,
+        "completeness_score": 20,
+        "fluency_score": 15,
+        "compliance_score": 20
+      },
+      "source_chunk_ids": [
+        "MCH_000113",
+        "MCH_000124",
+        "MCH_000125",
+        "MCH_000136",
+        "MCH_000138",
+        "MCH_000142",
+        "MCH_000143",
+        "MCH_000144",
+        "MCH_000145",
+        "MCH_000147",
+        "MCH_000148",
+        "MCH_000149"
+      ],
+      "source_titles": [
+        "张先生,您一直都在买理财产品,有没有发现利率有什么变化呢(客户回答越来越低了)",
+        "二、账户贵金属",
+        "1.一句话营销:",
+        "称赞客户:客户到处去比较理财产品收益率,也是件很辛苦的事情.他们是需要被你称赞的:",
+        "帮助决策:此时,客户需要一个专业的人士给出清晰的建议:",
+        "保险一句话营销话术分享",
+        "6、开卡的客户:您用这张卡可以关联一个每年定期存的保险产品,形成强制存钱的动作.",
+        "10、开网银的客户:咱们行还有网银买不到的代销保险产品,您来了解一下吧!"
+      ],
+      "source_chunk_count": 12,
+      "risk_chunk_count": 1,
+      "review_status": "pending",
+      "enabled": true,
+      "version": "MSC_MARKETING_V1"
+    },
+    {
+      "criterion_id": "MSC_FUND_FUND_GENERAL_RAW_SCRIPT",
+      "business_type": "FUND",
+      "business_name": "基金营销",
+      "scene_id": "FUND_GENERAL",
+      "scene_name": "基金综合营销",
+      "knowledge_type": "raw_script",
+      "answer_goal": "在基金营销-基金综合营销场景下，围绕客户需求完成基础营销沟通。",
+      "must_points": [
+        "围绕客户需求展开沟通。",
+        "覆盖话术中的核心业务信息。",
+        "给出明确但不强迫的下一步建议。",
+        "保持合规表达，避免绝对化承诺。",
+        "基金净值存在波动，不能承诺固定收益。",
+        "需要结合客户风险承受能力和投资期限判断是否适合。"
+      ],
+      "key_terms": [
+        "保险",
+        "费用",
+        "合同",
+        "波动"
+      ],
+      "compliance_red_lines": [
+        "零违约风险",
+        "大可放心",
+        "保证本金",
+        "锁定收益",
+        "一定赚钱",
+        "保证兑现",
+        "无风险",
+        "稳赚",
+        "保本"
+      ],
+      "business_boundaries": [
+        "基金净值存在波动，不能承诺固定收益。",
+        "需要结合客户风险承受能力和投资期限判断是否适合。"
+      ],
+      "scoring_weights": {
+        "keyword_score": 20,
+        "semantic_score": 25,
+        "completeness_score": 20,
+        "fluency_score": 15,
+        "compliance_score": 20
+      },
+      "source_chunk_ids": [
+        "MCH_000146",
+        "MCH_000150",
+        "MCH_000151",
+        "MCH_000152"
+      ],
+      "source_titles": [
+        "2 . 客户说:我做生意也很赚钱",
+        "5 . 客户说:买房养老更好",
+        "客户说:收房租,以房养老:",
+        "客户说:买了卖,涨得很快:"
+      ],
+      "source_chunk_count": 4,
+      "risk_chunk_count": 0,
+      "review_status": "pending",
+      "enabled": true,
+      "version": "MSC_MARKETING_V1"
+    },
+    {
+      "criterion_id": "MSC_FUND_FUND_GENERAL_SALES_PROCESS",
+      "business_type": "FUND",
+      "business_name": "基金营销",
+      "scene_id": "FUND_GENERAL",
+      "scene_name": "基金综合营销",
+      "knowledge_type": "sales_process",
+      "answer_goal": "在基金营销-基金综合营销场景下，按照业务流程推进客户沟通。",
+      "must_points": [
+        "按照需求了解、产品说明、风险提示和确认办理的顺序推进。",
+        "确认客户需求、风险承受能力或办理条件。",
+        "说明关键材料、规则或办理步骤。",
+        "保留客户自主决策空间。",
+        "基金净值存在波动，不能承诺固定收益。",
+        "需要结合客户风险承受能力和投资期限判断是否适合。"
+      ],
+      "key_terms": [
+        "保险"
+      ],
+      "compliance_red_lines": [
+        "零违约风险",
+        "大可放心",
+        "保证本金",
+        "锁定收益",
+        "一定赚钱",
+        "保证兑现",
+        "无风险",
+        "稳赚",
+        "保本"
+      ],
+      "business_boundaries": [
+        "基金净值存在波动，不能承诺固定收益。",
+        "需要结合客户风险承受能力和投资期限判断是否适合。"
+      ],
+      "scoring_weights": {
+        "keyword_score": 20,
+        "semantic_score": 25,
+        "completeness_score": 20,
+        "fluency_score": 15,
+        "compliance_score": 20
+      },
+      "source_chunk_ids": [
+        "MCH_000126",
+        "MCH_000127"
+      ],
+      "source_titles": [
+        "4.交易促成:您是想给自己规划50万还是更高的保额呢?",
+        "7.场景案例."
+      ],
+      "source_chunk_count": 2,
+      "risk_chunk_count": 0,
+      "review_status": "pending",
+      "enabled": true,
+      "version": "MSC_MARKETING_V1"
+    },
+    {
+      "criterion_id": "MSC_FUND_FUND_INVITE_PHONE_INVITATION",
+      "business_type": "FUND",
+      "business_name": "基金营销",
+      "scene_id": "FUND_INVITE",
+      "scene_name": "基金电话邀约",
+      "knowledge_type": "phone_invitation",
+      "answer_goal": "在基金营销-基金电话邀约场景下，完成合规、清晰的客户邀约。",
+      "must_points": [
+        "说明邀约原因和基金服务背景。",
+        "引导客户进一步了解风险和产品信息。",
+        "确认客户身份和沟通场景。",
+        "说明联系客户的原因或服务背景。",
+        "提出清晰的下一步邀约或办理动作。",
+        "避免夸大收益、权益或承诺结果。",
+        "基金净值存在波动，不能承诺固定收益。",
+        "需要结合客户风险承受能力和投资期限判断是否适合。"
+      ],
+      "key_terms": [
+        "基金",
+        "债券",
+        "理财产品",
+        "保险"
+      ],
+      "compliance_red_lines": [
+        "零违约风险",
+        "大可放心",
+        "保证本金",
+        "锁定收益",
+        "一定赚钱",
+        "保证兑现",
+        "无风险",
+        "稳赚",
+        "保本"
+      ],
+      "business_boundaries": [
+        "基金净值存在波动，不能承诺固定收益。",
+        "需要结合客户风险承受能力和投资期限判断是否适合。"
+      ],
+      "scoring_weights": {
+        "keyword_score": 20,
+        "semantic_score": 25,
+        "completeness_score": 20,
+        "fluency_score": 15,
+        "compliance_score": 20
+      },
+      "source_chunk_ids": [
+        "MCH_000112",
+        "MCH_000128"
+      ],
+      "source_titles": [
+        "基金参考话术",
+        "9.柜面营销参考话术(适用所有客户,含医保客户):"
+      ],
+      "source_chunk_count": 2,
+      "risk_chunk_count": 0,
+      "review_status": "pending",
+      "enabled": true,
+      "version": "MSC_MARKETING_V1"
+    },
+    {
+      "criterion_id": "MSC_FUND_FUND_OBJECTION_OBJECTION_HANDLING",
+      "business_type": "FUND",
+      "business_name": "基金营销",
+      "scene_id": "FUND_OBJECTION",
+      "scene_name": "基金异议处理",
+      "knowledge_type": "objection_handling",
+      "answer_goal": "在基金营销-基金异议处理场景下，回应客户异议并给出审慎解释。",
+      "must_points": [
+        "回应客户对风险、亏损或市场波动的担忧。",
+        "说明基金投资存在净值波动。",
+        "避免承诺收益，强调自主决策。",
+        "先认可或回应客户顾虑。",
+        "澄清客户具体担心的问题。",
+        "结合产品规则或业务事实进行解释。",
+        "给出可选择的后续方案或下一步动作。",
+        "避免使用绝对化承诺。",
+        "基金净值存在波动，不能承诺固定收益。",
+        "需要结合客户风险承受能力和投资期限判断是否适合。"
+      ],
+      "key_terms": [
+        "基金",
+        "异议",
+        "理财产品",
+        "基金经理",
+        "保本",
+        "定投",
+        "债券",
+        "保证本金",
+        "明确保证本金",
+        "净值",
+        "分批",
+        "期限"
+      ],
+      "compliance_red_lines": [
+        "明确保证本金",
+        "零违约风险",
+        "大可放心",
+        "保证本金",
+        "锁定收益",
+        "一定赚钱",
+        "保证兑现",
+        "无风险",
+        "稳赚",
+        "保本"
+      ],
+      "business_boundaries": [
+        "基金净值存在波动，不能承诺固定收益。",
+        "需要结合客户风险承受能力和投资期限判断是否适合。"
+      ],
+      "scoring_weights": {
+        "keyword_score": 20,
+        "semantic_score": 25,
+        "completeness_score": 20,
+        "fluency_score": 15,
+        "compliance_score": 20
+      },
+      "source_chunk_ids": [
+        "MCH_000114",
+        "MCH_000115",
+        "MCH_000117",
+        "MCH_000118",
+        "MCH_000119",
+        "MCH_000129"
+      ],
+      "source_titles": [
+        "异议处理",
+        "基金异议处理话术",
+        "基金异议处理话术(续)",
+        "10.异议处理."
+      ],
+      "source_chunk_count": 6,
+      "risk_chunk_count": 1,
+      "review_status": "pending",
+      "enabled": true,
+      "version": "MSC_MARKETING_V1"
+    },
+    {
+      "criterion_id": "MSC_FUND_FUND_SALE_PRODUCT_INTRO",
+      "business_type": "FUND",
+      "business_name": "基金营销",
+      "scene_id": "FUND_SALE",
+      "scene_name": "基金销售关键点",
+      "knowledge_type": "product_intro",
+      "answer_goal": "在基金营销-基金销售关键点场景下，介绍产品核心信息并提示风险边界。",
+      "must_points": [
+        "说明产品或服务的核心特点。",
+        "说明期限、收益、费用、资产投向或适用条件等关键信息。",
+        "提示风险、限制条件或不确定性。",
+        "结合客户需求判断适配性。",
+        "提醒以正式产品说明、合同或业务规则为准。",
+        "基金净值存在波动，不能承诺固定收益。",
+        "需要结合客户风险承受能力和投资期限判断是否适合。"
+      ],
+      "key_terms": [
+        "无风险",
+        "期限",
+        "保本"
+      ],
+      "compliance_red_lines": [
+        "零违约风险",
+        "大可放心",
+        "保证本金",
+        "锁定收益",
+        "一定赚钱",
+        "保证兑现",
+        "无风险",
+        "稳赚",
+        "保本"
+      ],
+      "business_boundaries": [
+        "基金净值存在波动，不能承诺固定收益。",
+        "需要结合客户风险承受能力和投资期限判断是否适合。"
+      ],
+      "scoring_weights": {
+        "keyword_score": 20,
+        "semantic_score": 25,
+        "completeness_score": 20,
+        "fluency_score": 15,
+        "compliance_score": 20
+      },
+      "source_chunk_ids": [
+        "MCH_000137"
+      ],
+      "source_titles": [
+        "导入概念:很多客户常年买理财,但可能并不知道收益率高低的决定因素是什么:"
+      ],
+      "source_chunk_count": 1,
+      "risk_chunk_count": 1,
+      "review_status": "pending",
+      "enabled": true,
+      "version": "MSC_MARKETING_V1"
+    },
+    {
+      "criterion_id": "MSC_FUND_FUND_SALE_RAW_SCRIPT",
+      "business_type": "FUND",
+      "business_name": "基金营销",
+      "scene_id": "FUND_SALE",
+      "scene_name": "基金销售关键点",
+      "knowledge_type": "raw_script",
+      "answer_goal": "在基金营销-基金销售关键点场景下，围绕客户需求完成基础营销沟通。",
+      "must_points": [
+        "围绕客户需求展开沟通。",
+        "覆盖话术中的核心业务信息。",
+        "给出明确但不强迫的下一步建议。",
+        "保持合规表达，避免绝对化承诺。",
+        "基金净值存在波动，不能承诺固定收益。",
+        "需要结合客户风险承受能力和投资期限判断是否适合。"
+      ],
+      "key_terms": [
+        "基金",
+        "基金经理"
+      ],
+      "compliance_red_lines": [
+        "零违约风险",
+        "大可放心",
+        "保证本金",
+        "锁定收益",
+        "一定赚钱",
+        "保证兑现",
+        "无风险",
+        "稳赚",
+        "保本"
+      ],
+      "business_boundaries": [
+        "基金净值存在波动，不能承诺固定收益。",
+        "需要结合客户风险承受能力和投资期限判断是否适合。"
+      ],
+      "scoring_weights": {
+        "keyword_score": 20,
+        "semantic_score": 25,
+        "completeness_score": 20,
+        "fluency_score": 15,
+        "compliance_score": 20
+      },
+      "source_chunk_ids": [
+        "MCH_000116"
+      ],
+      "source_titles": [
+        "正文"
+      ],
+      "source_chunk_count": 1,
+      "risk_chunk_count": 0,
+      "review_status": "pending",
+      "enabled": true,
+      "version": "MSC_MARKETING_V1"
+    },
+    {
+      "criterion_id": "MSC_INS_INS_DIVIDEND_OBJECTION_HANDLING",
+      "business_type": "INS",
+      "business_name": "保险营销",
+      "scene_id": "INS_DIVIDEND",
+      "scene_name": "分红险异议处理",
+      "knowledge_type": "objection_handling",
+      "answer_goal": "在保险营销-分红险异议处理场景下，回应客户异议并给出审慎解释。",
+      "must_points": [
+        "说明分红险分红存在不确定性。",
+        "区分保障责任和收益演示。",
+        "提醒以保险合同为准。",
+        "先认可或回应客户顾虑。",
+        "澄清客户具体担心的问题。",
+        "结合产品规则或业务事实进行解释。",
+        "给出可选择的后续方案或下一步动作。",
+        "避免使用绝对化承诺。",
+        "保险产品应围绕保障责任、缴费期限和合同条款说明，不能包装成存款或理财。",
+        "分红、收益或现金价值存在不确定性，应以保险合同为准。"
+      ],
+      "key_terms": [
+        "分红",
+        "保险",
+        "100%收益/兑付表述",
+        "保证兑现",
+        "大可放心",
+        "锁定收益",
+        "固收",
+        "合同",
+        "顾虑",
+        "波动",
+        "异议",
+        "保单"
+      ],
+      "compliance_red_lines": [
+        "100%收益/兑付表述",
+        "零违约风险",
+        "大可放心",
+        "保证本金",
+        "锁定收益",
+        "一定赚钱",
+        "保证兑现",
+        "无风险",
+        "稳赚",
+        "保本"
+      ],
+      "business_boundaries": [
+        "保险产品应围绕保障责任、缴费期限和合同条款说明，不能包装成存款或理财。",
+        "分红、收益或现金价值存在不确定性，应以保险合同为准。"
+      ],
+      "scoring_weights": {
+        "keyword_score": 20,
+        "semantic_score": 25,
+        "completeness_score": 20,
+        "fluency_score": 15,
+        "compliance_score": 20
+      },
+      "source_chunk_ids": [
+        "MCH_000063",
+        "MCH_000064",
+        "MCH_000066",
+        "MCH_000067"
+      ],
+      "source_titles": [
+        "1、分红不确定,客户不接受,怎么办?",
+        "3、分红险的收益并不高,能抵得过通货膨胀么?"
+      ],
+      "source_chunk_count": 4,
+      "risk_chunk_count": 3,
+      "review_status": "pending",
+      "enabled": true,
+      "version": "MSC_MARKETING_V1"
+    },
+    {
+      "criterion_id": "MSC_INS_INS_DIVIDEND_PRODUCT_INTRO",
+      "business_type": "INS",
+      "business_name": "保险营销",
+      "scene_id": "INS_DIVIDEND",
+      "scene_name": "分红险异议处理",
+      "knowledge_type": "product_intro",
+      "answer_goal": "在保险营销-分红险异议处理场景下，介绍产品核心信息并提示风险边界。",
+      "must_points": [
+        "说明分红险分红存在不确定性。",
+        "区分保障责任和收益演示。",
+        "提醒以保险合同为准。",
+        "说明产品或服务的核心特点。",
+        "说明期限、收益、费用、资产投向或适用条件等关键信息。",
+        "提示风险、限制条件或不确定性。",
+        "结合客户需求判断适配性。",
+        "提醒以正式产品说明、合同或业务规则为准。",
+        "保险产品应围绕保障责任、缴费期限和合同条款说明，不能包装成存款或理财。",
+        "分红、收益或现金价值存在不确定性，应以保险合同为准。"
+      ],
+      "key_terms": [
+        "保险",
+        "分红",
+        "合同",
+        "锁定收益",
+        "封闭期",
+        "流动性",
+        "基金",
+        "现金价值",
+        "保单"
+      ],
+      "compliance_red_lines": [
+        "零违约风险",
+        "大可放心",
+        "保证本金",
+        "锁定收益",
+        "一定赚钱",
+        "保证兑现",
+        "无风险",
+        "稳赚",
+        "保本"
+      ],
+      "business_boundaries": [
+        "保险产品应围绕保障责任、缴费期限和合同条款说明，不能包装成存款或理财。",
+        "分红、收益或现金价值存在不确定性，应以保险合同为准。"
+      ],
+      "scoring_weights": {
+        "keyword_score": 20,
+        "semantic_score": 25,
+        "completeness_score": 20,
+        "fluency_score": 15,
+        "compliance_score": 20
+      },
+      "source_chunk_ids": [
+        "MCH_000010",
+        "MCH_000047",
+        "MCH_000065",
+        "MCH_000068",
+        "MCH_000069"
+      ],
+      "source_titles": [
+        "客户情绪安抚",
+        "(二)分红不确定,收益太低",
+        "2、这么一大笔钱放入分红险,安全么?",
+        "4、前期没有收益,返本慢?",
+        "5、不清楚分红每年能分多少"
+      ],
+      "source_chunk_count": 5,
+      "risk_chunk_count": 1,
+      "review_status": "pending",
+      "enabled": true,
+      "version": "MSC_MARKETING_V1"
+    },
+    {
+      "criterion_id": "MSC_INS_INS_DIVIDEND_SALES_PROCESS",
+      "business_type": "INS",
+      "business_name": "保险营销",
+      "scene_id": "INS_DIVIDEND",
+      "scene_name": "分红险异议处理",
+      "knowledge_type": "sales_process",
+      "answer_goal": "在保险营销-分红险异议处理场景下，按照业务流程推进客户沟通。",
+      "must_points": [
+        "说明分红险分红存在不确定性。",
+        "区分保障责任和收益演示。",
+        "提醒以保险合同为准。",
+        "按照需求了解、产品说明、风险提示和确认办理的顺序推进。",
+        "确认客户需求、风险承受能力或办理条件。",
+        "说明关键材料、规则或办理步骤。",
+        "保留客户自主决策空间。",
+        "保险产品应围绕保障责任、缴费期限和合同条款说明，不能包装成存款或理财。",
+        "分红、收益或现金价值存在不确定性，应以保险合同为准。"
+      ],
+      "key_terms": [
+        "保本",
+        "保证收益",
+        "分红"
+      ],
+      "compliance_red_lines": [
+        "零违约风险",
+        "大可放心",
+        "保证本金",
+        "锁定收益",
+        "保证收益",
+        "一定赚钱",
+        "保证兑现",
+        "无风险",
+        "稳赚",
+        "保本"
+      ],
+      "business_boundaries": [
+        "保险产品应围绕保障责任、缴费期限和合同条款说明，不能包装成存款或理财。",
+        "分红、收益或现金价值存在不确定性，应以保险合同为准。"
+      ],
+      "scoring_weights": {
+        "keyword_score": 20,
+        "semantic_score": 25,
+        "completeness_score": 20,
+        "fluency_score": 15,
+        "compliance_score": 20
+      },
+      "source_chunk_ids": [
+        "MCH_000045"
+      ],
+      "source_titles": [
+        "您主要关心养老呢还是教育金呢?为什么关心这块呢?您有去考虑过养老风险和教育风险吗?"
+      ],
+      "source_chunk_count": 1,
+      "risk_chunk_count": 1,
+      "review_status": "pending",
+      "enabled": true,
+      "version": "MSC_MARKETING_V1"
+    },
+    {
+      "criterion_id": "MSC_INS_INS_GENERAL_OBJECTION_HANDLING",
+      "business_type": "INS",
+      "business_name": "保险营销",
+      "scene_id": "INS_GENERAL",
+      "scene_name": "保险综合营销",
+      "knowledge_type": "objection_handling",
+      "answer_goal": "在保险营销-保险综合营销场景下，回应客户异议并给出审慎解释。",
+      "must_points": [
+        "先认可或回应客户顾虑。",
+        "澄清客户具体担心的问题。",
+        "结合产品规则或业务事实进行解释。",
+        "给出可选择的后续方案或下一步动作。",
+        "避免使用绝对化承诺。",
+        "保险产品应围绕保障责任、缴费期限和合同条款说明，不能包装成存款或理财。",
+        "分红、收益或现金价值存在不确定性，应以保险合同为准。"
+      ],
+      "key_terms": [
+        "保险"
+      ],
+      "compliance_red_lines": [
+        "零违约风险",
+        "大可放心",
+        "保证本金",
+        "锁定收益",
+        "一定赚钱",
+        "保证兑现",
+        "无风险",
+        "稳赚",
+        "保本"
+      ],
+      "business_boundaries": [
+        "保险产品应围绕保障责任、缴费期限和合同条款说明，不能包装成存款或理财。",
+        "分红、收益或现金价值存在不确定性，应以保险合同为准。"
+      ],
+      "scoring_weights": {
+        "keyword_score": 20,
+        "semantic_score": 25,
+        "completeness_score": 20,
+        "fluency_score": 15,
+        "compliance_score": 20
+      },
+      "source_chunk_ids": [
+        "MCH_000061"
+      ],
+      "source_titles": [
+        "(十五)我要考虑考虑"
+      ],
+      "source_chunk_count": 1,
+      "risk_chunk_count": 0,
+      "review_status": "pending",
+      "enabled": true,
+      "version": "MSC_MARKETING_V1"
+    },
+    {
+      "criterion_id": "MSC_INS_INS_GENERAL_PRODUCT_INTRO",
+      "business_type": "INS",
+      "business_name": "保险营销",
+      "scene_id": "INS_GENERAL",
+      "scene_name": "保险综合营销",
+      "knowledge_type": "product_intro",
+      "answer_goal": "在保险营销-保险综合营销场景下，介绍产品核心信息并提示风险边界。",
+      "must_points": [
+        "说明产品或服务的核心特点。",
+        "说明期限、收益、费用、资产投向或适用条件等关键信息。",
+        "提示风险、限制条件或不确定性。",
+        "结合客户需求判断适配性。",
+        "提醒以正式产品说明、合同或业务规则为准。",
+        "保险产品应围绕保障责任、缴费期限和合同条款说明，不能包装成存款或理财。",
+        "分红、收益或现金价值存在不确定性，应以保险合同为准。"
+      ],
+      "key_terms": [
+        "保险",
+        "保本",
+        "费用",
+        "保证本金",
+        "理财产品",
+        "锁定收益",
+        "保单",
+        "基金",
+        "定投"
+      ],
+      "compliance_red_lines": [
+        "零违约风险",
+        "大可放心",
+        "保证本金",
+        "锁定收益",
+        "一定赚钱",
+        "保证兑现",
+        "无风险",
+        "稳赚",
+        "保本"
+      ],
+      "business_boundaries": [
+        "保险产品应围绕保障责任、缴费期限和合同条款说明，不能包装成存款或理财。",
+        "分红、收益或现金价值存在不确定性，应以保险合同为准。"
+      ],
+      "scoring_weights": {
+        "keyword_score": 20,
+        "semantic_score": 25,
+        "completeness_score": 20,
+        "fluency_score": 15,
+        "compliance_score": 20
+      },
+      "source_chunk_ids": [
+        "MCH_000011",
+        "MCH_000012",
+        "MCH_000014",
+        "MCH_000018",
+        "MCH_000022",
+        "MCH_000037",
+        "MCH_000038",
+        "MCH_000039",
+        "MCH_000040",
+        "MCH_000041",
+        "MCH_000042",
+        "MCH_000043",
+        "MCH_000044",
+        "MCH_000046",
+        "MCH_000049",
+        "MCH_000051",
+        "MCH_000052",
+        "MCH_000054",
+        "MCH_000056"
+      ],
+      "source_titles": [
+        "【客户说没钱】就是因为您没钱,我才要帮您创造财富",
+        "X姐/哥,我们其实还有为像您这样的客户量身打造的产品介绍给您.",
+        "留存客户资料",
+        "(三)持有本行投资理财产品客户",
+        "(二)自我介绍",
+        "(六)客户信息收集",
+        "购买理财客户",
+        "3 - 5 年定期储蓄的客户"
+      ],
+      "source_chunk_count": 19,
+      "risk_chunk_count": 6,
+      "review_status": "pending",
+      "enabled": true,
+      "version": "MSC_MARKETING_V1"
+    },
+    {
+      "criterion_id": "MSC_INS_INS_GENERAL_RAW_SCRIPT",
+      "business_type": "INS",
+      "business_name": "保险营销",
+      "scene_id": "INS_GENERAL",
+      "scene_name": "保险综合营销",
+      "knowledge_type": "raw_script",
+      "answer_goal": "在保险营销-保险综合营销场景下，围绕客户需求完成基础营销沟通。",
+      "must_points": [
+        "围绕客户需求展开沟通。",
+        "覆盖话术中的核心业务信息。",
+        "给出明确但不强迫的下一步建议。",
+        "保持合规表达，避免绝对化承诺。",
+        "保险产品应围绕保障责任、缴费期限和合同条款说明，不能包装成存款或理财。",
+        "分红、收益或现金价值存在不确定性，应以保险合同为准。"
+      ],
+      "key_terms": [
+        "保险",
+        "费用",
+        "保本",
+        "基金",
+        "合同",
+        "合规"
+      ],
+      "compliance_red_lines": [
+        "零违约风险",
+        "大可放心",
+        "保证本金",
+        "锁定收益",
+        "一定赚钱",
+        "保证兑现",
+        "无风险",
+        "稳赚",
+        "保本"
+      ],
+      "business_boundaries": [
+        "保险产品应围绕保障责任、缴费期限和合同条款说明，不能包装成存款或理财。",
+        "分红、收益或现金价值存在不确定性，应以保险合同为准。"
+      ],
+      "scoring_weights": {
+        "keyword_score": 20,
+        "semantic_score": 25,
+        "completeness_score": 20,
+        "fluency_score": 15,
+        "compliance_score": 20
+      },
+      "source_chunk_ids": [
+        "MCH_000015",
+        "MCH_000023",
+        "MCH_000024",
+        "MCH_000025",
+        "MCH_000026",
+        "MCH_000027",
+        "MCH_000028",
+        "MCH_000034",
+        "MCH_000035",
+        "MCH_000036",
+        "MCH_000050",
+        "MCH_000053",
+        "MCH_000055",
+        "MCH_000057",
+        "MCH_000059",
+        "MCH_000060",
+        "MCH_000062"
+      ],
+      "source_titles": [
+        "送别客户",
+        "(三)切入投资理财",
+        "(客户:现在行情不好/一点点,不是很多)",
+        "(客户:想赚点钱吧!)",
+        "(客户:银行还有些存款,用于日常生活开支.)",
+        "(客户:没有了.)",
+        "(客户:风险就发生一些意外,造成一些财产和人身的伤害.)",
+        "(五)激发风险意识"
+      ],
+      "source_chunk_count": 17,
+      "risk_chunk_count": 1,
+      "review_status": "pending",
+      "enabled": true,
+      "version": "MSC_MARKETING_V1"
+    },
+    {
+      "criterion_id": "MSC_INS_INS_GENERAL_SALES_PROCESS",
+      "business_type": "INS",
+      "business_name": "保险营销",
+      "scene_id": "INS_GENERAL",
+      "scene_name": "保险综合营销",
+      "knowledge_type": "sales_process",
+      "answer_goal": "在保险营销-保险综合营销场景下，按照业务流程推进客户沟通。",
+      "must_points": [
+        "按照需求了解、产品说明、风险提示和确认办理的顺序推进。",
+        "确认客户需求、风险承受能力或办理条件。",
+        "说明关键材料、规则或办理步骤。",
+        "保留客户自主决策空间。",
+        "保险产品应围绕保障责任、缴费期限和合同条款说明，不能包装成存款或理财。",
+        "分红、收益或现金价值存在不确定性，应以保险合同为准。"
+      ],
+      "key_terms": [
+        "保险",
+        "合同",
+        "保障责任",
+        "流程",
+        "需求",
+        "确认"
+      ],
+      "compliance_red_lines": [
+        "零违约风险",
+        "大可放心",
+        "保证本金",
+        "锁定收益",
+        "一定赚钱",
+        "保证兑现",
+        "无风险",
+        "稳赚",
+        "保本"
+      ],
+      "business_boundaries": [
+        "保险产品应围绕保障责任、缴费期限和合同条款说明，不能包装成存款或理财。",
+        "分红、收益或现金价值存在不确定性，应以保险合同为准。"
+      ],
+      "scoring_weights": {
+        "keyword_score": 20,
+        "semantic_score": 25,
+        "completeness_score": 20,
+        "fluency_score": 15,
+        "compliance_score": 20
+      },
+      "source_chunk_ids": [
+        "MCH_000013"
+      ],
+      "source_titles": [
+        "促成交易"
+      ],
+      "source_chunk_count": 1,
+      "risk_chunk_count": 0,
+      "review_status": "pending",
+      "enabled": true,
+      "version": "MSC_MARKETING_V1"
+    },
+    {
+      "criterion_id": "MSC_INS_INS_INVITE_PHONE_INVITATION",
+      "business_type": "INS",
+      "business_name": "保险营销",
+      "scene_id": "INS_INVITE",
+      "scene_name": "保险电话邀约",
+      "knowledge_type": "phone_invitation",
+      "answer_goal": "在保险营销-保险电话邀约场景下，完成合规、清晰的客户邀约。",
+      "must_points": [
+        "说明邀约客户到网点或进一步沟通的原因。",
+        "避免用高收益包装保险产品。",
+        "确认客户身份和沟通场景。",
+        "说明联系客户的原因或服务背景。",
+        "提出清晰的下一步邀约或办理动作。",
+        "避免夸大收益、权益或承诺结果。",
+        "保险产品应围绕保障责任、缴费期限和合同条款说明，不能包装成存款或理财。",
+        "分红、收益或现金价值存在不确定性，应以保险合同为准。"
+      ],
+      "key_terms": [
+        "到网点",
+        "保险",
+        "理财产品",
+        "预约",
+        "预期收益"
+      ],
+      "compliance_red_lines": [
+        "零违约风险",
+        "大可放心",
+        "保证本金",
+        "锁定收益",
+        "一定赚钱",
+        "保证兑现",
+        "无风险",
+        "稳赚",
+        "保本"
+      ],
+      "business_boundaries": [
+        "保险产品应围绕保障责任、缴费期限和合同条款说明，不能包装成存款或理财。",
+        "分红、收益或现金价值存在不确定性，应以保险合同为准。"
+      ],
+      "scoring_weights": {
+        "keyword_score": 20,
+        "semantic_score": 25,
+        "completeness_score": 20,
+        "fluency_score": 15,
+        "compliance_score": 20
+      },
+      "source_chunk_ids": [
+        "MCH_000001",
+        "MCH_000002",
+        "MCH_000003",
+        "MCH_000004",
+        "MCH_000005",
+        "MCH_000006",
+        "MCH_000007",
+        "MCH_000008",
+        "MCH_000009",
+        "MCH_000016",
+        "MCH_000017",
+        "MCH_000019",
+        "MCH_000020",
+        "MCH_000021"
+      ],
+      "source_titles": [
+        "到期类客户(以定期为例)",
+        "活期大额未持有保险客户",
+        "持有保险类客户(趸缴类转化)",
+        "持有理财客户(理财类转化)",
+        "无活期类客户",
+        "降级类客户",
+        "大额流失客户",
+        "生日类客户"
+      ],
+      "source_chunk_count": 14,
+      "risk_chunk_count": 0,
+      "review_status": "pending",
+      "enabled": true,
+      "version": "MSC_MARKETING_V1"
+    },
+    {
+      "criterion_id": "MSC_INS_INS_OBJECTION_OBJECTION_HANDLING",
+      "business_type": "INS",
+      "business_name": "保险营销",
+      "scene_id": "INS_OBJECTION",
+      "scene_name": "保险异议处理",
+      "knowledge_type": "objection_handling",
+      "answer_goal": "在保险营销-保险异议处理场景下，回应客户异议并给出审慎解释。",
+      "must_points": [
+        "回应客户对保险费用、期限或收益的顾虑。",
+        "用合同条款和保障责任进行解释。",
+        "先认可或回应客户顾虑。",
+        "澄清客户具体担心的问题。",
+        "结合产品规则或业务事实进行解释。",
+        "给出可选择的后续方案或下一步动作。",
+        "避免使用绝对化承诺。",
+        "保险产品应围绕保障责任、缴费期限和合同条款说明，不能包装成存款或理财。",
+        "分红、收益或现金价值存在不确定性，应以保险合同为准。"
+      ],
+      "key_terms": [
+        "保险",
+        "保证本金",
+        "锁定收益",
+        "合同"
+      ],
+      "compliance_red_lines": [
+        "零违约风险",
+        "大可放心",
+        "保证本金",
+        "锁定收益",
+        "一定赚钱",
+        "保证兑现",
+        "无风险",
+        "稳赚",
+        "保本"
+      ],
+      "business_boundaries": [
+        "保险产品应围绕保障责任、缴费期限和合同条款说明，不能包装成存款或理财。",
+        "分红、收益或现金价值存在不确定性，应以保险合同为准。"
+      ],
+      "scoring_weights": {
+        "keyword_score": 20,
+        "semantic_score": 25,
+        "completeness_score": 20,
+        "fluency_score": 15,
+        "compliance_score": 20
+      },
+      "source_chunk_ids": [
+        "MCH_000048",
+        "MCH_000058"
+      ],
+      "source_titles": [
+        "(三)还不如买理财",
+        "(十三)万一保险公司倒闭了怎么办"
+      ],
+      "source_chunk_count": 2,
+      "risk_chunk_count": 1,
+      "review_status": "pending",
+      "enabled": true,
+      "version": "MSC_MARKETING_V1"
+    },
+    {
+      "criterion_id": "MSC_INS_INS_PERIODIC_COMPLIANCE_NOTE",
+      "business_type": "INS",
+      "business_name": "保险营销",
+      "scene_id": "INS_PERIODIC",
+      "scene_name": "期交保险营销",
+      "knowledge_type": "compliance_note",
+      "answer_goal": "在保险营销-期交保险营销场景下，识别并替换不合规表达。",
+      "must_points": [
+        "说明期交保险的缴费期限和持续缴费要求。",
+        "说明保障责任或合同权益。",
+        "结合客户长期资金安排判断是否适合。",
+        "识别不当承诺、绝对化收益或误导性表达。",
+        "使用更审慎、合规的替代表达。",
+        "明确提示产品风险、费用或规则边界。",
+        "保险产品应围绕保障责任、缴费期限和合同条款说明，不能包装成存款或理财。",
+        "分红、收益或现金价值存在不确定性，应以保险合同为准。"
+      ],
+      "key_terms": [
+        "保险",
+        "保单",
+        "预期收益",
+        "保本",
+        "合同",
+        "现金价值"
+      ],
+      "compliance_red_lines": [
+        "零违约风险",
+        "大可放心",
+        "保证本金",
+        "锁定收益",
+        "一定赚钱",
+        "保证兑现",
+        "无风险",
+        "稳赚",
+        "保本"
+      ],
+      "business_boundaries": [
+        "保险产品应围绕保障责任、缴费期限和合同条款说明，不能包装成存款或理财。",
+        "分红、收益或现金价值存在不确定性，应以保险合同为准。"
+      ],
+      "scoring_weights": {
+        "keyword_score": 20,
+        "semantic_score": 25,
+        "completeness_score": 20,
+        "fluency_score": 15,
+        "compliance_score": 20
+      },
+      "source_chunk_ids": [
+        "MCH_000075",
+        "MCH_000076",
+        "MCH_000106"
+      ],
+      "source_titles": [
+        "注意事项:",
+        "37.客户:我们孩子上初中,这些钱我都用做孩子的补习班,不能存保险啊!"
+      ],
+      "source_chunk_count": 3,
+      "risk_chunk_count": 1,
+      "review_status": "pending",
+      "enabled": true,
+      "version": "MSC_MARKETING_V1"
+    },
+    {
+      "criterion_id": "MSC_INS_INS_PERIODIC_OBJECTION_HANDLING",
+      "business_type": "INS",
+      "business_name": "保险营销",
+      "scene_id": "INS_PERIODIC",
+      "scene_name": "期交保险营销",
+      "knowledge_type": "objection_handling",
+      "answer_goal": "在保险营销-期交保险营销场景下，回应客户异议并给出审慎解释。",
+      "must_points": [
+        "说明期交保险的缴费期限和持续缴费要求。",
+        "说明保障责任或合同权益。",
+        "结合客户长期资金安排判断是否适合。",
+        "先认可或回应客户顾虑。",
+        "澄清客户具体担心的问题。",
+        "结合产品规则或业务事实进行解释。",
+        "给出可选择的后续方案或下一步动作。",
+        "避免使用绝对化承诺。",
+        "保险产品应围绕保障责任、缴费期限和合同条款说明，不能包装成存款或理财。",
+        "分红、收益或现金价值存在不确定性，应以保险合同为准。"
+      ],
+      "key_terms": [
+        "保险",
+        "保证收益",
+        "分红",
+        "合同",
+        "理财产品",
+        "分批",
+        "异议",
+        "流动性",
+        "期交",
+        "预约"
+      ],
+      "compliance_red_lines": [
+        "零违约风险",
+        "大可放心",
+        "保证本金",
+        "锁定收益",
+        "保证收益",
+        "一定赚钱",
+        "保证兑现",
+        "无风险",
+        "稳赚",
+        "保本"
+      ],
+      "business_boundaries": [
+        "保险产品应围绕保障责任、缴费期限和合同条款说明，不能包装成存款或理财。",
+        "分红、收益或现金价值存在不确定性，应以保险合同为准。"
+      ],
+      "scoring_weights": {
+        "keyword_score": 20,
+        "semantic_score": 25,
+        "completeness_score": 20,
+        "fluency_score": 15,
+        "compliance_score": 20
+      },
+      "source_chunk_ids": [
+        "MCH_000071",
+        "MCH_000072",
+        "MCH_000086",
+        "MCH_000087",
+        "MCH_000099",
+        "MCH_000100",
+        "MCH_000101"
+      ],
+      "source_titles": [
+        "2、 异议处理",
+        "客户嫌利率低.",
+        "针对两年期以上存款到期客户:突出产品的收益性",
+        "16.保险是骗人的,我不要!",
+        "18.客户:你说这款产品好,我周围有很多人存,都有谁存了?",
+        "22.客户:你说这款产品好我也认同,但我怕后边每年存不上,怎么办?"
+      ],
+      "source_chunk_count": 7,
+      "risk_chunk_count": 1,
+      "review_status": "pending",
+      "enabled": true,
+      "version": "MSC_MARKETING_V1"
+    },
+    {
+      "criterion_id": "MSC_INS_INS_PERIODIC_PHONE_INVITATION",
+      "business_type": "INS",
+      "business_name": "保险营销",
+      "scene_id": "INS_PERIODIC",
+      "scene_name": "期交保险营销",
+      "knowledge_type": "phone_invitation",
+      "answer_goal": "在保险营销-期交保险营销场景下，完成合规、清晰的客户邀约。",
+      "must_points": [
+        "说明期交保险的缴费期限和持续缴费要求。",
+        "说明保障责任或合同权益。",
+        "结合客户长期资金安排判断是否适合。",
+        "确认客户身份和沟通场景。",
+        "说明联系客户的原因或服务背景。",
+        "提出清晰的下一步邀约或办理动作。",
+        "避免夸大收益、权益或承诺结果。",
+        "保险产品应围绕保障责任、缴费期限和合同条款说明，不能包装成存款或理财。",
+        "分红、收益或现金价值存在不确定性，应以保险合同为准。"
+      ],
+      "key_terms": [
+        "保险",
+        "理财产品",
+        "电话邀约",
+        "锁定收益",
+        "分红",
+        "到网点",
+        "期限",
+        "保单",
+        "基金",
+        "长期投资",
+        "保本"
+      ],
+      "compliance_red_lines": [
+        "零违约风险",
+        "大可放心",
+        "保证本金",
+        "锁定收益",
+        "一定赚钱",
+        "保证兑现",
+        "无风险",
+        "稳赚",
+        "保本"
+      ],
+      "business_boundaries": [
+        "保险产品应围绕保障责任、缴费期限和合同条款说明，不能包装成存款或理财。",
+        "分红、收益或现金价值存在不确定性，应以保险合同为准。"
+      ],
+      "scoring_weights": {
+        "keyword_score": 20,
+        "semantic_score": 25,
+        "completeness_score": 20,
+        "fluency_score": 15,
+        "compliance_score": 20
+      },
+      "source_chunk_ids": [
+        "MCH_000077",
+        "MCH_000078",
+        "MCH_000079",
+        "MCH_000080",
+        "MCH_000081",
+        "MCH_000082",
+        "MCH_000088",
+        "MCH_000093",
+        "MCH_000094",
+        "MCH_000097",
+        "MCH_000104",
+        "MCH_000105",
+        "MCH_000110",
+        "MCH_000111"
+      ],
+      "source_titles": [
+        "一、接触话术",
+        "一、接触话术(续)",
+        "四、处理客户拒绝话术1、我现在很健康,不需要保险.",
+        "7、期限太长了.",
+        "12、我已有社保,不需要再买保险.",
+        "30.客户:我觉得这款保险产品我需要回家与家人商量一下再说!",
+        "34.我问过朋友,朋友都说“这是保险,不能买”.",
+        "4、制造一对一的促成环境"
+      ],
+      "source_chunk_count": 14,
+      "risk_chunk_count": 1,
+      "review_status": "pending",
+      "enabled": true,
+      "version": "MSC_MARKETING_V1"
+    },
+    {
+      "criterion_id": "MSC_INS_INS_PERIODIC_PRODUCT_INTRO",
+      "business_type": "INS",
+      "business_name": "保险营销",
+      "scene_id": "INS_PERIODIC",
+      "scene_name": "期交保险营销",
+      "knowledge_type": "product_intro",
+      "answer_goal": "在保险营销-期交保险营销场景下，介绍产品核心信息并提示风险边界。",
+      "must_points": [
+        "说明期交保险的缴费期限和持续缴费要求。",
+        "说明保障责任或合同权益。",
+        "结合客户长期资金安排判断是否适合。",
+        "说明产品或服务的核心特点。",
+        "说明期限、收益、费用、资产投向或适用条件等关键信息。",
+        "提示风险、限制条件或不确定性。",
+        "结合客户需求判断适配性。",
+        "提醒以正式产品说明、合同或业务规则为准。",
+        "保险产品应围绕保障责任、缴费期限和合同条款说明，不能包装成存款或理财。",
+        "分红、收益或现金价值存在不确定性，应以保险合同为准。"
+      ],
+      "key_terms": [
+        "保险",
+        "锁定收益",
+        "理财产品",
+        "期交",
+        "顾虑",
+        "保单"
+      ],
+      "compliance_red_lines": [
+        "零违约风险",
+        "大可放心",
+        "保证本金",
+        "锁定收益",
+        "一定赚钱",
+        "保证兑现",
+        "无风险",
+        "稳赚",
+        "保本"
+      ],
+      "business_boundaries": [
+        "保险产品应围绕保障责任、缴费期限和合同条款说明，不能包装成存款或理财。",
+        "分红、收益或现金价值存在不确定性，应以保险合同为准。"
+      ],
+      "scoring_weights": {
+        "keyword_score": 20,
+        "semantic_score": 25,
+        "completeness_score": 20,
+        "fluency_score": 15,
+        "compliance_score": 20
+      },
+      "source_chunk_ids": [
+        "MCH_000070",
+        "MCH_000073",
+        "MCH_000084",
+        "MCH_000085",
+        "MCH_000090",
+        "MCH_000091",
+        "MCH_000098",
+        "MCH_000102",
+        "MCH_000103"
+      ],
+      "source_titles": [
+        "1、观念引导",
+        "客户回去考虑一下.",
+        "3. 对于定存转存的客户:",
+        "三、需求分析类话术 针对到期客户:突出产品稀缺性.",
+        "3、保险不吉利,不保不险,一保就险.",
+        "14、让我考虑几天.",
+        "24.客户表示对产品犹豫或购买后对产品迟疑,想回家商量后再买的!",
+        "27.客户:我有的是钱,不需要保险."
+      ],
+      "source_chunk_count": 9,
+      "risk_chunk_count": 1,
+      "review_status": "pending",
+      "enabled": true,
+      "version": "MSC_MARKETING_V1"
+    },
+    {
+      "criterion_id": "MSC_INS_INS_PERIODIC_RAW_SCRIPT",
+      "business_type": "INS",
+      "business_name": "保险营销",
+      "scene_id": "INS_PERIODIC",
+      "scene_name": "期交保险营销",
+      "knowledge_type": "raw_script",
+      "answer_goal": "在保险营销-期交保险营销场景下，围绕客户需求完成基础营销沟通。",
+      "must_points": [
+        "说明期交保险的缴费期限和持续缴费要求。",
+        "说明保障责任或合同权益。",
+        "结合客户长期资金安排判断是否适合。",
+        "围绕客户需求展开沟通。",
+        "覆盖话术中的核心业务信息。",
+        "给出明确但不强迫的下一步建议。",
+        "保持合规表达，避免绝对化承诺。",
+        "保险产品应围绕保障责任、缴费期限和合同条款说明，不能包装成存款或理财。",
+        "分红、收益或现金价值存在不确定性，应以保险合同为准。"
+      ],
+      "key_terms": [
+        "保险",
+        "费用"
+      ],
+      "compliance_red_lines": [
+        "零违约风险",
+        "大可放心",
+        "保证本金",
+        "锁定收益",
+        "一定赚钱",
+        "保证兑现",
+        "无风险",
+        "稳赚",
+        "保本"
+      ],
+      "business_boundaries": [
+        "保险产品应围绕保障责任、缴费期限和合同条款说明，不能包装成存款或理财。",
+        "分红、收益或现金价值存在不确定性，应以保险合同为准。"
+      ],
+      "scoring_weights": {
+        "keyword_score": 20,
+        "semantic_score": 25,
+        "completeness_score": 20,
+        "fluency_score": 15,
+        "compliance_score": 20
+      },
+      "source_chunk_ids": [
+        "MCH_000074",
+        "MCH_000083",
+        "MCH_000089",
+        "MCH_000092",
+        "MCH_000095",
+        "MCH_000096"
+      ],
+      "source_titles": [
+        "保险营销话术参考",
+        "2. 对普通的客户:",
+        "2、养儿育女就是保障,何必买保险.",
+        "5、保险是买少了不管用,买多了交不起钱.",
+        "10、等我老一点再买吧.",
+        "11、以前的人确实没有保险也都过了,我何必买呢."
+      ],
+      "source_chunk_count": 6,
+      "risk_chunk_count": 0,
+      "review_status": "pending",
+      "enabled": true,
+      "version": "MSC_MARKETING_V1"
+    },
+    {
+      "criterion_id": "MSC_INS_INS_PERIODIC_SALES_PROCESS",
+      "business_type": "INS",
+      "business_name": "保险营销",
+      "scene_id": "INS_PERIODIC",
+      "scene_name": "期交保险营销",
+      "knowledge_type": "sales_process",
+      "answer_goal": "在保险营销-期交保险营销场景下，按照业务流程推进客户沟通。",
+      "must_points": [
+        "说明期交保险的缴费期限和持续缴费要求。",
+        "说明保障责任或合同权益。",
+        "结合客户长期资金安排判断是否适合。",
+        "按照需求了解、产品说明、风险提示和确认办理的顺序推进。",
+        "确认客户需求、风险承受能力或办理条件。",
+        "说明关键材料、规则或办理步骤。",
+        "保留客户自主决策空间。",
+        "保险产品应围绕保障责任、缴费期限和合同条款说明，不能包装成存款或理财。",
+        "分红、收益或现金价值存在不确定性，应以保险合同为准。"
+      ],
+      "key_terms": [
+        "保险",
+        "保单"
+      ],
+      "compliance_red_lines": [
+        "零违约风险",
+        "大可放心",
+        "保证本金",
+        "锁定收益",
+        "一定赚钱",
+        "保证兑现",
+        "无风险",
+        "稳赚",
+        "保本"
+      ],
+      "business_boundaries": [
+        "保险产品应围绕保障责任、缴费期限和合同条款说明，不能包装成存款或理财。",
+        "分红、收益或现金价值存在不确定性，应以保险合同为准。"
+      ],
+      "scoring_weights": {
+        "keyword_score": 20,
+        "semantic_score": 25,
+        "completeness_score": 20,
+        "fluency_score": 15,
+        "compliance_score": 20
+      },
+      "source_chunk_ids": [
+        "MCH_000107",
+        "MCH_000108",
+        "MCH_000109"
+      ],
+      "source_titles": [
+        "3、讲述身边事例",
+        "5、二择一促成法",
+        "1、合适的位置"
+      ],
+      "source_chunk_count": 3,
+      "risk_chunk_count": 0,
+      "review_status": "pending",
+      "enabled": true,
+      "version": "MSC_MARKETING_V1"
+    },
+    {
+      "criterion_id": "MSC_INS_INS_PROCESS_SALES_PROCESS",
+      "business_type": "INS",
+      "business_name": "保险营销",
+      "scene_id": "INS_PROCESS",
+      "scene_name": "保险营销流程",
+      "knowledge_type": "sales_process",
+      "answer_goal": "在保险营销-保险营销流程场景下，按照业务流程推进客户沟通。",
+      "must_points": [
+        "按照保险营销流程完成需求了解、产品说明和风险提示。",
+        "确认客户理解合同、缴费和保障责任。",
+        "按照需求了解、产品说明、风险提示和确认办理的顺序推进。",
+        "确认客户需求、风险承受能力或办理条件。",
+        "说明关键材料、规则或办理步骤。",
+        "保留客户自主决策空间。",
+        "保险产品应围绕保障责任、缴费期限和合同条款说明，不能包装成存款或理财。",
+        "分红、收益或现金价值存在不确定性，应以保险合同为准。"
+      ],
+      "key_terms": [
+        "保险",
+        "保单",
+        "费用"
+      ],
+      "compliance_red_lines": [
+        "零违约风险",
+        "大可放心",
+        "保证本金",
+        "锁定收益",
+        "一定赚钱",
+        "保证兑现",
+        "无风险",
+        "稳赚",
+        "保本"
+      ],
+      "business_boundaries": [
+        "保险产品应围绕保障责任、缴费期限和合同条款说明，不能包装成存款或理财。",
+        "分红、收益或现金价值存在不确定性，应以保险合同为准。"
+      ],
+      "scoring_weights": {
+        "keyword_score": 20,
+        "semantic_score": 25,
+        "completeness_score": 20,
+        "fluency_score": 15,
+        "compliance_score": 20
+      },
+      "source_chunk_ids": [
+        "MCH_000029",
+        "MCH_000030",
+        "MCH_000031",
+        "MCH_000032",
+        "MCH_000033"
+      ],
+      "source_titles": [
+        "步骤一:",
+        "步骤二:",
+        "步骤三:",
+        "步骤四:",
+        "步骤五:"
+      ],
+      "source_chunk_count": 5,
+      "risk_chunk_count": 0,
+      "review_status": "pending",
+      "enabled": true,
+      "version": "MSC_MARKETING_V1"
+    },
+    {
+      "criterion_id": "MSC_WM_WM_ASSET_COMPLIANCE_NOTE",
+      "business_type": "WM",
+      "business_name": "理财营销",
+      "scene_id": "WM_ASSET",
+      "scene_name": "理财底层资产解析",
+      "knowledge_type": "compliance_note",
+      "answer_goal": "在理财营销-理财底层资产解析场景下，识别并替换不合规表达。",
+      "must_points": [
+        "说明底层资产的主要投向或构成。",
+        "说明产品风险等级或风险来源。",
+        "提示收益和净值可能波动。",
+        "提醒客户以产品说明书为准。",
+        "识别不当承诺、绝对化收益或误导性表达。",
+        "使用更审慎、合规的替代表达。",
+        "明确提示产品风险、费用或规则边界。",
+        "理财产品不是存款，不能承诺保本保收益。",
+        "收益、风险、期限和底层资产以产品说明书为准。"
+      ],
+      "key_terms": [
+        "100%收益/兑付表述",
+        "业绩比较基准",
+        "封闭期",
+        "流动性",
+        "净值",
+        "波动",
+        "保本",
+        "合规"
+      ],
+      "compliance_red_lines": [
+        "100%收益/兑付表述",
+        "零违约风险",
+        "大可放心",
+        "保证本金",
+        "锁定收益",
+        "保证兑现",
+        "一定赚钱",
+        "闭着眼买",
+        "无风险",
+        "放心买",
+        "稳赚",
+        "保本"
+      ],
+      "business_boundaries": [
+        "理财产品不是存款，不能承诺保本保收益。",
+        "收益、风险、期限和底层资产以产品说明书为准。"
+      ],
+      "scoring_weights": {
+        "keyword_score": 20,
+        "semantic_score": 25,
+        "completeness_score": 20,
+        "fluency_score": 15,
+        "compliance_score": 20
+      },
+      "source_chunk_ids": [
+        "MCH_000161"
+      ],
+      "source_titles": [
+        "低风险偏好投资者"
+      ],
+      "source_chunk_count": 1,
+      "risk_chunk_count": 1,
+      "review_status": "pending",
+      "enabled": true,
+      "version": "MSC_MARKETING_V1"
+    },
+    {
+      "criterion_id": "MSC_WM_WM_ASSET_PRODUCT_INTRO",
+      "business_type": "WM",
+      "business_name": "理财营销",
+      "scene_id": "WM_ASSET",
+      "scene_name": "理财底层资产解析",
+      "knowledge_type": "product_intro",
+      "answer_goal": "在理财营销-理财底层资产解析场景下，介绍产品核心信息并提示风险边界。",
+      "must_points": [
+        "说明底层资产的主要投向或构成。",
+        "说明产品风险等级或风险来源。",
+        "提示收益和净值可能波动。",
+        "提醒客户以产品说明书为准。",
+        "说明产品或服务的核心特点。",
+        "说明期限、收益、费用、资产投向或适用条件等关键信息。",
+        "提示风险、限制条件或不确定性。",
+        "结合客户需求判断适配性。",
+        "提醒以正式产品说明、合同或业务规则为准。",
+        "理财产品不是存款，不能承诺保本保收益。",
+        "收益、风险、期限和底层资产以产品说明书为准。"
+      ],
+      "key_terms": [
+        "债券",
+        "流动性",
+        "波动",
+        "金融衍生品",
+        "业绩比较基准",
+        "货币市场工具",
+        "理财产品",
+        "期限",
+        "净值",
+        "基金",
+        "底层资产",
+        "风险等级"
+      ],
+      "compliance_red_lines": [
+        "零违约风险",
+        "大可放心",
+        "保证本金",
+        "锁定收益",
+        "保证兑现",
+        "一定赚钱",
+        "闭着眼买",
+        "无风险",
+        "放心买",
+        "稳赚",
+        "保本"
+      ],
+      "business_boundaries": [
+        "理财产品不是存款，不能承诺保本保收益。",
+        "收益、风险、期限和底层资产以产品说明书为准。"
+      ],
+      "scoring_weights": {
+        "keyword_score": 20,
+        "semantic_score": 25,
+        "completeness_score": 20,
+        "fluency_score": 15,
+        "compliance_score": 20
+      },
+      "source_chunk_ids": [
+        "MCH_000153",
+        "MCH_000154",
+        "MCH_000155",
+        "MCH_000156",
+        "MCH_000157",
+        "MCH_000160",
+        "MCH_000162",
+        "MCH_000163",
+        "MCH_000164",
+        "MCH_000166",
+        "MCH_000167"
+      ],
+      "source_titles": [
+        "一、产品定位与类型区分",
+        "二、核心特点(四大维度解析)",
+        "三、核心卖点(场景化价值提炼)",
+        "四、底层资产构成(PR2 级产品配置)",
+        "国债及政策性金融债:35.2%(国家信用背书,零违约风险)",
+        "中年家庭客户",
+        "热卖二三年期理财产品底层资产解析:",
+        "1.固定收益类资产:"
+      ],
+      "source_chunk_count": 11,
+      "risk_chunk_count": 0,
+      "review_status": "pending",
+      "enabled": true,
+      "version": "MSC_MARKETING_V1"
+    },
+    {
+      "criterion_id": "MSC_WM_WM_ASSET_RAW_SCRIPT",
+      "business_type": "WM",
+      "business_name": "理财营销",
+      "scene_id": "WM_ASSET",
+      "scene_name": "理财底层资产解析",
+      "knowledge_type": "raw_script",
+      "answer_goal": "在理财营销-理财底层资产解析场景下，围绕客户需求完成基础营销沟通。",
+      "must_points": [
+        "说明底层资产的主要投向或构成。",
+        "说明产品风险等级或风险来源。",
+        "提示收益和净值可能波动。",
+        "提醒客户以产品说明书为准。",
+        "围绕客户需求展开沟通。",
+        "覆盖话术中的核心业务信息。",
+        "给出明确但不强迫的下一步建议。",
+        "保持合规表达，避免绝对化承诺。",
+        "理财产品不是存款，不能承诺保本保收益。",
+        "收益、风险、期限和底层资产以产品说明书为准。"
+      ],
+      "key_terms": [
+        "债券",
+        "净值",
+        "波动",
+        "流动性",
+        "货币市场工具",
+        "期限"
+      ],
+      "compliance_red_lines": [
+        "零违约风险",
+        "大可放心",
+        "保证本金",
+        "锁定收益",
+        "保证兑现",
+        "一定赚钱",
+        "闭着眼买",
+        "无风险",
+        "放心买",
+        "稳赚",
+        "保本"
+      ],
+      "business_boundaries": [
+        "理财产品不是存款，不能承诺保本保收益。",
+        "收益、风险、期限和底层资产以产品说明书为准。"
+      ],
+      "scoring_weights": {
+        "keyword_score": 20,
+        "semantic_score": 25,
+        "completeness_score": 20,
+        "fluency_score": 15,
+        "compliance_score": 20
+      },
+      "source_chunk_ids": [
+        "MCH_000158",
+        "MCH_000159",
+        "MCH_000165"
+      ],
+      "source_titles": [
+        "主要风险点",
+        "风险控制亮点",
+        "1.固定收益类资产:"
+      ],
+      "source_chunk_count": 3,
+      "risk_chunk_count": 0,
+      "review_status": "pending",
+      "enabled": true,
+      "version": "MSC_MARKETING_V1"
+    },
+    {
+      "criterion_id": "MSC_WM_WM_GENERAL_PHONE_INVITATION",
+      "business_type": "WM",
+      "business_name": "理财营销",
+      "scene_id": "WM_GENERAL",
+      "scene_name": "理财综合营销",
+      "knowledge_type": "phone_invitation",
+      "answer_goal": "在理财营销-理财综合营销场景下，完成合规、清晰的客户邀约。",
+      "must_points": [
+        "确认客户身份和沟通场景。",
+        "说明联系客户的原因或服务背景。",
+        "提出清晰的下一步邀约或办理动作。",
+        "避免夸大收益、权益或承诺结果。",
+        "理财产品不是存款，不能承诺保本保收益。",
+        "收益、风险、期限和底层资产以产品说明书为准。"
+      ],
+      "key_terms": [
+        "到网点"
+      ],
+      "compliance_red_lines": [
+        "零违约风险",
+        "大可放心",
+        "保证本金",
+        "锁定收益",
+        "保证兑现",
+        "一定赚钱",
+        "闭着眼买",
+        "无风险",
+        "放心买",
+        "稳赚",
+        "保本"
+      ],
+      "business_boundaries": [
+        "理财产品不是存款，不能承诺保本保收益。",
+        "收益、风险、期限和底层资产以产品说明书为准。"
+      ],
+      "scoring_weights": {
+        "keyword_score": 20,
+        "semantic_score": 25,
+        "completeness_score": 20,
+        "fluency_score": 15,
+        "compliance_score": 20
+      },
+      "source_chunk_ids": [
+        "MCH_000168",
+        "MCH_000170",
+        "MCH_000171"
+      ],
+      "source_titles": [
+        "1、厅堂职能服务区/现金柜业务办理客户:",
+        "现金类理财存量客户邀约话术:",
+        "定期、理财到期客户:"
+      ],
+      "source_chunk_count": 3,
+      "risk_chunk_count": 0,
+      "review_status": "pending",
+      "enabled": true,
+      "version": "MSC_MARKETING_V1"
+    },
+    {
+      "criterion_id": "MSC_WM_WM_PRODUCT_PHONE_INVITATION",
+      "business_type": "WM",
+      "business_name": "理财营销",
+      "scene_id": "WM_PRODUCT",
+      "scene_name": "理财产品介绍",
+      "knowledge_type": "phone_invitation",
+      "answer_goal": "在理财营销-理财产品介绍场景下，完成合规、清晰的客户邀约。",
+      "must_points": [
+        "说明理财产品的期限、风险等级和核心特点。",
+        "结合客户资金期限和风险偏好判断适配性。",
+        "不得承诺保本、稳赚或无风险。",
+        "确认客户身份和沟通场景。",
+        "说明联系客户的原因或服务背景。",
+        "提出清晰的下一步邀约或办理动作。",
+        "避免夸大收益、权益或承诺结果。",
+        "理财产品不是存款，不能承诺保本保收益。",
+        "收益、风险、期限和底层资产以产品说明书为准。"
+      ],
+      "key_terms": [
+        "理财产品",
+        "风险等级",
+        "产品说明书",
+        "电话邀约",
+        "预约",
+        "到网点"
+      ],
+      "compliance_red_lines": [
+        "零违约风险",
+        "大可放心",
+        "保证本金",
+        "锁定收益",
+        "保证兑现",
+        "一定赚钱",
+        "闭着眼买",
+        "无风险",
+        "放心买",
+        "稳赚",
+        "保本"
+      ],
+      "business_boundaries": [
+        "理财产品不是存款，不能承诺保本保收益。",
+        "收益、风险、期限和底层资产以产品说明书为准。"
+      ],
+      "scoring_weights": {
+        "keyword_score": 20,
+        "semantic_score": 25,
+        "completeness_score": 20,
+        "fluency_score": 15,
+        "compliance_score": 20
+      },
+      "source_chunk_ids": [
+        "MCH_000169"
+      ],
+      "source_titles": [
+        "定期转存/存定期客户:"
+      ],
+      "source_chunk_count": 1,
+      "risk_chunk_count": 0,
+      "review_status": "pending",
+      "enabled": true,
+      "version": "MSC_MARKETING_V1"
+    }
+  ]
+}

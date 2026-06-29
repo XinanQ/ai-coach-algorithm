@@ -1,0 +1,2 @@
+"""AI coach algorithm package."""
+

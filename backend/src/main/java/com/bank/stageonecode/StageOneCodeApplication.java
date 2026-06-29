@@ -15,7 +15,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
         "com.performance",
         "com.points",
         "com.auth",
-        "com.decomposition"
+        "com.decomposition",
+        "com.miniapp.practice.model"
 })
 @EnableJpaRepositories(basePackages = {
         "com.organization",
@@ -26,7 +27,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
         "com.performance",
         "com.points",
         "com.auth",
-        "com.decomposition"
+        "com.decomposition",
+        "com.miniapp.practice.repository"
 })
 public class StageOneCodeApplication {
 

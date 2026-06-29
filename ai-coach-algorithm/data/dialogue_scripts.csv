@@ -1,0 +1,5 @@
+script_id,scenario_id,customer_id,stage,customer_message,expected_employee_points
+DS_DEP_001,DEP_001,CUST_RATE,opening,"我看到别的银行利率好像更高，你们这里有什么优势？",认可客户关注|说明利率以系统公示为准|说明安全和服务|引导查询
+DS_DEP_002,DEP_001,CUST_LIQUIDITY,opening,"我这笔钱可能突然要用，如果存定期会不会不方便？",询问资金使用时间|说明活期保留|说明提前支取影响|推荐合适期限
+DS_WM_001,WM_001,CUST_RISK,opening,"这个理财产品会不会亏？是不是保本的？",说明非存款|说明风险等级|避免保本承诺|了解风险承受能力
+DS_CC_001,CC_001,CUST_COST,opening,"信用卡不用会不会扣钱？有什么费用？",说明年费政策|说明还款日|说明逾期风险|引导查看规则

@@ -12,7 +12,8 @@ Page({
     goal: '',
     requirements: [],
     duration: '',
-    progress: 0
+    progress: 0,
+    scriptId: ''
   },
   onLoad(query) {
     this.setData({ taskId: query.taskId || '' })

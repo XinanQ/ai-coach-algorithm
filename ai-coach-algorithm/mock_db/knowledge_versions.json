@@ -1,0 +1,799 @@
+[
+  {
+    "version_id": "KV_f95baadc",
+    "version_name": "KB_TEST_AUTO",
+    "published_at": "2026-06-01T16:50:58",
+    "publish_mode": "fully_automatic_biweekly",
+    "screening_algorithm": "Frequency Mining + Vector Clustering + AutoUpdateScore + Compliance Filter",
+    "candidate_count": 4,
+    "included_candidate_ids": [
+      "KC_0abf2820",
+      "KC_7339ee59",
+      "KC_eeb0f648",
+      "KC_8b911523"
+    ],
+    "note": "Demo records automatic publishing. Production can write selected items into DB tables with rollback versioning."
+  },
+  {
+    "version_id": "KV_99ba44d5",
+    "version_name": "KB_TEST_AUTO",
+    "published_at": "2026-06-02T10:27:05",
+    "publish_mode": "fully_automatic_biweekly",
+    "screening_algorithm": "Frequency Mining + Vector Clustering + AutoUpdateScore + Compliance Filter",
+    "candidate_count": 5,
+    "included_candidate_ids": [
+      "KC_9b6eb914",
+      "KC_dd4b3752",
+      "KC_29381b1b",
+      "KC_7797e9df",
+      "KC_70278f59"
+    ],
+    "note": "Demo records automatic publishing. Production can write selected items into DB tables with rollback versioning."
+  },
+  {
+    "version_id": "KV_22ab3de9",
+    "version_name": "KB_TEST_AUTO",
+    "published_at": "2026-06-02T11:55:43",
+    "publish_mode": "fully_automatic_biweekly",
+    "screening_algorithm": "Frequency Mining + Vector Clustering + AutoUpdateScore + Compliance Filter",
+    "candidate_count": 5,
+    "included_candidate_ids": [
+      "KC_e3835f90",
+      "KC_f316eab8",
+      "KC_442a2f3e",
+      "KC_ca2a61fb",
+      "KC_f48e8bbd"
+    ],
+    "note": "Demo records automatic publishing. Production can write selected items into DB tables with rollback versioning."
+  },
+  {
+    "version_id": "KV_e787e7af",
+    "version_name": "KB_TEST_AUTO",
+    "published_at": "2026-06-09T13:59:10",
+    "publish_mode": "fully_automatic_biweekly",
+    "screening_algorithm": "Frequency Mining + Vector Clustering + AutoUpdateScore + Compliance Filter",
+    "candidate_count": 6,
+    "included_candidate_ids": [
+      "KC_d175c112",
+      "KC_44ecb049",
+      "KC_f6326a4e",
+      "KC_183e4261",
+      "KC_51673971",
+      "KC_5f10c3ae"
+    ],
+    "note": "Demo records automatic publishing. Production can write selected items into DB tables with rollback versioning."
+  },
+  {
+    "version_id": "KV_62b5be21",
+    "version_name": "KB_TEST_AUTO",
+    "published_at": "2026-06-10T11:16:58",
+    "publish_mode": "fully_automatic_biweekly",
+    "screening_algorithm": "Frequency Mining + Vector Clustering + AutoUpdateScore + Compliance Filter",
+    "candidate_count": 6,
+    "included_candidate_ids": [
+      "KC_c12d0869",
+      "KC_bae0d13b",
+      "KC_9da7e2ae",
+      "KC_2849eb83",
+      "KC_3e612d85",
+      "KC_11c1ebbf"
+    ],
+    "note": "Demo records automatic publishing. Production can write selected items into DB tables with rollback versioning."
+  },
+  {
+    "version_id": "KV_5a5bb15b",
+    "version_name": "KB_TEST_AUTO",
+    "published_at": "2026-06-10T15:18:54",
+    "publish_mode": "fully_automatic_biweekly",
+    "screening_algorithm": "Frequency Mining + Vector Clustering + AutoUpdateScore + Compliance Filter",
+    "candidate_count": 6,
+    "included_candidate_ids": [
+      "KC_84b8a628",
+      "KC_22c1a2d7",
+      "KC_3a8bfad9",
+      "KC_57237be1",
+      "KC_3d03b55e",
+      "KC_81ea0d77"
+    ],
+    "note": "Demo records automatic publishing. Production can write selected items into DB tables with rollback versioning."
+  },
+  {
+    "version_id": "KV_01dfeb28",
+    "version_name": "KB_TEST_AUTO",
+    "published_at": "2026-06-15T11:25:51",
+    "publish_mode": "fully_automatic_biweekly",
+    "screening_algorithm": "Frequency Mining + Vector Clustering + AutoUpdateScore + Compliance Filter",
+    "candidate_count": 6,
+    "included_candidate_ids": [
+      "KC_f534cb24",
+      "KC_b568e1d6",
+      "KC_eca0a50e",
+      "KC_2fd525fe",
+      "KC_93f88812",
+      "KC_f01b792f"
+    ],
+    "note": "Demo records automatic publishing. Production can write selected items into DB tables with rollback versioning."
+  },
+  {
+    "version_id": "KV_e8f07c44",
+    "version_name": "KB_TEST_AUTO",
+    "published_at": "2026-06-15T11:38:58",
+    "publish_mode": "fully_automatic_biweekly",
+    "screening_algorithm": "Frequency Mining + Vector Clustering + AutoUpdateScore + Compliance Filter",
+    "candidate_count": 6,
+    "included_candidate_ids": [
+      "KC_365ee19b",
+      "KC_beea0a2a",
+      "KC_c7d2b7ce",
+      "KC_dfbfca9b",
+      "KC_c7b5312e",
+      "KC_4a35315e"
+    ],
+    "note": "Demo records automatic publishing. Production can write selected items into DB tables with rollback versioning."
+  },
+  {
+    "version_id": "KV_a7fb74cd",
+    "version_name": "KB_TEST_AUTO",
+    "published_at": "2026-06-16T10:49:07",
+    "publish_mode": "fully_automatic_biweekly",
+    "screening_algorithm": "Frequency Mining + Vector Clustering + AutoUpdateScore + Compliance Filter",
+    "candidate_count": 6,
+    "included_candidate_ids": [
+      "KC_c153881a",
+      "KC_673bbb79",
+      "KC_98430d10",
+      "KC_249e7a65",
+      "KC_a7e1f06c",
+      "KC_9305c3a4"
+    ],
+    "note": "Demo records automatic publishing. Production can write selected items into DB tables with rollback versioning."
+  },
+  {
+    "version_id": "KV_dc87f227",
+    "version_name": "KB_TEST_AUTO",
+    "published_at": "2026-06-16T10:55:35",
+    "publish_mode": "fully_automatic_biweekly",
+    "screening_algorithm": "Frequency Mining + Vector Clustering + AutoUpdateScore + Compliance Filter",
+    "candidate_count": 6,
+    "included_candidate_ids": [
+      "KC_9cfddaca",
+      "KC_81d999c6",
+      "KC_b45c8e81",
+      "KC_96acf40b",
+      "KC_1c48af17",
+      "KC_e9ea1169"
+    ],
+    "note": "Demo records automatic publishing. Production can write selected items into DB tables with rollback versioning."
+  },
+  {
+    "version_id": "KV_adbed0fa",
+    "version_name": "KB_TEST_AUTO",
+    "published_at": "2026-06-16T11:11:36",
+    "publish_mode": "fully_automatic_biweekly",
+    "screening_algorithm": "Frequency Mining + Vector Clustering + AutoUpdateScore + Compliance Filter",
+    "candidate_count": 6,
+    "included_candidate_ids": [
+      "KC_85cb42b2",
+      "KC_6e74014b",
+      "KC_5960a085",
+      "KC_daa7a956",
+      "KC_380b59e3",
+      "KC_c54ab07b"
+    ],
+    "note": "Demo records automatic publishing. Production can write selected items into DB tables with rollback versioning."
+  },
+  {
+    "version_id": "KV_19ecfebf",
+    "version_name": "KB_TEST_AUTO",
+    "published_at": "2026-06-16T11:15:03",
+    "publish_mode": "fully_automatic_biweekly",
+    "screening_algorithm": "Frequency Mining + Vector Clustering + AutoUpdateScore + Compliance Filter",
+    "candidate_count": 6,
+    "included_candidate_ids": [
+      "KC_a7d8ecd2",
+      "KC_afaf5410",
+      "KC_ab22384d",
+      "KC_43b3d166",
+      "KC_530c5e54",
+      "KC_1383cee1"
+    ],
+    "note": "Demo records automatic publishing. Production can write selected items into DB tables with rollback versioning."
+  },
+  {
+    "version_id": "KV_576c5856",
+    "version_name": "KB_TEST_AUTO",
+    "published_at": "2026-06-16T11:26:58",
+    "publish_mode": "fully_automatic_biweekly",
+    "screening_algorithm": "Frequency Mining + Vector Clustering + AutoUpdateScore + Compliance Filter",
+    "candidate_count": 6,
+    "included_candidate_ids": [
+      "KC_5c692010",
+      "KC_01eef040",
+      "KC_d5f7a3c6",
+      "KC_427c4ccf",
+      "KC_1999e9d3",
+      "KC_d9f4ddf6"
+    ],
+    "note": "Demo records automatic publishing. Production can write selected items into DB tables with rollback versioning."
+  },
+  {
+    "version_id": "KV_c0dcbf38",
+    "version_name": "KB_TEST_AUTO",
+    "published_at": "2026-06-16T13:05:01",
+    "publish_mode": "fully_automatic_biweekly",
+    "screening_algorithm": "Frequency Mining + Vector Clustering + AutoUpdateScore + Compliance Filter",
+    "candidate_count": 6,
+    "included_candidate_ids": [
+      "KC_ba7a0416",
+      "KC_6a463566",
+      "KC_4131f2e5",
+      "KC_a936ef02",
+      "KC_4d9e178d",
+      "KC_ca45c46b"
+    ],
+    "note": "Demo records automatic publishing. Production can write selected items into DB tables with rollback versioning."
+  },
+  {
+    "version_id": "KV_49a2fb55",
+    "version_name": "KB_TEST_AUTO",
+    "published_at": "2026-06-16T13:06:04",
+    "publish_mode": "fully_automatic_biweekly",
+    "screening_algorithm": "Frequency Mining + Vector Clustering + AutoUpdateScore + Compliance Filter",
+    "candidate_count": 6,
+    "included_candidate_ids": [
+      "KC_091e31ee",
+      "KC_7e54359c",
+      "KC_e018a9e7",
+      "KC_c8a91a36",
+      "KC_5dfa1787",
+      "KC_0eb61f8d"
+    ],
+    "note": "Demo records automatic publishing. Production can write selected items into DB tables with rollback versioning."
+  },
+  {
+    "version_id": "KV_1f7aa5e1",
+    "version_name": "KB_TEST_AUTO",
+    "published_at": "2026-06-16T14:37:30",
+    "publish_mode": "fully_automatic_biweekly",
+    "screening_algorithm": "Frequency Mining + Vector Clustering + AutoUpdateScore + Compliance Filter",
+    "candidate_count": 10,
+    "included_candidate_ids": [
+      "KC_2a399061",
+      "KC_bb708afb",
+      "KC_f97248e7",
+      "KC_c711d9ae",
+      "KC_75f19730",
+      "KC_50295fc4",
+      "KC_225e63c2",
+      "KC_49fed714",
+      "KC_e63f3c5a",
+      "KC_6a77a903"
+    ],
+    "note": "Demo records automatic publishing. Production can write selected items into DB tables with rollback versioning."
+  },
+  {
+    "version_id": "KV_ddb91624",
+    "version_name": "KB_TEST_AUTO",
+    "published_at": "2026-06-16T14:38:05",
+    "publish_mode": "fully_automatic_biweekly",
+    "screening_algorithm": "Frequency Mining + Vector Clustering + AutoUpdateScore + Compliance Filter",
+    "candidate_count": 10,
+    "included_candidate_ids": [
+      "KC_ef966043",
+      "KC_2561e157",
+      "KC_43095594",
+      "KC_3a67f856",
+      "KC_c77eaf0b",
+      "KC_4516d763",
+      "KC_0fa1b391",
+      "KC_6c1b1e1d",
+      "KC_b5f14157",
+      "KC_56d7cfb2"
+    ],
+    "note": "Demo records automatic publishing. Production can write selected items into DB tables with rollback versioning."
+  },
+  {
+    "version_id": "KV_0d40135e",
+    "version_name": "KB_TEST_AUTO",
+    "published_at": "2026-06-16T16:15:24",
+    "publish_mode": "fully_automatic_biweekly",
+    "screening_algorithm": "Frequency Mining + Vector Clustering + AutoUpdateScore + Compliance Filter",
+    "candidate_count": 10,
+    "included_candidate_ids": [
+      "KC_41439ac9",
+      "KC_5e8b078d",
+      "KC_8e2c0d7e",
+      "KC_5189fb3e",
+      "KC_eed42542",
+      "KC_25606553",
+      "KC_9614ffbd",
+      "KC_9c5f68cc",
+      "KC_097b0cf2",
+      "KC_0382f3b3"
+    ],
+    "note": "Demo records automatic publishing. Production can write selected items into DB tables with rollback versioning."
+  },
+  {
+    "version_id": "KV_11e6f8ff",
+    "version_name": "KB_TEST_AUTO",
+    "published_at": "2026-06-17T10:36:57",
+    "publish_mode": "fully_automatic_biweekly",
+    "screening_algorithm": "Frequency Mining + Vector Clustering + AutoUpdateScore + Compliance Filter",
+    "candidate_count": 10,
+    "included_candidate_ids": [
+      "KC_be14022e",
+      "KC_3adad8c4",
+      "KC_e3d9d27d",
+      "KC_6968a654",
+      "KC_f57eb1f8",
+      "KC_8f8c6e10",
+      "KC_6fd2f4af",
+      "KC_fd0d4485",
+      "KC_3d6003b6",
+      "KC_7578167f"
+    ],
+    "note": "Demo records automatic publishing. Production can write selected items into DB tables with rollback versioning."
+  },
+  {
+    "version_id": "KV_47705bb6",
+    "version_name": "KB_TEST_AUTO",
+    "published_at": "2026-06-17T10:37:36",
+    "publish_mode": "fully_automatic_biweekly",
+    "screening_algorithm": "Frequency Mining + Vector Clustering + AutoUpdateScore + Compliance Filter",
+    "candidate_count": 10,
+    "included_candidate_ids": [
+      "KC_aa45a196",
+      "KC_bde2ab54",
+      "KC_88495027",
+      "KC_4970ea4d",
+      "KC_950747bd",
+      "KC_81c614bf",
+      "KC_911d3054",
+      "KC_481870a3",
+      "KC_0a30181f",
+      "KC_2bc0c15e"
+    ],
+    "note": "Demo records automatic publishing. Production can write selected items into DB tables with rollback versioning."
+  },
+  {
+    "version_id": "KV_5948758a",
+    "version_name": "KB_TEST_AUTO",
+    "published_at": "2026-06-17T11:08:43",
+    "publish_mode": "fully_automatic_biweekly",
+    "screening_algorithm": "Frequency Mining + Vector Clustering + AutoUpdateScore + Compliance Filter",
+    "candidate_count": 10,
+    "included_candidate_ids": [
+      "KC_8a6ea514",
+      "KC_55fc0c62",
+      "KC_6a98dc3f",
+      "KC_b835ce98",
+      "KC_283ae2e4",
+      "KC_fe16bd52",
+      "KC_1eb8dc61",
+      "KC_0400ce8f",
+      "KC_5973cf42",
+      "KC_0afc93c2"
+    ],
+    "note": "Demo records automatic publishing. Production can write selected items into DB tables with rollback versioning."
+  },
+  {
+    "version_id": "KV_13e0be8c",
+    "version_name": "KB_TEST_AUTO",
+    "published_at": "2026-06-17T11:09:10",
+    "publish_mode": "fully_automatic_biweekly",
+    "screening_algorithm": "Frequency Mining + Vector Clustering + AutoUpdateScore + Compliance Filter",
+    "candidate_count": 10,
+    "included_candidate_ids": [
+      "KC_4169703d",
+      "KC_ee36bc44",
+      "KC_40f67737",
+      "KC_5b04b776",
+      "KC_e900a734",
+      "KC_559b8d4c",
+      "KC_ce0433e1",
+      "KC_6359e489",
+      "KC_8c6dafb0",
+      "KC_5889db91"
+    ],
+    "note": "Demo records automatic publishing. Production can write selected items into DB tables with rollback versioning."
+  },
+  {
+    "version_id": "KV_fbc8d85c",
+    "version_name": "KB_TEST_AUTO",
+    "published_at": "2026-06-17T11:24:10",
+    "publish_mode": "fully_automatic_biweekly",
+    "screening_algorithm": "Frequency Mining + Vector Clustering + AutoUpdateScore + Compliance Filter",
+    "candidate_count": 10,
+    "included_candidate_ids": [
+      "KC_2f85f730",
+      "KC_4faadcf3",
+      "KC_a64629b3",
+      "KC_819bc18d",
+      "KC_49ba2317",
+      "KC_6bc05b88",
+      "KC_5d6756d9",
+      "KC_d5c8ac55",
+      "KC_f60b2869",
+      "KC_c646ad61"
+    ],
+    "note": "Demo records automatic publishing. Production can write selected items into DB tables with rollback versioning."
+  },
+  {
+    "version_id": "KV_dc685b52",
+    "version_name": "KB_TEST_AUTO",
+    "published_at": "2026-06-17T13:51:52",
+    "publish_mode": "fully_automatic_biweekly",
+    "screening_algorithm": "Frequency Mining + Vector Clustering + AutoUpdateScore + Compliance Filter",
+    "candidate_count": 10,
+    "included_candidate_ids": [
+      "KC_b29d18ca",
+      "KC_3f9d55a7",
+      "KC_a7849362",
+      "KC_d86735ea",
+      "KC_9bab09ca",
+      "KC_3a371f26",
+      "KC_e586585a",
+      "KC_17d49349",
+      "KC_c20d01d1",
+      "KC_8e065237"
+    ],
+    "note": "Demo records automatic publishing. Production can write selected items into DB tables with rollback versioning."
+  },
+  {
+    "version_id": "KV_c9572b84",
+    "version_name": "KB_TEST_AUTO",
+    "published_at": "2026-06-17T15:01:34",
+    "publish_mode": "fully_automatic_biweekly",
+    "screening_algorithm": "Frequency Mining + Vector Clustering + AutoUpdateScore + Compliance Filter",
+    "candidate_count": 10,
+    "included_candidate_ids": [
+      "KC_5657f698",
+      "KC_ba45d63c",
+      "KC_21ec31d3",
+      "KC_999bf42c",
+      "KC_c1c79048",
+      "KC_5cef7fc2",
+      "KC_7f5f28f1",
+      "KC_365ca677",
+      "KC_49aaa9a1",
+      "KC_66b714e9"
+    ],
+    "note": "Demo records automatic publishing. Production can write selected items into DB tables with rollback versioning."
+  },
+  {
+    "version_id": "KV_36bbfa26",
+    "version_name": "KB_TEST_AUTO",
+    "published_at": "2026-06-17T15:03:32",
+    "publish_mode": "fully_automatic_biweekly",
+    "screening_algorithm": "Frequency Mining + Vector Clustering + AutoUpdateScore + Compliance Filter",
+    "candidate_count": 10,
+    "included_candidate_ids": [
+      "KC_020822dd",
+      "KC_3ce7f015",
+      "KC_dbfe98d9",
+      "KC_2fb0437d",
+      "KC_848f9c75",
+      "KC_94475ba3",
+      "KC_6e1056ca",
+      "KC_77764d8f",
+      "KC_d59451fa",
+      "KC_e733561f"
+    ],
+    "note": "Demo records automatic publishing. Production can write selected items into DB tables with rollback versioning."
+  },
+  {
+    "version_id": "KV_bd7da18d",
+    "version_name": "KB_TEST_AUTO",
+    "published_at": "2026-06-17T16:33:30",
+    "publish_mode": "fully_automatic_biweekly",
+    "screening_algorithm": "Frequency Mining + Vector Clustering + AutoUpdateScore + Compliance Filter",
+    "candidate_count": 10,
+    "included_candidate_ids": [
+      "KC_9e8170f0",
+      "KC_2bc32412",
+      "KC_8c5c8f38",
+      "KC_82e640d5",
+      "KC_6e4011a7",
+      "KC_74e6881b",
+      "KC_88743895",
+      "KC_855df792",
+      "KC_be61febf",
+      "KC_d58811c5"
+    ],
+    "note": "Demo records automatic publishing. Production can write selected items into DB tables with rollback versioning."
+  },
+  {
+    "version_id": "KV_b954b1ab",
+    "version_name": "KB_TEST_AUTO",
+    "published_at": "2026-06-17T16:37:44",
+    "publish_mode": "fully_automatic_biweekly",
+    "screening_algorithm": "Frequency Mining + Vector Clustering + AutoUpdateScore + Compliance Filter",
+    "candidate_count": 10,
+    "included_candidate_ids": [
+      "KC_ff5a1c3f",
+      "KC_9c588787",
+      "KC_4f03eaeb",
+      "KC_9fe1239d",
+      "KC_83a92df4",
+      "KC_a345cce7",
+      "KC_d6686982",
+      "KC_a6fdb90b",
+      "KC_47c9e671",
+      "KC_027d19fd"
+    ],
+    "note": "Demo records automatic publishing. Production can write selected items into DB tables with rollback versioning."
+  },
+  {
+    "version_id": "KV_bd0c43b3",
+    "version_name": "KB_TEST_AUTO",
+    "published_at": "2026-06-21T10:57:41",
+    "publish_mode": "fully_automatic_biweekly",
+    "screening_algorithm": "Frequency Mining + Vector Clustering + AutoUpdateScore + Compliance Filter",
+    "candidate_count": 10,
+    "included_candidate_ids": [
+      "KC_9d8ff3ce",
+      "KC_9ca6d4a6",
+      "KC_fd22b502",
+      "KC_7d4ee0f1",
+      "KC_56634008",
+      "KC_d6db8627",
+      "KC_a9d2df16",
+      "KC_12868ba8",
+      "KC_561cdeea",
+      "KC_a622817c"
+    ],
+    "note": "Demo records automatic publishing. Production can write selected items into DB tables with rollback versioning."
+  },
+  {
+    "version_id": "KV_df64027f",
+    "version_name": "KB_TEST_AUTO",
+    "published_at": "2026-06-21T11:10:57",
+    "publish_mode": "fully_automatic_biweekly",
+    "screening_algorithm": "Frequency Mining + Vector Clustering + AutoUpdateScore + Compliance Filter",
+    "candidate_count": 10,
+    "included_candidate_ids": [
+      "KC_503bd084",
+      "KC_b3f6afdd",
+      "KC_825dbc12",
+      "KC_061b08f5",
+      "KC_7df9f209",
+      "KC_aec12d00",
+      "KC_cf84cbbf",
+      "KC_82b754b4",
+      "KC_13838ee1",
+      "KC_00e35dd3"
+    ],
+    "note": "Demo records automatic publishing. Production can write selected items into DB tables with rollback versioning."
+  },
+  {
+    "version_id": "KV_ed4d59f3",
+    "version_name": "KB_TEST_AUTO",
+    "published_at": "2026-06-21T11:34:03",
+    "publish_mode": "fully_automatic_biweekly",
+    "screening_algorithm": "Frequency Mining + Vector Clustering + AutoUpdateScore + Compliance Filter",
+    "candidate_count": 10,
+    "included_candidate_ids": [
+      "KC_70ae8506",
+      "KC_43256bb2",
+      "KC_122dbd50",
+      "KC_a6d055d2",
+      "KC_c141a025",
+      "KC_fff59f3d",
+      "KC_0420d045",
+      "KC_85ade605",
+      "KC_77f08a8e",
+      "KC_895b2858"
+    ],
+    "note": "Demo records automatic publishing. Production can write selected items into DB tables with rollback versioning."
+  },
+  {
+    "version_id": "KV_4bf5aebe",
+    "version_name": "KB_TEST_AUTO",
+    "published_at": "2026-06-21T12:59:35",
+    "publish_mode": "fully_automatic_biweekly",
+    "screening_algorithm": "Frequency Mining + Vector Clustering + AutoUpdateScore + Compliance Filter",
+    "candidate_count": 10,
+    "included_candidate_ids": [
+      "KC_17e67875",
+      "KC_c0f399fb",
+      "KC_5747bfc3",
+      "KC_74789ec2",
+      "KC_0e726a69",
+      "KC_fa46c7c0",
+      "KC_24a56c64",
+      "KC_fca4a0bd",
+      "KC_805b16aa",
+      "KC_9edb5853"
+    ],
+    "note": "Demo records automatic publishing. Production can write selected items into DB tables with rollback versioning."
+  },
+  {
+    "version_id": "KV_f13e3e88",
+    "version_name": "KB_TEST_AUTO",
+    "published_at": "2026-06-21T13:00:47",
+    "publish_mode": "fully_automatic_biweekly",
+    "screening_algorithm": "Frequency Mining + Vector Clustering + AutoUpdateScore + Compliance Filter",
+    "candidate_count": 10,
+    "included_candidate_ids": [
+      "KC_0eedb0d4",
+      "KC_c007a05d",
+      "KC_2049cf42",
+      "KC_e13d85b0",
+      "KC_7719b083",
+      "KC_3b6da0d5",
+      "KC_b725c0a3",
+      "KC_461b55bf",
+      "KC_ee4ab30e",
+      "KC_eefdb918"
+    ],
+    "note": "Demo records automatic publishing. Production can write selected items into DB tables with rollback versioning."
+  },
+  {
+    "version_id": "KV_f55b8f8d",
+    "version_name": "KB_TEST_AUTO",
+    "published_at": "2026-06-21T14:04:00",
+    "publish_mode": "fully_automatic_biweekly",
+    "screening_algorithm": "Frequency Mining + Vector Clustering + AutoUpdateScore + Compliance Filter",
+    "candidate_count": 10,
+    "included_candidate_ids": [
+      "KC_10130a01",
+      "KC_c2ab8521",
+      "KC_8ffd6621",
+      "KC_021bc8f3",
+      "KC_881343d1",
+      "KC_89def34f",
+      "KC_0a88893a",
+      "KC_4693ef40",
+      "KC_91b740e3",
+      "KC_cfeda8f0"
+    ],
+    "note": "Demo records automatic publishing. Production can write selected items into DB tables with rollback versioning."
+  },
+  {
+    "version_id": "KV_552e8483",
+    "version_name": "KB_TEST_AUTO",
+    "published_at": "2026-06-21T14:05:15",
+    "publish_mode": "fully_automatic_biweekly",
+    "screening_algorithm": "Frequency Mining + Vector Clustering + AutoUpdateScore + Compliance Filter",
+    "candidate_count": 10,
+    "included_candidate_ids": [
+      "KC_8633fd24",
+      "KC_2b355d45",
+      "KC_fe594eeb",
+      "KC_c7010b14",
+      "KC_29211e83",
+      "KC_f93714bc",
+      "KC_3ecca783",
+      "KC_1fee6fb5",
+      "KC_f6f3db4d",
+      "KC_cd648e00"
+    ],
+    "note": "Demo records automatic publishing. Production can write selected items into DB tables with rollback versioning."
+  },
+  {
+    "version_id": "KV_66de955f",
+    "version_name": "KB_TEST_AUTO",
+    "published_at": "2026-06-23T10:35:36",
+    "publish_mode": "fully_automatic_biweekly",
+    "screening_algorithm": "Frequency Mining + Vector Clustering + AutoUpdateScore + Compliance Filter",
+    "candidate_count": 10,
+    "included_candidate_ids": [
+      "KC_2e6853a2",
+      "KC_afeb0c1e",
+      "KC_4420989f",
+      "KC_42edbe5d",
+      "KC_8484b2ed",
+      "KC_96d30c35",
+      "KC_17625a3f",
+      "KC_583792bf",
+      "KC_6ad65c51",
+      "KC_5832a88d"
+    ],
+    "note": "Demo records automatic publishing. Production can write selected items into DB tables with rollback versioning."
+  },
+  {
+    "version_id": "KV_1d0c3c5e",
+    "version_name": "KB_TEST_AUTO",
+    "published_at": "2026-06-23T10:36:39",
+    "publish_mode": "fully_automatic_biweekly",
+    "screening_algorithm": "Frequency Mining + Vector Clustering + AutoUpdateScore + Compliance Filter",
+    "candidate_count": 10,
+    "included_candidate_ids": [
+      "KC_4655bf00",
+      "KC_a947e965",
+      "KC_2de750f2",
+      "KC_9bf85471",
+      "KC_c88773f3",
+      "KC_07d3ec80",
+      "KC_91ed09ed",
+      "KC_86777110",
+      "KC_a396e216",
+      "KC_030e9a4a"
+    ],
+    "note": "Demo records automatic publishing. Production can write selected items into DB tables with rollback versioning."
+  },
+  {
+    "version_id": "KV_ac15a8a9",
+    "version_name": "KB_TEST_AUTO",
+    "published_at": "2026-06-23T10:42:34",
+    "publish_mode": "fully_automatic_biweekly",
+    "screening_algorithm": "Frequency Mining + Vector Clustering + AutoUpdateScore + Compliance Filter",
+    "candidate_count": 10,
+    "included_candidate_ids": [
+      "KC_9b50fe48",
+      "KC_116c2935",
+      "KC_0168f76d",
+      "KC_7315ebb2",
+      "KC_c7c79f73",
+      "KC_d52d8d90",
+      "KC_b6d51d08",
+      "KC_9cb933f4",
+      "KC_9c23ac92",
+      "KC_498c9017"
+    ],
+    "note": "Demo records automatic publishing. Production can write selected items into DB tables with rollback versioning."
+  },
+  {
+    "version_id": "KV_2e5d0dcb",
+    "version_name": "KB_TEST_AUTO",
+    "published_at": "2026-06-23T11:06:56",
+    "publish_mode": "fully_automatic_biweekly",
+    "screening_algorithm": "Frequency Mining + Vector Clustering + AutoUpdateScore + Compliance Filter",
+    "candidate_count": 10,
+    "included_candidate_ids": [
+      "KC_33773a2a",
+      "KC_7bb7ab42",
+      "KC_862994bc",
+      "KC_5fc98d94",
+      "KC_51486f41",
+      "KC_62dd2ce7",
+      "KC_cba2efa5",
+      "KC_fd077afa",
+      "KC_68571b2f",
+      "KC_04574d9a"
+    ],
+    "note": "Demo records automatic publishing. Production can write selected items into DB tables with rollback versioning."
+  },
+  {
+    "version_id": "KV_e648ec32",
+    "version_name": "KB_TEST_AUTO",
+    "published_at": "2026-06-23T11:11:49",
+    "publish_mode": "fully_automatic_biweekly",
+    "screening_algorithm": "Frequency Mining + Vector Clustering + AutoUpdateScore + Compliance Filter",
+    "candidate_count": 10,
+    "included_candidate_ids": [
+      "KC_46de7ee8",
+      "KC_b9b80b3f",
+      "KC_90a14799",
+      "KC_8ffaec08",
+      "KC_317e842b",
+      "KC_f43f3026",
+      "KC_162789a4",
+      "KC_fe1e648d",
+      "KC_7cdd0e04",
+      "KC_be7965df"
+    ],
+    "note": "Demo records automatic publishing. Production can write selected items into DB tables with rollback versioning."
+  },
+  {
+    "version_id": "KV_ad2cdfc3",
+    "version_name": "KB_TEST_AUTO",
+    "published_at": "2026-06-23T11:13:45",
+    "publish_mode": "fully_automatic_biweekly",
+    "screening_algorithm": "Frequency Mining + Vector Clustering + AutoUpdateScore + Compliance Filter",
+    "candidate_count": 10,
+    "included_candidate_ids": [
+      "KC_d19cefa1",
+      "KC_9c8ac5b0",
+      "KC_9935f29a",
+      "KC_91e48155",
+      "KC_e265ba11",
+      "KC_15da4dc8",
+      "KC_ff7e28ad",
+      "KC_d000c5a1",
+      "KC_d005ab8c",
+      "KC_0328285b"
+    ],
+    "note": "Demo records automatic publishing. Production can write selected items into DB tables with rollback versioning."
+  }
+]
