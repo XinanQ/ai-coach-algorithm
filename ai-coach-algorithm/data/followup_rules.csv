@@ -1,0 +1,11 @@
+rule_id,scenario_id,customer_id,missing_terms,ai_followup,weak_tag,priority
+FU_DEP_RATE_001,DEP_001,CUST_RATE,利率|公示|查询,"那你们现在具体利率是多少？是不是一定比别的银行高？",利率说明不足,1
+FU_DEP_RATE_002,DEP_001,CUST_RATE,安全|便利|服务,"除了利率之外，我为什么要选择你们银行？",产品优势说明不足,2
+FU_DEP_LIQ_001,DEP_001,CUST_LIQUIDITY,活期|流动性|随时要用,"那如果我中途突然要用钱，提前取出来会不会有影响？",流动性说明不足,1
+FU_DEP_LIQ_002,DEP_001,CUST_LIQUIDITY,资金用途|多久不用|短期不用,"你是不是应该先问我这笔钱多久不用？",需求挖掘不足,2
+FU_WM_RISK_001,WM_001,CUST_RISK,风险等级|风险承受能力|波动,"你说风险不大，那这个产品到底有没有可能亏？",风险解释不足,1
+FU_WM_RISK_002,WM_001,CUST_RISK,产品说明书|非保本|不承诺,"那你能不能直接告诉我它是不是保本？",合规风险,2
+FU_CC_COST_001,CC_001,CUST_COST,年费|费用|减免,"信用卡如果不用，会不会扣年费？",费用说明不足,1
+FU_CC_COST_002,CC_001,CUST_COST,还款日|账单日|逾期,"如果我忘记还款，会不会影响征信？",还款风险说明不足,2
+FU_CC_REJ_001,CC_001,CUST_REJECT,需求|用途|消费习惯,"可是我平时很少刷卡，为什么还要办？",需求挖掘不足,1
+FU_CC_REJ_002,CC_001,CUST_REJECT,权益|优惠|便利,"那它对我具体有什么好处？",权益说明不足,2

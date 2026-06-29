@@ -1,0 +1,20 @@
+[
+  {
+    "task_id": "T_DEP_001",
+    "scenario_id": "DEP_001",
+    "title": "三个月定期存款推荐",
+    "status": "active"
+  },
+  {
+    "task_id": "T_WM_001",
+    "scenario_id": "WM_001",
+    "title": "理财风险说明",
+    "status": "active"
+  },
+  {
+    "task_id": "T_CC_001",
+    "scenario_id": "CC_001",
+    "title": "信用卡费用说明",
+    "status": "active"
+  }
+]

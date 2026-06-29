@@ -1,0 +1,48 @@
+{
+  "version": "SCORING_W2_DEP_001",
+  "scene_id": "DEP_001",
+  "description": "W2 存款推荐场景规则评分 baseline。暂不使用 embedding，语义相似度用轻量文本覆盖率近似。",
+  "weights": {
+    "keyword_score": 20,
+    "semantic_score": 25,
+    "completeness_score": 20,
+    "fluency_score": 15,
+    "compliance_score": 20
+  },
+  "fluency_rules": {
+    "min_reasonable_length": 18,
+    "good_length": 45,
+    "short_answer_deduction": 6,
+    "very_short_answer_deduction": 10,
+    "repeat_deduction": 4
+  },
+  "compliance_rules": {
+    "high_risk_total_score_cap": 60,
+    "medium_risk_total_score_cap": 85,
+    "high_risk_deduction": 20,
+    "medium_risk_deduction": 10,
+    "low_risk_deduction": 5
+  },
+  "question_rules": [
+    {
+      "question_id": "Q_DEP_RATE",
+      "customer_profile": "CUST_RATE",
+      "weakness_tags": ["利率说明不足", "产品优势说明不足"]
+    },
+    {
+      "question_id": "Q_DEP_LIQUIDITY",
+      "customer_profile": "CUST_LIQUIDITY",
+      "weakness_tags": ["流动性说明不足", "替代方案不足"]
+    },
+    {
+      "question_id": "Q_DEP_MATURITY",
+      "customer_profile": "CUST_LIQUIDITY",
+      "weakness_tags": ["流程说明不足", "到期安排说明不足"]
+    },
+    {
+      "question_id": "Q_DEP_REJECT",
+      "customer_profile": "CUST_REJECT",
+      "weakness_tags": ["客户需求回应不足", "办理引导不足"]
+    }
+  ]
+}
