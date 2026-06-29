@@ -7,8 +7,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -131,11 +134,54 @@ public class ProjectServiceImpl implements ProjectService {
         repo.deleteById(id);
     }
 
+    /**
+     * 合法状态流转表（状态机）。仅允许下列转换；终态（已结束 / 已取消）不可再变更。
+     * 前端 Projects.vue 的 ALLOWED_TRANSITIONS 须与此保持一致。
+     */
+    private static final Map<ProjectStatus, Set<ProjectStatus>> ALLOWED_TRANSITIONS = buildAllowedTransitions();
+
+    private static Map<ProjectStatus, Set<ProjectStatus>> buildAllowedTransitions() {
+        Map<ProjectStatus, Set<ProjectStatus>> map = new EnumMap<>(ProjectStatus.class);
+        map.put(ProjectStatus.DRAFT, EnumSet.of(ProjectStatus.PLANNED, ProjectStatus.CANCELLED));
+        map.put(ProjectStatus.PLANNED, EnumSet.of(ProjectStatus.ACTIVE, ProjectStatus.CANCELLED));
+        map.put(ProjectStatus.ACTIVE, EnumSet.of(ProjectStatus.PAUSED, ProjectStatus.COMPLETED, ProjectStatus.CANCELLED));
+        map.put(ProjectStatus.PAUSED, EnumSet.of(ProjectStatus.ACTIVE, ProjectStatus.COMPLETED, ProjectStatus.CANCELLED));
+        map.put(ProjectStatus.COMPLETED, EnumSet.noneOf(ProjectStatus.class));
+        map.put(ProjectStatus.CANCELLED, EnumSet.noneOf(ProjectStatus.class));
+        return map;
+    }
+
     @Override
     public Project setStatus(Long id, ProjectStatus status) {
+        if (status == null) {
+            throw new IllegalArgumentException("目标状态不能为空");
+        }
         return repo.findById(id).map(p -> {
+            ProjectStatus current = p.getStatus();
+            // 同状态视为幂等；不同状态则必须是合法流转，否则拒绝（HTTP 400）
+            if (current != null && current != status) {
+                Set<ProjectStatus> allowed = ALLOWED_TRANSITIONS.getOrDefault(current, Set.of());
+                if (!allowed.contains(status)) {
+                    throw new IllegalArgumentException(
+                            "不允许的状态流转：" + zh(current) + " → " + zh(status));
+                }
+            }
             p.setStatus(status);
             return repo.save(p);
         }).orElse(null);
+    }
+
+    private static String zh(ProjectStatus status) {
+        if (status == null) {
+            return "未知";
+        }
+        return switch (status) {
+            case DRAFT -> "草稿";
+            case PLANNED -> "未开始";
+            case ACTIVE -> "进行中";
+            case PAUSED -> "已暂停";
+            case COMPLETED -> "已结束";
+            case CANCELLED -> "已取消";
+        };
     }
 }
