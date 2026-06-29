@@ -1,5 +1,6 @@
 package com.miniapp.practice;
 
+import com.auth.CurrentUserContext;
 import com.miniapp.practice.client.AiCoachClient;
 import com.miniapp.practice.client.AiCoachProperties;
 import com.miniapp.practice.client.dto.AiCoachDialogFinishRequest;
@@ -23,12 +24,12 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class MiniPracticeService {
-    private static final String DEFAULT_USER_ID = "U_DEMO";
-
     private final AiCoachClient aiCoachClient;
     private final AiCoachProperties aiCoachProperties;
     private final PracticeTaskRepository practiceTaskRepository;
@@ -47,17 +48,25 @@ public class MiniPracticeService {
 
     public PracticeTaskListResponse getTasks(String tab) {
         String tabType = (tab == null || tab.trim().isEmpty()) ? "assigned" : tab;
-        List<PracticeTaskSummaryResponse> tasks = practiceTaskRepository.findByTabTypeOrderByIdAsc(tabType)
+        List<TaskSummaryContext> contexts = practiceTaskRepository.findByTabTypeOrderByIdAsc(tabType)
                 .stream()
-                .map(this::toSummaryResponse)
-                .collect(Collectors.toList());
+                .map(this::toTaskSummaryContext)
+                .toList();
+        Map<String, Long> titleCounts = contexts.stream()
+                .collect(Collectors.groupingBy(TaskSummaryContext::baseTitle, Collectors.counting()));
+        List<PracticeTaskSummaryResponse> tasks = contexts.stream()
+                .map(context -> toSummaryResponse(
+                        context,
+                        titleCounts.getOrDefault(context.baseTitle(), 0L) > 1
+                ))
+                .toList();
 
         return new PracticeTaskListResponse(
-                "Lv5 专业进阶",
-                1260,
-                1800,
-                7,
-                320,
+                null,
+                null,
+                null,
+                null,
+                null,
                 tasks
         );
     }
@@ -93,37 +102,62 @@ public class MiniPracticeService {
         if (task.getAiSceneId() == null || task.getAiSceneId().trim().isEmpty()) {
             throw new RuntimeException("陪练任务未配置 AI 场景：" + taskId);
         }
+        CustomerProfile profile = findProfile(task);
         Integer totalRounds = task.getRounds() == null ? aiCoachProperties.getDefaultTotalRounds() : task.getRounds();
         String customerId = task.getCustomerId();
-        if (customerId != null && customerId.trim().isEmpty()) {
-            customerId = null;
+        if (customerId == null || customerId.trim().isEmpty()) {
+            throw new RuntimeException("陪练任务未配置客户画像：" + taskId);
+        }
+        String difficulty = profile.getDifficultyLevel();
+        if (difficulty != null && difficulty.trim().isEmpty()) {
+            difficulty = null;
         }
         AiCoachDialogStartResponse aiResponse = aiCoachClient.start(new AiCoachDialogStartRequest(
-                DEFAULT_USER_ID,
+                currentUserId(),
                 task.getAiSceneId(),
                 task.getTaskId(),
-                customerId,
-                totalRounds
+                customerId.trim(),
+                totalRounds,
+                difficulty,
+                false
         ));
         PracticeDialogStartResponse response = new PracticeDialogStartResponse();
         response.setSessionId(aiResponse.getSessionId());
         response.setTaskId(aiResponse.getTaskId());
         response.setRound(aiResponse.getRound());
         response.setTotalRounds(aiResponse.getTotalRounds());
-        response.setLiveScore(aiResponse.getLiveScore());
+        response.setDifficultyLevel(aiResponse.getDifficultyLevel());
+        response.setDifficultyRecommendation(aiResponse.getDifficultyRecommendation());
         response.setMessages(aiResponse.getMessages());
-        response.setSource(aiResponse.getSource());
         return response;
     }
 
-    private PracticeTaskSummaryResponse toSummaryResponse(PracticeTask task) {
+    private TaskSummaryContext toTaskSummaryContext(PracticeTask task) {
         CustomerProfile profile = findProfile(task);
         BusinessSceneMetadata businessSceneMetadata = aiCoachMetadataService.findBusinessConfigBySceneId(task.getAiSceneId())
                 .orElse(null);
+        return new TaskSummaryContext(
+                task,
+                profile,
+                businessSceneMetadata,
+                buildDisplayTitle(profile)
+        );
+    }
+
+    private PracticeTaskSummaryResponse toSummaryResponse(TaskSummaryContext context, boolean appendCustomerId) {
+        PracticeTask task = context.task();
+        CustomerProfile profile = context.profile();
+        String displayTitle = context.baseTitle();
+        if (appendCustomerId) {
+            displayTitle = displayTitle + " · " + profile.getCustomerId();
+        }
         return new PracticeTaskSummaryResponse(
                 task.getTaskId(),
                 profile.getSceneName(),
-                resolveSceneName(profile, businessSceneMetadata),
+                displayTitle,
+                resolveSceneName(profile, context.businessSceneMetadata()),
+                profile.getDifficultyLevel(),
+                profile.getExpectedIntents(),
                 firstNonBlank(task.getLevel(), "recommend"),
                 resolveLevelText(task.getLevel()),
                 task.getStatus(),
@@ -133,14 +167,37 @@ public class MiniPracticeService {
         );
     }
 
+    private String buildDisplayTitle(CustomerProfile profile) {
+        String title = Stream.of(
+                        profile.getSceneName(),
+                        profile.getCustomerType(),
+                        profile.getDifficultyLevel()
+                )
+                .filter(value -> value != null && !value.trim().isEmpty())
+                .collect(Collectors.joining(" · "));
+        return title.isEmpty() ? profile.getCustomerId() : title;
+    }
+
     private PracticeTask findTask(String taskId) {
         return practiceTaskRepository.findByTaskId(taskId)
                 .orElseThrow(() -> new RuntimeException("未找到陪练任务：" + taskId));
     }
 
     private CustomerProfile findProfile(PracticeTask task) {
-        return aiCoachMetadataService.findProfileBySceneId(task.getAiSceneId())
-                .orElseThrow(() -> new RuntimeException("AI 陪练元数据不可用，请稍后重试"));
+        CustomerProfile profile = aiCoachMetadataService.findProfileByCustomerId(task.getCustomerId())
+                .orElseThrow(() -> new RuntimeException("AI 陪练客户画像不可用，请稍后重试"));
+        if (!task.getAiSceneId().equals(profile.getSceneId())) {
+            throw new RuntimeException("陪练任务的 AI 场景与客户画像不匹配：" + task.getTaskId());
+        }
+        return profile;
+    }
+
+    private String currentUserId() {
+        Long employeeId = CurrentUserContext.getEmployeeId();
+        if (employeeId == null) {
+            throw new RuntimeException("当前登录员工不存在");
+        }
+        return employeeId.toString();
     }
 
     private String resolveSceneName(CustomerProfile profile, BusinessSceneMetadata businessSceneMetadata) {
@@ -195,14 +252,14 @@ public class MiniPracticeService {
             throw new RuntimeException("Reply text cannot be empty");
         }
 
-        AiCoachDialogReplyResponse aiResponse = aiCoachClient.reply(new AiCoachDialogReplyRequest(sessionId, text));
+        AiCoachDialogReplyResponse aiResponse = aiCoachClient.reply(
+                new AiCoachDialogReplyRequest(sessionId.trim(), text.trim())
+        );
         PracticeDialogReplyResponse response = new PracticeDialogReplyResponse();
         response.setRound(aiResponse.getRound());
         response.setTotalRounds(aiResponse.getTotalRounds());
-        response.setLiveScore(aiResponse.getLiveScore());
         response.setMessage(aiResponse.getMessage());
         response.setFinished(aiResponse.getFinished());
-        response.setSource(aiResponse.getSource());
         return response;
     }
 
@@ -211,7 +268,7 @@ public class MiniPracticeService {
             throw new RuntimeException("Session id cannot be empty");
         }
 
-        AiCoachDialogFinishResponse aiResponse = aiCoachClient.finish(new AiCoachDialogFinishRequest(sessionId));
+        AiCoachDialogFinishResponse aiResponse = aiCoachClient.finish(new AiCoachDialogFinishRequest(sessionId.trim()));
         PracticeDialogFinishResponse response = new PracticeDialogFinishResponse();
 
         // resultId 暂作为算法结果引用；taskId 是 start 时传入并由算法会话原样返回的业务任务 ID。
@@ -232,6 +289,14 @@ public class MiniPracticeService {
         response.setCertificationTitle(aiResponse.getCertificationTitle());
         response.setCertificationDesc(aiResponse.getCertificationDesc());
         return response;
+    }
+
+    private record TaskSummaryContext(
+            PracticeTask task,
+            CustomerProfile profile,
+            BusinessSceneMetadata businessSceneMetadata,
+            String baseTitle
+    ) {
     }
 
 }

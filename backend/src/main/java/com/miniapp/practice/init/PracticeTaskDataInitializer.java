@@ -11,8 +11,10 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 /**
  * 小程序 AI 陪练默认任务初始化。
@@ -25,13 +27,6 @@ import java.util.List;
 public class PracticeTaskDataInitializer implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(PracticeTaskDataInitializer.class);
-    private static final List<String> LEGACY_MOCK_TASK_IDS = Arrays.asList(
-            "practice-risk-disclosure-001",
-            "practice-high-net-worth-needs-001",
-            "practice-credit-card-installment-001",
-            "practice-loan-overdue-reminder-001",
-            "practice-complaint-comfort-001"
-    );
     private final PracticeTaskRepository practiceTaskRepository;
     private final AiCoachMetadataService aiCoachMetadataService;
     private final AiCoachProperties aiCoachProperties;
@@ -54,15 +49,20 @@ public class PracticeTaskDataInitializer implements CommandLineRunner {
             return;
         }
 
-        practiceTaskRepository.deleteByTaskIdIn(LEGACY_MOCK_TASK_IDS);
-
+        Set<String> expectedDefaultTaskIds = new LinkedHashSet<>();
         int synced = 0;
         for (CustomerProfile profile : profiles) {
-            if (profile.getSceneId().isEmpty()) {
-                log.warn("Skip AI coach profile without scene_id. profile={}", profile);
+            if (profile.getSceneId().isEmpty() || profile.getCustomerId().isEmpty()) {
+                log.warn("Skip AI coach profile without scene_id or customer_id. sceneId={}, customerId={}",
+                        profile.getSceneId(), profile.getCustomerId());
                 continue;
             }
-            String taskId = buildTaskId(profile.getSceneId());
+            String taskId = buildTaskId(profile.getCustomerId());
+            if (!expectedDefaultTaskIds.add(taskId)) {
+                log.warn("Skip duplicate AI coach customer profile task. taskId={}, customerId={}",
+                        taskId, profile.getCustomerId());
+                continue;
+            }
             PracticeTask task = practiceTaskRepository.findByTaskId(taskId)
                     .orElseGet(PracticeTask::new);
             syncTask(task, profile, taskId);
@@ -70,8 +70,14 @@ public class PracticeTaskDataInitializer implements CommandLineRunner {
             synced++;
         }
 
-        log.info("AI coach practice task initialization completed. dataDir={}, profiles={}, syncedTasks={}, removedLegacyMockTaskIds={}",
-                aiCoachProperties.getDataDir(), profiles.size(), synced, LEGACY_MOCK_TASK_IDS);
+        List<PracticeTask> obsoleteDefaultTasks = practiceTaskRepository.findByIsDefaultTrue()
+                .stream()
+                .filter(task -> !expectedDefaultTaskIds.contains(task.getTaskId()))
+                .toList();
+        practiceTaskRepository.deleteAll(obsoleteDefaultTasks);
+
+        log.info("AI coach practice task initialization completed. dataDir={}, profiles={}, syncedTasks={}, removedObsoleteDefaultTasks={}",
+                aiCoachProperties.getDataDir(), profiles.size(), synced, obsoleteDefaultTasks.size());
     }
 
     private void syncTask(PracticeTask task, CustomerProfile profile, String taskId) {
@@ -85,12 +91,12 @@ public class PracticeTaskDataInitializer implements CommandLineRunner {
         task.setLevel("recommend");
         task.setStatus("PENDING");
         task.setDeadline("");
-        task.setRewardPoints(40);
+        task.setRewardPoints(null);
         task.setRounds(aiCoachProperties.getDefaultTotalRounds());
         task.setProgress(0);
     }
 
-    private String buildTaskId(String sceneId) {
-        return "practice-" + sceneId.toLowerCase().replace("_", "-");
+    private String buildTaskId(String customerId) {
+        return "practice-" + customerId.toLowerCase(Locale.ROOT).replace("_", "-");
     }
 }

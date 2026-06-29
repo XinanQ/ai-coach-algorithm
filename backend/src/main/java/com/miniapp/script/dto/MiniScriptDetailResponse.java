@@ -6,17 +6,24 @@ import java.util.List;
  * 小程序话术详情响应 DTO。
  *
  * 用于 GET /api/mini/scripts/{scriptId}。
- * 字段需要与小程序前端详情页保持一致：
- * detail.js 中复制按钮读取的是 detail.standard，
- * 因此这里必须返回 standard，而不是 standardScript。
+ * standard 字段用于兼容现有详情页，内容来自算法知识块的 tutor_view_text。
  */
 public class MiniScriptDetailResponse {
 
     private String scriptId;
+    private String chunkId;
+    private String sceneId;
     private String scene;
     private String title;
+    private String businessName;
+    private String knowledgeType;
     private List<String> tags;
     private String standard;
+    private String content;
+    private String sourceFile;
+    private String sourceName;
+    private String complianceStatus;
+    private String reviewStatus;
     private String sourceTaskId;
     private String mine;
     private String source;
@@ -52,6 +59,22 @@ public class MiniScriptDetailResponse {
         this.scriptId = scriptId;
     }
 
+    public String getChunkId() {
+        return chunkId;
+    }
+
+    public void setChunkId(String chunkId) {
+        this.chunkId = chunkId;
+    }
+
+    public String getSceneId() {
+        return sceneId;
+    }
+
+    public void setSceneId(String sceneId) {
+        this.sceneId = sceneId;
+    }
+
     public String getScene() {
         return scene;
     }
@@ -68,6 +91,22 @@ public class MiniScriptDetailResponse {
         this.title = title;
     }
 
+    public String getBusinessName() {
+        return businessName;
+    }
+
+    public void setBusinessName(String businessName) {
+        this.businessName = businessName;
+    }
+
+    public String getKnowledgeType() {
+        return knowledgeType;
+    }
+
+    public void setKnowledgeType(String knowledgeType) {
+        this.knowledgeType = knowledgeType;
+    }
+
     public List<String> getTags() {
         return tags;
     }
@@ -82,6 +121,46 @@ public class MiniScriptDetailResponse {
 
     public void setStandard(String standard) {
         this.standard = standard;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    public String getSourceFile() {
+        return sourceFile;
+    }
+
+    public void setSourceFile(String sourceFile) {
+        this.sourceFile = sourceFile;
+    }
+
+    public String getSourceName() {
+        return sourceName;
+    }
+
+    public void setSourceName(String sourceName) {
+        this.sourceName = sourceName;
+    }
+
+    public String getComplianceStatus() {
+        return complianceStatus;
+    }
+
+    public void setComplianceStatus(String complianceStatus) {
+        this.complianceStatus = complianceStatus;
+    }
+
+    public String getReviewStatus() {
+        return reviewStatus;
+    }
+
+    public void setReviewStatus(String reviewStatus) {
+        this.reviewStatus = reviewStatus;
     }
 
     public String getSourceTaskId() {

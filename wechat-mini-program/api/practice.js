@@ -16,14 +16,14 @@ function getTaskDetail(taskId) {
 }
 
 // 开始对话（POST /api/mini/practice/dialog/start）
-// 返回 { sessionId, round, totalRounds, liveScore, messages }
+// 返回 { sessionId, taskId, round, totalRounds, difficultyLevel, difficultyRecommendation?, messages }
 function startDialog(taskId) {
   if (config.USE_MOCK) return Promise.resolve(mock.dialogStart(taskId))
   return request.post('/mini/practice/dialog/start', { taskId })
 }
 
 // 提交一轮回复（POST /api/mini/practice/dialog/reply）
-// 返回 { round, totalRounds, liveScore, message, finished }
+// 返回 { round, totalRounds, message, finished }
 // round 仅用于 mock 推进；真实请求只发送 { sessionId, text }
 function replyDialog(sessionId, text, round) {
   if (config.USE_MOCK) return Promise.resolve(mock.dialogReply(round))

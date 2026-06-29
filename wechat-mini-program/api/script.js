@@ -11,7 +11,7 @@ function getList() {
 // 话术详情（GET /api/mini/scripts/{scriptId}）
 function getDetail(id) {
   if (config.USE_MOCK) return Promise.resolve(mock.detail(id))
-  return request.get('/mini/scripts/' + id)
+  return request.get('/mini/scripts/' + encodeURIComponent(id))
 }
 
 // 收藏优化话术 { taskId, optimized }

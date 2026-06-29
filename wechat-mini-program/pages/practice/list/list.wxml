@@ -8,7 +8,7 @@
   </view>
 
   <!-- 成长卡 -->
-  <view class="hero-card growth-card">
+  <view class="hero-card growth-card" wx:if="{{hasGrowth}}">
     <view class="growth-top">
       <view class="growth-left">
         <text class="growth-level">{{growth.levelName}}</text>
@@ -33,10 +33,18 @@
         <text class="badge {{item.level === 'must' ? 'badge-must' : 'badge-recommend'}}">{{item.level === 'must' ? '必须完成' : '强烈推荐'}}</text>
         <text class="task-status">{{item.statusLabel}}</text>
       </view>
-      <text class="task-name">{{item.title}}</text>
+      <text class="task-name">{{item.displayTitle || item.title}}</text>
+      <view class="task-tags" wx:if="{{item.tags && item.tags.length > 0}}">
+        <text class="task-tag" wx:for="{{item.tags}}" wx:for-item="tag" wx:key="*this">{{tag}}</text>
+      </view>
       <view class="task-meta">
-        <text class="task-scene">{{item.scene}}</text>
-        <text class="task-deadline">{{item.deadline ? '截止 ' + item.deadline + ' · ' : ''}}+{{item.rewardPoints}}积分</text>
+        <view class="task-context">
+          <text class="task-scene" wx:if="{{item.scene}}">{{item.scene}}</text>
+          <text class="task-difficulty" wx:if="{{item.difficulty}}">{{item.difficulty}}</text>
+        </view>
+        <text class="task-deadline" wx:if="{{item.deadline || item.rewardPoints != null}}">
+          {{item.deadline ? '截止 ' + item.deadline : ''}}{{item.deadline && item.rewardPoints != null ? ' · ' : ''}}{{item.rewardPoints != null ? '+' + item.rewardPoints + '积分' : ''}}
+        </text>
       </view>
     </view>
     <view class="empty" wx:if="{{list.length === 0}}">暂无任务</view>

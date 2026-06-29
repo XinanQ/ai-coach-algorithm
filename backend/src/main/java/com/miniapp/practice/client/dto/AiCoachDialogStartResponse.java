@@ -3,6 +3,7 @@ package com.miniapp.practice.client.dto;
 import com.miniapp.practice.dto.PracticeMessageResponse;
 
 import java.util.List;
+import java.util.Map;
 
 public class AiCoachDialogStartResponse {
 
@@ -10,9 +11,9 @@ public class AiCoachDialogStartResponse {
     private String taskId;
     private Integer round;
     private Integer totalRounds;
-    private Integer liveScore;
+    private String difficultyLevel;
+    private Map<String, Object> difficultyRecommendation;
     private List<PracticeMessageResponse> messages;
-    private String source;
 
     public String getSessionId() {
         return sessionId;
@@ -46,12 +47,20 @@ public class AiCoachDialogStartResponse {
         this.totalRounds = totalRounds;
     }
 
-    public Integer getLiveScore() {
-        return liveScore;
+    public String getDifficultyLevel() {
+        return difficultyLevel;
     }
 
-    public void setLiveScore(Integer liveScore) {
-        this.liveScore = liveScore;
+    public void setDifficultyLevel(String difficultyLevel) {
+        this.difficultyLevel = difficultyLevel;
+    }
+
+    public Map<String, Object> getDifficultyRecommendation() {
+        return difficultyRecommendation;
+    }
+
+    public void setDifficultyRecommendation(Map<String, Object> difficultyRecommendation) {
+        this.difficultyRecommendation = difficultyRecommendation;
     }
 
     public List<PracticeMessageResponse> getMessages() {
@@ -62,11 +71,4 @@ public class AiCoachDialogStartResponse {
         this.messages = messages;
     }
 
-    public String getSource() {
-        return source;
-    }
-
-    public void setSource(String source) {
-        this.source = source;
-    }
 }

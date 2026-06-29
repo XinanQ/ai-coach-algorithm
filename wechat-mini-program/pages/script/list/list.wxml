@@ -1,23 +1,38 @@
 <view class="page">
   <view class="page-head">
-    <text class="eyebrow">个人沉淀</text>
+    <text class="eyebrow">算法知识库</text>
     <text class="big-title">话术库</text>
   </view>
 
+  <input class="search-input" placeholder="搜索标题、场景、来源" value="{{keyword}}" bindinput="onKeywordInput" />
+
+  <scroll-view class="category-filter" scroll-x wx:if="{{categories.length > 0}}">
+    <view class="category-filter-inner">
+      <text class="category-chip {{activeCategory === '' ? 'active' : ''}}" data-category="" bindtap="selectCategory">全部</text>
+      <text
+        class="category-chip {{activeCategory === item ? 'active' : ''}}"
+        wx:for="{{categories}}"
+        wx:key="*this"
+        data-category="{{item}}"
+        bindtap="selectCategory"
+      >{{item}}</text>
+    </view>
+  </scroll-view>
+
   <view class="list">
-    <view class="row" wx:for="{{scripts}}" wx:key="scriptId" data-id="{{item.scriptId}}" bindtap="viewDetail">
+    <view class="row" wx:for="{{visibleScripts}}" wx:key="scriptId" data-id="{{item.scriptId}}" bindtap="viewDetail">
       <view class="row-main">
-        <text class="title">{{item.title}}</text>
-        <view class="tags">
-          <text class="tag" wx:for="{{item.tags}}" wx:for-item="t" wx:key="*this">{{t}}</text>
-        </view>
-        <text class="meta">{{item.scene}} · {{item.date}}</text>
+        <text class="title">{{item.displayTitle}}</text>
+        <text class="meta" wx:if="{{item.businessName || item.scene}}">
+          {{item.businessName}}{{item.businessName && item.scene ? ' · ' : ''}}{{item.scene}}
+        </text>
+        <text class="source-name" wx:if="{{item.sourceName}}">{{item.sourceName}}</text>
       </view>
       <text class="arrow">></text>
     </view>
   </view>
 
-  <view class="empty" wx:if="{{scripts.length === 0}}">话术库还是空的，完成陪练复盘后可收藏优化话术</view>
+  <view class="empty" wx:if="{{visibleScripts.length === 0}}">暂无可展示的话术内容</view>
 </view>
 
 <tab-bar active="script" />

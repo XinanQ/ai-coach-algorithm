@@ -1,6 +1,7 @@
 package com.miniapp.practice.dto;
 
 import java.util.List;
+import java.util.Map;
 
 public class PracticeDialogStartResponse {
 
@@ -8,9 +9,9 @@ public class PracticeDialogStartResponse {
     private String taskId;
     private Integer round;
     private Integer totalRounds;
-    private Integer liveScore;
+    private String difficultyLevel;
+    private Map<String, Object> difficultyRecommendation;
     private List<PracticeMessageResponse> messages;
-    private String source;
 
     public PracticeDialogStartResponse() {
     }
@@ -47,12 +48,20 @@ public class PracticeDialogStartResponse {
         this.totalRounds = totalRounds;
     }
 
-    public Integer getLiveScore() {
-        return liveScore;
+    public String getDifficultyLevel() {
+        return difficultyLevel;
     }
 
-    public void setLiveScore(Integer liveScore) {
-        this.liveScore = liveScore;
+    public void setDifficultyLevel(String difficultyLevel) {
+        this.difficultyLevel = difficultyLevel;
+    }
+
+    public Map<String, Object> getDifficultyRecommendation() {
+        return difficultyRecommendation;
+    }
+
+    public void setDifficultyRecommendation(Map<String, Object> difficultyRecommendation) {
+        this.difficultyRecommendation = difficultyRecommendation;
     }
 
     public List<PracticeMessageResponse> getMessages() {
@@ -63,11 +72,4 @@ public class PracticeDialogStartResponse {
         this.messages = messages;
     }
 
-    public String getSource() {
-        return source;
-    }
-
-    public void setSource(String source) {
-        this.source = source;
-    }
 }
