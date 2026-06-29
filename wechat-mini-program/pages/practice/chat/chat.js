@@ -5,14 +5,12 @@ Page({
   data: {
     taskId: '',
     sessionId: '',
-    scene: '存款推荐',
+    difficultyLevel: '',
     messages: [],
     inputValue: '',
     round: 0,
     totalRounds: 3,
     finished: false,
-    liveScore: 70,
-    dims: ['风险揭示', '适当性匹配', '客户异议'],
     timeText: '00:00'
   },
   onLoad(query) {
@@ -38,7 +36,7 @@ Page({
         messages: d.messages || [],
         round: d.round || 1,
         totalRounds: d.totalRounds || 3,
-        liveScore: d.liveScore != null ? d.liveScore : this.data.liveScore
+        difficultyLevel: d.difficultyLevel || ''
       })
     })
   },
@@ -56,11 +54,11 @@ Page({
     const messages = this.data.messages.concat([{ role: 'user', content: text }])
     this.setData({ messages, inputValue: '' })
 
-    // 规范：reply 用 sessionId+text；实时分与是否结束以服务端返回为准
+    // 规范：reply 用 sessionId+text；轮次与是否结束以服务端返回为准
     api.practice.replyDialog(this.data.sessionId, text, this.data.round).then((d) => {
       const patch = {
         round: d.round != null ? d.round : this.data.round,
-        liveScore: d.liveScore != null ? d.liveScore : this.data.liveScore
+        totalRounds: d.totalRounds != null ? d.totalRounds : this.data.totalRounds
       }
       if (d.message) patch.messages = this.data.messages.concat([d.message])
       this.setData(patch)

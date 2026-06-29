@@ -4,10 +4,8 @@ public class PracticeDialogReplyResponse {
 
     private Integer round;
     private Integer totalRounds;
-    private Integer liveScore;
     private PracticeMessageResponse message;
     private Boolean finished;
-    private String source;
 
     public PracticeDialogReplyResponse() {
     }
@@ -28,14 +26,6 @@ public class PracticeDialogReplyResponse {
         this.totalRounds = totalRounds;
     }
 
-    public Integer getLiveScore() {
-        return liveScore;
-    }
-
-    public void setLiveScore(Integer liveScore) {
-        this.liveScore = liveScore;
-    }
-
     public PracticeMessageResponse getMessage() {
         return message;
     }
@@ -52,11 +42,4 @@ public class PracticeDialogReplyResponse {
         this.finished = finished;
     }
 
-    public String getSource() {
-        return source;
-    }
-
-    public void setSource(String source) {
-        this.source = source;
-    }
 }

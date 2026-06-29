@@ -23,7 +23,10 @@ page {
   letter-spacing: -1rpx;
   margin-top: 12rpx;
 }
-.rounds {
+.scene-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
   font-size: 26rpx;
   opacity: 0.8;
   margin-top: 16rpx;

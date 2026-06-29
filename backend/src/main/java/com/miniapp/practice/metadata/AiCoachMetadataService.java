@@ -30,6 +30,7 @@ public class AiCoachMetadataService {
     private static final String CUSTOMER_PROFILES_FILE = "data/customer_profiles.json";
     private static final String BUSINESS_CONFIG_FILE = "configs/marketing_business_config.json";
     private static final String SCORING_CRITERIA_FILE = "data/marketing_scoring_criteria.json";
+    private static final String MARKETING_CHUNKS_FILE = "data/marketing_chunks.json";
 
     private final AiCoachProperties aiCoachProperties;
     private final ObjectMapper objectMapper;
@@ -75,6 +76,63 @@ public class AiCoachMetadataService {
         }
         return getProfiles().stream()
                 .filter(profile -> sceneId.equals(profile.getSceneId()))
+                .findFirst();
+    }
+
+    public Optional<CustomerProfile> findProfileByCustomerId(String customerId) {
+        if (customerId == null || customerId.trim().isEmpty()) {
+            return Optional.empty();
+        }
+        return getProfiles().stream()
+                .filter(profile -> customerId.equals(profile.getCustomerId()))
+                .findFirst();
+    }
+
+    public List<MarketingKnowledgeChunk> getMarketingKnowledgeChunks() {
+        Optional<JsonNode> root = readJson(MARKETING_CHUNKS_FILE);
+        if (root.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        JsonNode chunks = root.get().path("chunks");
+        if (!chunks.isArray()) {
+            log.warn("AI coach marketing chunks file has no chunks array.");
+            return Collections.emptyList();
+        }
+
+        List<MarketingKnowledgeChunk> result = new ArrayList<>();
+        for (JsonNode node : chunks) {
+            String chunkId = text(node, "chunk_id");
+            if (chunkId.isEmpty()) {
+                log.warn("Skip AI coach marketing chunk without chunk_id.");
+                continue;
+            }
+            result.add(new MarketingKnowledgeChunk(
+                    chunkId,
+                    text(node, "scene_id"),
+                    text(node, "scene_name"),
+                    text(node, "business_name"),
+                    text(node, "title"),
+                    text(node, "content"),
+                    text(node, "tutor_view_text"),
+                    text(node, "knowledge_type"),
+                    text(node, "source_file"),
+                    stringList(node.get("route_tags")),
+                    text(node, "created_at"),
+                    text(node, "compliance_status"),
+                    text(node, "review_status"),
+                    !node.has("enabled") || node.path("enabled").asBoolean(true)
+            ));
+        }
+        return result;
+    }
+
+    public Optional<MarketingKnowledgeChunk> findMarketingKnowledgeChunkById(String chunkId) {
+        if (chunkId == null || chunkId.trim().isEmpty()) {
+            return Optional.empty();
+        }
+        return getMarketingKnowledgeChunks().stream()
+                .filter(chunk -> chunkId.equals(chunk.getChunkId()))
                 .findFirst();
     }
 
@@ -350,6 +408,109 @@ public class AiCoachMetadataService {
 
         public List<Map<String, Object>> getSceneRules() {
             return sceneRules;
+        }
+    }
+
+    public static class MarketingKnowledgeChunk {
+        private final String chunkId;
+        private final String sceneId;
+        private final String sceneName;
+        private final String businessName;
+        private final String title;
+        private final String content;
+        private final String tutorViewText;
+        private final String knowledgeType;
+        private final String sourceFile;
+        private final List<String> routeTags;
+        private final String createdAt;
+        private final String complianceStatus;
+        private final String reviewStatus;
+        private final boolean enabled;
+
+        public MarketingKnowledgeChunk(String chunkId,
+                                       String sceneId,
+                                       String sceneName,
+                                       String businessName,
+                                       String title,
+                                       String content,
+                                       String tutorViewText,
+                                       String knowledgeType,
+                                       String sourceFile,
+                                       List<String> routeTags,
+                                       String createdAt,
+                                       String complianceStatus,
+                                       String reviewStatus,
+                                       boolean enabled) {
+            this.chunkId = chunkId;
+            this.sceneId = sceneId;
+            this.sceneName = sceneName;
+            this.businessName = businessName;
+            this.title = title;
+            this.content = content;
+            this.tutorViewText = tutorViewText;
+            this.knowledgeType = knowledgeType;
+            this.sourceFile = sourceFile;
+            this.routeTags = routeTags;
+            this.createdAt = createdAt;
+            this.complianceStatus = complianceStatus;
+            this.reviewStatus = reviewStatus;
+            this.enabled = enabled;
+        }
+
+        public String getChunkId() {
+            return chunkId;
+        }
+
+        public String getSceneId() {
+            return sceneId;
+        }
+
+        public String getSceneName() {
+            return sceneName;
+        }
+
+        public String getBusinessName() {
+            return businessName;
+        }
+
+        public String getTitle() {
+            return title;
+        }
+
+        public String getContent() {
+            return content;
+        }
+
+        public String getTutorViewText() {
+            return tutorViewText;
+        }
+
+        public String getKnowledgeType() {
+            return knowledgeType;
+        }
+
+        public String getSourceFile() {
+            return sourceFile;
+        }
+
+        public List<String> getRouteTags() {
+            return routeTags;
+        }
+
+        public String getCreatedAt() {
+            return createdAt;
+        }
+
+        public String getComplianceStatus() {
+            return complianceStatus;
+        }
+
+        public String getReviewStatus() {
+            return reviewStatus;
+        }
+
+        public boolean isEnabled() {
+            return enabled;
         }
     }
 

@@ -78,17 +78,14 @@ public class AiCoachClient {
         requireText(response.getTaskId(), "taskId");
         requireNonNull(response.getRound(), "round");
         requireNonNull(response.getTotalRounds(), "totalRounds");
-        requireNonNull(response.getLiveScore(), "liveScore");
+        requireText(response.getDifficultyLevel(), "difficultyLevel");
         requireNonNull(response.getMessages(), "messages");
-        requireText(response.getSource(), "source");
     }
 
     private void validateReplyResponse(AiCoachDialogReplyResponse response) {
         requireNonNull(response.getRound(), "round");
         requireNonNull(response.getTotalRounds(), "totalRounds");
-        requireNonNull(response.getLiveScore(), "liveScore");
         requireNonNull(response.getFinished(), "finished");
-        requireText(response.getSource(), "source");
         if (!response.getFinished()) {
             requireNonNull(response.getMessage(), "message");
             requireText(response.getMessage().getContent(), "message.content");

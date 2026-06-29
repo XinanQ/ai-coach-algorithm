@@ -3,7 +3,9 @@ const api = require('../../../api/index')
 Page({
   data: {
     taskId: '',
+    title: '',
     scene: '',
+    difficulty: '',
     customerName: '',
     customerDesc: '',
     tags: [],

@@ -19,6 +19,11 @@ public class AiCoachDialogStartRequest {
     @JsonProperty("total_rounds")
     private Integer totalRounds;
 
+    private String difficulty;
+
+    @JsonProperty("auto_difficulty")
+    private Boolean autoDifficulty;
+
     public AiCoachDialogStartRequest() {
     }
 
@@ -26,12 +31,16 @@ public class AiCoachDialogStartRequest {
                                      String sceneId,
                                      String taskId,
                                      String customerId,
-                                     Integer totalRounds) {
+                                     Integer totalRounds,
+                                     String difficulty,
+                                     Boolean autoDifficulty) {
         this.userId = userId;
         this.sceneId = sceneId;
         this.taskId = taskId;
         this.customerId = customerId;
         this.totalRounds = totalRounds;
+        this.difficulty = difficulty;
+        this.autoDifficulty = autoDifficulty;
     }
 
     public String getUserId() {
@@ -72,5 +81,21 @@ public class AiCoachDialogStartRequest {
 
     public void setTotalRounds(Integer totalRounds) {
         this.totalRounds = totalRounds;
+    }
+
+    public String getDifficulty() {
+        return difficulty;
+    }
+
+    public void setDifficulty(String difficulty) {
+        this.difficulty = difficulty;
+    }
+
+    public Boolean getAutoDifficulty() {
+        return autoDifficulty;
+    }
+
+    public void setAutoDifficulty(Boolean autoDifficulty) {
+        this.autoDifficulty = autoDifficulty;
     }
 }

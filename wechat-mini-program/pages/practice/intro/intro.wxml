@@ -1,8 +1,12 @@
 <view class="container">
   <view class="hero">
     <text class="scene-label">陪练场景</text>
-    <text class="scene-title">{{scene}}</text>
-    <text class="rounds">共 {{rounds}} 轮对话</text>
+    <text class="scene-title">{{title || scene}}</text>
+    <view class="scene-meta">
+      <text wx:if="{{scene && scene !== title}}">{{scene}}</text>
+      <text wx:if="{{difficulty}}">{{difficulty}}</text>
+      <text>共 {{rounds}} 轮对话</text>
+    </view>
   </view>
 
   <view class="block">

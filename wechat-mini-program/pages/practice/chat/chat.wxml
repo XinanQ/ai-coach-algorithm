@@ -1,12 +1,11 @@
 <view class="container">
   <view class="topbar">
-    <text class="topbar-scene">{{scene}} · 第{{round}}/{{totalRounds}}轮</text>
+    <view class="topbar-scene">
+      <text>第{{round}}/{{totalRounds}}轮</text>
+      <text wx:if="{{difficultyLevel}}"> · {{difficultyLevel}}</text>
+    </view>
     <view class="topbar-right">
       <text class="timer">{{timeText}}</text>
-      <view class="live-score">
-        <text class="live-val">{{liveScore}}</text>
-        <text class="live-label">实时分</text>
-      </view>
     </view>
   </view>
 
@@ -19,8 +18,7 @@
     <view id="bottom"></view>
   </scroll-view>
 
-  <view class="dim-tags" wx:if="{{!finished}}">
-    <text class="dim-tag" wx:for="{{dims}}" wx:key="*this">{{item}}</text>
+  <view class="dialog-actions" wx:if="{{!finished}}">
     <text class="end-link" bindtap="finishDialog">结束回顾</text>
   </view>
 
