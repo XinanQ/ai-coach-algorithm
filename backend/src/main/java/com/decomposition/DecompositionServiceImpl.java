@@ -45,6 +45,16 @@ public class DecompositionServiceImpl implements DecompositionService {
             "网点", "outlet_admin"
     );
 
+    // 机构层级 → 前端角色字符串。用于由登录用户的真实机构推导其身份，
+    // 不再信任前端传来的 ownerRole / currentOrgId。
+    private static final Map<OrgLevel, String> ROLE_BY_ORG_LEVEL = Map.of(
+            OrgLevel.HEADQUARTERS, "head_admin",
+            OrgLevel.PROVINCE, "province_admin",
+            OrgLevel.CITY, "city_admin",
+            OrgLevel.BRANCH, "branch_admin",
+            OrgLevel.OUTLET, "outlet_admin"
+    );
+
     private final DecompositionRepository repo;
     private final EmployeeRepository employeeRepository;
     private final ReviewScopeService reviewScopeService;
@@ -69,6 +79,23 @@ public class DecompositionServiceImpl implements DecompositionService {
     @Override
     @Transactional(readOnly = true)
     public List<DecompositionListResponse> list(String ownerRole, Long currentOrgId, Long projectId) {
+        // 回读身份以登录用户为准，确保与保存时落库的 ownerRole / currentOrgId 完全一致，
+        // 从根本上避免"存了却查不到"。未登录场景（无上下文）则沿用入参，保持向后兼容。
+        Long employeeId = CurrentUserContext.getEmployeeId();
+        if (employeeId != null) {
+            Employee current = employeeRepository.findByIdWithOrganization(employeeId).orElse(null);
+            if (current != null && current.getOrganization() != null) {
+                Long authedOrgId = current.getOrganization().getId();
+                String authedRole = roleByOrgLevel(current.getOrganization().getLevel());
+                if (authedOrgId != null) {
+                    currentOrgId = authedOrgId;
+                }
+                if (authedRole != null) {
+                    ownerRole = authedRole;
+                }
+            }
+        }
+
         List<DecompositionRecord> records;
         if (ownerRole != null && currentOrgId != null && projectId != null) {
             records = repo.findByOwnerRoleAndCurrentOrgIdAndProjectId(ownerRole, currentOrgId, projectId);
@@ -92,6 +119,9 @@ public class DecompositionServiceImpl implements DecompositionService {
         }
 
         if (projectId != null && !result.isEmpty()) {
+            // 单项目视图：优先返回可编辑记录（readOnly=false），其次才是只读的上级下发记录，
+            // 这样收到方分解保存后能读回自己的可编辑计划，而不是又回到只读的收到视图。
+            result.sort(Comparator.comparing(DecompositionListResponse::isReadOnly));
             return List.of(result.get(0));
         }
         return result;
@@ -111,23 +141,30 @@ public class DecompositionServiceImpl implements DecompositionService {
         }
 
         Long projectId = request.getProjectId();
-        Long currentOrgId = request.getCurrentOrgId();
         String originType = request.getOriginType();
-        Long userOrgId = current.getOrganization() != null ? current.getOrganization().getId() : null;
 
-        // Verify org ownership based on origin type
-        if ("created".equals(originType)) {
-            if (userOrgId == null || !userOrgId.equals(currentOrgId)) {
-                throw new IllegalArgumentException("只有项目所在机构可下发分解");
-            }
-        } else if ("received".equals(originType)) {
+        // 分解方的身份一律以登录用户的真实机构为准，不信任前端传来的
+        // currentOrgId / ownerRole / 机构名 / 层级，从根本上保证写入 key 与回读 key 一致。
+        Organization userOrg = current.getOrganization();
+        if (userOrg == null) {
+            throw new IllegalArgumentException("当前用户无关联机构，无法执行分解");
+        }
+        Long currentOrgId = userOrg.getId();
+        String currentOrgName = userOrg.getName() != null ? userOrg.getName() : "";
+        String currentLevel = resolveChineseLevel(userOrg.getLevel());
+        String ownerRole = roleByOrgLevel(userOrg.getLevel());
+        // 下一层级按机构真实层级推导，推导不出时回退到请求值
+        String nextLevel = NEXT_LEVEL_MAP.get(currentLevel);
+        if (nextLevel == null) {
+            nextLevel = request.getNextLevel();
+        }
+
+        // 按来源类型校验权限
+        if ("received".equals(originType)) {
             List<DecompositionRecord> existing = repo.findByProjectIdAndCurrentOrgId(projectId, currentOrgId);
             boolean hasReceived = existing.stream().anyMatch(r -> "received".equals(r.getOriginType()));
             if (!hasReceived) {
                 throw new IllegalArgumentException("未找到上级下发的分解记录");
-            }
-            if (!currentOrgId.equals(userOrgId)) {
-                throw new IllegalArgumentException("只能分解本机构收到的任务");
             }
         }
 
@@ -151,34 +188,33 @@ public class DecompositionServiceImpl implements DecompositionService {
             }
             original.setExternalId(request.getId());
             original.setProjectId(projectId);
-            original.setOwnerRole(request.getOwnerRole());
+            original.setOwnerRole(ownerRole);
             original.setOriginType(originType);
             original.setReceivedFrom(request.getReceivedFrom() != null ? request.getReceivedFrom() : "");
-            original.setCurrentOrganization(request.getCurrentOrganization() != null ? request.getCurrentOrganization() : "");
+            original.setCurrentOrganization(currentOrgName);
             original.setCurrentOrgId(currentOrgId);
-            original.setCurrentLevel(request.getCurrentLevel() != null ? request.getCurrentLevel() : "");
-            original.setNextLevel(request.getNextLevel());
+            original.setCurrentLevel(currentLevel != null ? currentLevel : "");
+            original.setNextLevel(nextLevel);
             original.setStatus(request.getStatus() != null ? request.getStatus() : "已下发");
             original.setReadOnly(false);
             original.setPayload(json);
             original = repo.save(original);
             log.info("主分解记录已保存 id={} externalId={}", original.getId(), original.getExternalId());
 
-            // Clean up old received records sent by this org for this project before recreating
+            // 重建前先清掉本机构就该项目下发过的旧 received 记录
             List<DecompositionRecord> oldReceived = repo.findByProjectId(projectId);
-            String currentOrgName = request.getCurrentOrganization();
             for (DecompositionRecord r : oldReceived) {
                 if ("received".equals(r.getOriginType())
-                        && currentOrgName != null && currentOrgName.equals(r.getReceivedFrom())) {
+                        && currentOrgName.equals(r.getReceivedFrom())) {
                     repo.delete(r);
                     log.debug("删除旧下发记录 externalId={}", r.getExternalId());
                 }
             }
 
-            // Generate received records for each target at the next level
-            String childLevel = request.getNextLevel();
-            String grandChildLevel = NEXT_LEVEL_MAP.get(childLevel);
-            String childRole = ROLE_BY_LEVEL.get(childLevel);
+            // 为每个直属对象生成下一层级的 received 记录
+            String childLevel = nextLevel;
+            String grandChildLevel = childLevel != null ? NEXT_LEVEL_MAP.get(childLevel) : null;
+            String childRole = childLevel != null ? ROLE_BY_LEVEL.get(childLevel) : null;
 
             if (childRole != null) {
                 for (TargetItem target : request.getTargets()) {
@@ -297,6 +333,10 @@ public class DecompositionServiceImpl implements DecompositionService {
             case BRANCH -> "支行";
             case OUTLET -> "网点";
         };
+    }
+
+    private String roleByOrgLevel(OrgLevel level) {
+        return level == null ? null : ROLE_BY_ORG_LEVEL.get(level);
     }
 
     private Map<String, Object> buildSingleTargetPayload(TargetItem target, String childLevel, String grandChildLevel) {
