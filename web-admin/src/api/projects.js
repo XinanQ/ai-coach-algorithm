@@ -124,6 +124,15 @@ export async function deleteProject(projectId) {
   })
 }
 
+// 更新项目状态 ↔ POST /api/admin/projects/{id}/status?status=<枚举>
+// statusCode 取 ProjectStatus 枚举：DRAFT / PLANNED / ACTIVE / PAUSED / COMPLETED / CANCELLED
+export async function setProjectStatus(projectId, statusCode) {
+  return await request(
+    `/api/admin/projects/${projectId}/status?status=${encodeURIComponent(statusCode)}`,
+    { method: 'POST' }
+  )
+}
+
 // --- 组员项目管理向导依赖（localStorage，原样保留其逻辑）---
 const localProjectsKey = 'localProjects'
 const projectConfigKey = (id) => `projectConfig:${id}`

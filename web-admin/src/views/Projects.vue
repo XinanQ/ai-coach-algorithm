@@ -38,9 +38,7 @@
         <label class="form-field">
           项目状态
           <select v-model="form.status" class="select">
-            <option>未开始</option>
-            <option>进行中</option>
-            <option>已结束</option>
+            <option v-for="opt in PROJECT_STATUS_OPTIONS" :key="opt.code" :value="opt.code">{{ opt.label }}</option>
           </select>
         </label>
         <label class="form-field">
@@ -258,6 +256,19 @@
             下发分解
           </router-link>
           <button v-else class="button" disabled>待上级下发明细</button>
+          <label class="status-select">
+            状态
+            <select
+              v-if="nextStatusOptions(project.statusCode).length"
+              class="select"
+              :value="''"
+              @change="onStatusSelect(project, $event)"
+            >
+              <option value="" disabled>{{ statusLabels[project.statusCode] || project.status }} ›</option>
+              <option v-for="opt in nextStatusOptions(project.statusCode)" :key="opt.code" :value="opt.code">{{ opt.label }}</option>
+            </select>
+            <span v-else class="status-terminal">{{ statusLabels[project.statusCode] || project.status }} · 终态</span>
+          </label>
           <button v-if="project.canDelete" class="button danger-button" @click="removeProject(project)">
             删除项目
           </button>
@@ -270,7 +281,8 @@
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { getCurrentUser } from '../auth/permissions'
-import { createProject, deleteProject, getOrganizations, getProjects, saveProjectConfig } from '../api/projects'
+import { ElMessageBox } from 'element-plus'
+import { createProject, deleteProject, getOrganizations, getProjects, saveProjectConfig, setProjectStatus } from '../api/projects'
 import { saveIndicators } from '../api/indicators'
 
 const projects = ref([])
@@ -305,7 +317,7 @@ const baseForm = () => {
     endDate: addMonths(startDate, 2),
     reportDeadline: '00:00',
     attachmentRequired: false,
-    status: '未开始',
+    status: 'PLANNED',
     attachment: null,
     ownerOrg: currentUser?.organization || '',
     manager: currentUser?.name || ''
@@ -490,6 +502,90 @@ async function removeProject(project) {
   }
 }
 
+// 项目状态：与后端 ProjectStatus 枚举对齐。code 用于提交（新建 / 改状态）与后端 statusCode 比对，label 仅用于显示。
+const PROJECT_STATUS_OPTIONS = [
+  { code: 'DRAFT', label: '草稿' },
+  { code: 'PLANNED', label: '未开始' },
+  { code: 'ACTIVE', label: '进行中' },
+  { code: 'PAUSED', label: '已暂停' },
+  { code: 'COMPLETED', label: '已结束' },
+  { code: 'CANCELLED', label: '已取消' }
+]
+const statusLabels = Object.fromEntries(PROJECT_STATUS_OPTIONS.map((opt) => [opt.code, opt.label]))
+
+// 合法状态流转（状态机），须与后端 ProjectServiceImpl.ALLOWED_TRANSITIONS 一致。
+// 状态下拉只列出「当前状态允许的下一步」，从源头杜绝乱跳；终态无下一步。
+const ALLOWED_TRANSITIONS = {
+  DRAFT: ['PLANNED', 'CANCELLED'],
+  PLANNED: ['ACTIVE', 'CANCELLED'],
+  ACTIVE: ['PAUSED', 'COMPLETED', 'CANCELLED'],
+  PAUSED: ['ACTIVE', 'COMPLETED', 'CANCELLED'],
+  COMPLETED: [],
+  CANCELLED: []
+}
+// 终态目标：变更到这两个状态不可逆，需强确认（手输项目名）。
+const TERMINAL_TARGETS = ['COMPLETED', 'CANCELLED']
+
+function nextStatusOptions(statusCode) {
+  const codes = ALLOWED_TRANSITIONS[statusCode] || []
+  return PROJECT_STATUS_OPTIONS.filter((opt) => codes.includes(opt.code))
+}
+
+// 选中即把下拉复位回「当前状态」占位（selectedIndex=0），
+// 避免未确认时下拉视觉上停在新状态（顶部徽章始终是后端真值，不受影响）。
+function onStatusSelect(project, event) {
+  const statusCode = event.target.value
+  event.target.selectedIndex = 0
+  if (statusCode) {
+    changeStatus(project, statusCode)
+  }
+}
+
+async function changeStatus(project, statusCode) {
+  if (!statusCode || statusCode === project.statusCode) return
+
+  const label = statusLabels[statusCode] || statusCode
+
+  try {
+    if (TERMINAL_TARGETS.includes(statusCode)) {
+      // 终态：强确认，要求手输项目完整名称，防误触
+      await ElMessageBox.prompt(
+        `此操作将把项目「${project.name}」置为「${label}」，终态不可逆。请输入项目完整名称以确认：`,
+        '高危操作确认',
+        {
+          confirmButtonText: '确认变更',
+          cancelButtonText: '取消',
+          type: 'warning',
+          inputPlaceholder: project.name,
+          inputValidator: (val) => (val && val.trim() === project.name) || '项目名称不一致，无法确认',
+          inputErrorMessage: '项目名称不一致'
+        }
+      )
+    } else {
+      // 可逆变更：普通确认弹窗
+      await ElMessageBox.confirm(
+        `将项目「${project.name}」状态变更为「${label}」？`,
+        '确认状态变更',
+        { confirmButtonText: '确认', cancelButtonText: '取消', type: 'warning' }
+      )
+    }
+  } catch {
+    // 用户取消：下拉已在 onStatusSelect 中复位，徽章仍是后端真值，无需其它处理
+    return
+  }
+
+  try {
+    await setProjectStatus(project.id, statusCode)
+    await loadProjects()
+    message.value = `项目“${project.name}”状态已更新为「${label}」。`
+    messageType.value = 'success'
+  } catch (err) {
+    message.value = err.message || '更新项目状态失败。'
+    messageType.value = 'error'
+    await loadProjects()
+  }
+}
+
 onMounted(async () => {
   await loadProjects()
 })
@@ -520,6 +616,28 @@ onMounted(async () => {
 
 .project-card p {
   color: #4b5563;
+}
+
+.status-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.status-select .select {
+  width: auto;
+  min-width: 96px;
+  padding: 6px 8px;
+}
+
+.status-terminal {
+  font-size: 13px;
+  color: #9ca3af;
+  padding: 6px 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
 }
 
 dl {

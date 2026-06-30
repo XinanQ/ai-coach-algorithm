@@ -30,6 +30,7 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -88,34 +89,42 @@ public class DashboardService {
         res.setVisibleProjectCount(visibleProjects.size());
 
         Map<Long, BigDecimal> approvedByProject = sumApprovedResultByProject();
-        List<DashboardProjectItem> projectItems = new ArrayList<>();
+        List<DashboardProjectItem> activeProjects = new ArrayList<>();
         List<Integer> completionRates = new ArrayList<>();
-        int activeCount = 0;
 
         for (Project project : visibleProjects) {
-            boolean active = project.getStatus() == ProjectStatus.ACTIVE;
-            if (active) {
-                activeCount++;
+            if (project.getStatus() != ProjectStatus.ACTIVE) {
+                continue;
             }
-            if (active && projectItems.size() < PROJECT_LIMIT) {
-                Integer rate = computeCompletionRate(project.getId(), approvedByProject);
 
-                DashboardProjectItem item = new DashboardProjectItem();
-                item.setId(project.getId());
-                item.setName(project.getName());
-                item.setCompletionRate(rate);
-                item.setDaysToDeadline(project.getEndDate() == null
-                        ? null
-                        : (int) ChronoUnit.DAYS.between(today, project.getEndDate()));
+            Integer rate = computeCompletionRate(project.getId(), approvedByProject);
 
-                if (rate != null) {
-                    completionRates.add(rate);
-                }
-                projectItems.add(item);
+            DashboardProjectItem item = new DashboardProjectItem();
+            item.setId(project.getId());
+            item.setName(project.getName());
+            item.setCompletionRate(rate);
+            item.setDaysToDeadline(project.getEndDate() == null
+                    ? null
+                    : (int) ChronoUnit.DAYS.between(today, project.getEndDate()));
+
+            if (rate != null) {
+                completionRates.add(rate);
             }
+            activeProjects.add(item);
         }
-        res.setActiveProjectCount(activeCount);
-        res.setProjects(projectItems);
+
+        // 按距截止天数升序：已逾期/最紧急排最前，无截止日期排最后；排序后再截断，
+        // 保证露出的永远是「最该关注」的前 N 个，而非 id 最小的前 N 个。
+        activeProjects.sort(Comparator.comparing(
+                DashboardProjectItem::getDaysToDeadline,
+                Comparator.nullsLast(Comparator.naturalOrder())));
+
+        List<DashboardProjectItem> topProjects = activeProjects.size() > PROJECT_LIMIT
+                ? new ArrayList<>(activeProjects.subList(0, PROJECT_LIMIT))
+                : activeProjects;
+
+        res.setActiveProjectCount(activeProjects.size());
+        res.setProjects(topProjects);
         res.setOverallCompletionRate(averageOrNull(completionRates));
 
         // —— 范围内本月员工积分排行（已按登录机构范围过滤）——
