@@ -283,6 +283,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { getCurrentUser } from '../auth/permissions'
 import { ElMessageBox } from 'element-plus'
 import { createProject, deleteProject, getOrganizations, getProjects, saveProjectConfig, setProjectStatus } from '../api/projects'
+import { getDecomposableProjectIds } from '../api/decomposition'
 import { saveIndicators } from '../api/indicators'
 
 const projects = ref([])
@@ -448,7 +449,15 @@ function cancelWizard() {
 }
 
 async function loadProjects() {
-  projects.value = await getProjects(currentUser)
+  const [list, decomposableIds] = await Promise.all([
+    getProjects(currentUser),
+    getDecomposableProjectIds(currentUser)
+  ])
+  // 本机构收到上级下发的项目也允许继续下发，并入「下发分解」按钮判定
+  const idSet = new Set(decomposableIds.map((id) => String(id)))
+  projects.value = list.map((project) =>
+    project.canDecompose ? project : { ...project, canDecompose: idSet.has(String(project.id)) }
+  )
 }
 
 async function saveProject() {
