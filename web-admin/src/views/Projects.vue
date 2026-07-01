@@ -97,9 +97,47 @@
             <button class="button danger-button" type="button" @click="removeIndicator(index)">删除</button>
           </div>
           <div class="form-grid">
+            <label class="form-field indicator-picker">
+              指标名称（搜索复用，没有则新建）
+              <el-select
+                v-model="indicator.indicatorId"
+                filterable
+                :filter-method="(q) => (indicatorQuery = q)"
+                placeholder="搜索指标库…"
+                class="indicator-select"
+                @change="(val) => onIndicatorPicked(index, val)"
+                @visible-change="() => (indicatorQuery = '')"
+              >
+                <el-option
+                  v-for="opt in filteredIndicatorOptions"
+                  :key="opt.id"
+                  :label="opt.name"
+                  :value="opt.id"
+                >
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+                    <span>{{ opt.name }}</span>
+                    <span
+                      style="color:#dc2626;cursor:pointer;font-size:12px;line-height:1"
+                      title="从指标库删除该指标"
+                      @click.stop="deleteIndicatorOption(opt)"
+                    >✕</span>
+                  </div>
+                </el-option>
+                <template #footer>
+                  <el-button
+                    text
+                    type="primary"
+                    :disabled="!indicatorQuery.trim() || creatingIndicator"
+                    @click="createIndicatorFromQuery(index)"
+                  >
+                    ＋ 新建指标{{ indicatorQuery.trim() ? `「${indicatorQuery.trim()}」` : '' }}
+                  </el-button>
+                </template>
+              </el-select>
+            </label>
             <label class="form-field">
-              指标名称
-              <input v-model.trim="indicator.name" class="field" placeholder="例如：定期存款" />
+              目标值 / 任务量
+              <input v-model.number="indicator.targetValue" class="field" type="number" min="0" placeholder="例如：500" />
             </label>
             <label class="form-field">
               指标类型
@@ -284,7 +322,7 @@ import { getCurrentUser } from '../auth/permissions'
 import { ElMessageBox } from 'element-plus'
 import { createProject, deleteProject, getOrganizations, getProjects, saveProjectConfig, setProjectStatus } from '../api/projects'
 import { getDecomposableProjectIds } from '../api/decomposition'
-import { saveIndicators } from '../api/indicators'
+import { getIndicatorLibrary, createLibraryIndicator, deleteLibraryIndicator, saveProjectIndicators } from '../api/indicators'
 
 const projects = ref([])
 const currentUser = getCurrentUser()
@@ -348,16 +386,92 @@ const indicatorWeightTotal = computed(() =>
 
 function addIndicator() {
   indicatorList.value.push({
+    indicatorId: null,
     name: '',
     indicatorType: '结果指标',
     valueType: '金额',
     unit: '万元',
+    targetValue: 0,
     weight: 0,
     pointRule: 0,
     bigOrderEnabled: false,
     bigOrderThreshold: 0,
     talentCount: 0
   })
+}
+
+// 指标库：搜索复用优先，搜不到再新建入库
+const indicatorLibrary = ref([])
+const indicatorQuery = ref('')
+const creatingIndicator = ref(false)
+
+const filteredIndicatorOptions = computed(() => {
+  const q = indicatorQuery.value.trim().toLowerCase()
+  if (!q) return indicatorLibrary.value
+  return indicatorLibrary.value.filter((opt) => (opt.name || '').toLowerCase().includes(q))
+})
+
+async function loadIndicatorLibrary() {
+  try {
+    indicatorLibrary.value = await getIndicatorLibrary()
+  } catch {
+    indicatorLibrary.value = []
+  }
+}
+
+function onIndicatorPicked(index, id) {
+  const opt = indicatorLibrary.value.find((o) => o.id === id)
+  if (!opt) return
+  indicatorList.value[index].name = opt.name
+  if (opt.unit) indicatorList.value[index].unit = opt.unit
+}
+
+async function createIndicatorFromQuery(index) {
+  const name = indicatorQuery.value.trim()
+  if (!name || creatingIndicator.value) return
+  creatingIndicator.value = true
+  try {
+    const created = await createLibraryIndicator({ name, unit: indicatorList.value[index].unit })
+    indicatorLibrary.value = [created, ...indicatorLibrary.value.filter((o) => o.id !== created.id)]
+    indicatorList.value[index].indicatorId = created.id
+    indicatorList.value[index].name = created.name
+    if (created.unit) indicatorList.value[index].unit = created.unit
+    indicatorQuery.value = ''
+  } catch (err) {
+    message.value = err.message || '创建指标失败。'
+    messageType.value = 'error'
+  } finally {
+    creatingIndicator.value = false
+  }
+}
+
+async function deleteIndicatorOption(opt) {
+  try {
+    await ElMessageBox.confirm(
+      `确定从指标库删除「${opt.name}」吗？若已被其他项目引用，删除后可能影响其展示。`,
+      '删除指标',
+      { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' }
+    )
+  } catch {
+    return // 用户取消
+  }
+
+  try {
+    await deleteLibraryIndicator(opt.id)
+    indicatorLibrary.value = indicatorLibrary.value.filter((o) => o.id !== opt.id)
+    // 若已被某个指标卡片选中，一并清空其选择
+    indicatorList.value.forEach((card) => {
+      if (card.indicatorId === opt.id) {
+        card.indicatorId = null
+        card.name = ''
+      }
+    })
+    message.value = `已从指标库删除「${opt.name}」。`
+    messageType.value = 'success'
+  } catch (err) {
+    message.value = err.message || '删除指标失败，可能已被项目引用。'
+    messageType.value = 'error'
+  }
 }
 
 function removeIndicator(index) {
@@ -469,19 +583,23 @@ async function saveProject() {
     return
   }
 
+  // 每个指标都必须选/建库指标，否则挂不到项目（后端要求 indicatorId）
+  const unlinked = indicatorList.value.some((indicator) => !indicator.indicatorId)
+  if (indicatorList.value.length && unlinked) {
+    currentStep.value = 2
+    message.value = '请为每个指标从指标库中选择，或在下拉底部新建后再保存。'
+    messageType.value = 'error'
+    return
+  }
+
   try {
     const result = await createProject(
       { ...form, attachment: undefined, visibleOrgIds: config.participatingOrgIds },
       currentUser
     )
 
-    // 详细指标与分解设置按项目 id 持久化
-    const indicatorsToSave = indicatorList.value.map((indicator, index) => ({
-      ...indicator,
-      id: `${result.id}-${index}`,
-      projectId: result.id
-    }))
-    await saveIndicators(result.id, indicatorsToSave)
+    // 把选/建好的库指标真正挂接到项目（后端持久化），并本地镜像
+    await saveProjectIndicators(result.id, indicatorList.value)
     await saveProjectConfig(result.id, { ...config })
 
     await loadProjects()
@@ -596,7 +714,7 @@ async function changeStatus(project, statusCode) {
 }
 
 onMounted(async () => {
-  await loadProjects()
+  await Promise.all([loadProjects(), loadIndicatorLibrary()])
 })
 </script>
 
@@ -604,6 +722,10 @@ onMounted(async () => {
 .project-card {
   display: grid;
   gap: 16px;
+}
+
+.indicator-select {
+  width: 100%;
 }
 
 .project-title {

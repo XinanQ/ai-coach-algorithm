@@ -3,6 +3,7 @@ package com.indicator;
 import com.employee.EmployeeRepository;
 import com.indicator.dto.*;
 import com.organization.OrganizationRepository;
+import com.project.ProjectIndicatorRepository;
 import com.performance.TaskResult;
 import com.performance.TaskResultRepository;
 import com.performance.TaskResultStatus;
@@ -35,17 +36,20 @@ public class IndicatorServiceImpl implements IndicatorService {
     private final TaskResultRepository taskResultRepo;
     private final OrganizationRepository organizationRepo;
     private final EmployeeRepository employeeRepo;
+    private final ProjectIndicatorRepository projectIndicatorRepo;
 
     public IndicatorServiceImpl(IndicatorRepository indicatorRepo,
                                 TaskRepository taskRepo,
                                 TaskResultRepository taskResultRepo,
                                 OrganizationRepository organizationRepo,
-                                EmployeeRepository employeeRepo) {
+                                EmployeeRepository employeeRepo,
+                                ProjectIndicatorRepository projectIndicatorRepo) {
         this.indicatorRepo = indicatorRepo;
         this.taskRepo = taskRepo;
         this.taskResultRepo = taskResultRepo;
         this.organizationRepo = organizationRepo;
         this.employeeRepo = employeeRepo;
+        this.projectIndicatorRepo = projectIndicatorRepo;
     }
 
     @Override
@@ -125,6 +129,9 @@ public class IndicatorServiceImpl implements IndicatorService {
     public void deleteLibrary(Long id) {
         if (!indicatorRepo.existsById(id)) {
             throw new IllegalArgumentException("指标不存在: " + id);
+        }
+        if (projectIndicatorRepo.existsByIndicatorId(id)) {
+            throw new IllegalArgumentException("该指标已被项目挂接，无法删除；请先在相关项目中移除该指标后再删除");
         }
         indicatorRepo.deleteById(id);
     }

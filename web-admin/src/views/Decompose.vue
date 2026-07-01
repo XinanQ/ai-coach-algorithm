@@ -292,6 +292,9 @@ function selectPlan(planId) {
   activePlanId.value = planId
   selectedIndicatorId.value = indicatorSummaries.value[0]?.indicatorId || null
   message.value = ''
+  // 每次切换选中计划都重记基线，否则在工作台切到别的项目后，
+  // 变更判断会拿旧项目的基线去比，导致未改动的指标被误判为「已保存」。
+  allocationBaseline = snapshotAllocations(activePlan.value)
 }
 
 function sourceLabel(plan) {
@@ -373,8 +376,10 @@ async function loadDecomposition() {
   }
 
   plans.value = list
-  selectPlan(plans.value[0]?.id || '')
-  allocationBaseline = snapshotAllocations(activePlan.value)
+  // 重新加载后尽量保持当前选中的计划（如保存后刷新），找不到再退回第一个，
+  // 避免在工作台里保存后选中项跳回列表第一个、提示错位。
+  const keepActive = plans.value.some((plan) => plan.id === activePlanId.value)
+  selectPlan(keepActive ? activePlanId.value : (plans.value[0]?.id || ''))
 }
 
 async function saveDecompositionPlan() {
