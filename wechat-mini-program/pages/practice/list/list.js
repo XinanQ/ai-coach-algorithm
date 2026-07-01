@@ -13,6 +13,7 @@ const STATUS_LABEL = {
 Page({
   data: {
     growth: {},
+    hasGrowth: false,
     growthPercent: 0,
     segs: ['上级下发', '自主练习', '已完成'],
     tabKeys: ['assigned', 'self', 'done'],
@@ -27,19 +28,20 @@ Page({
     // 规范：GET /api/mini/practice/tasks?tab=... 每次按 tab 拉取，成长信息随返回体一起来
     const tab = this.data.tabKeys[this.data.activeTab] || 'assigned'
     api.practice.getTasks(tab).then((d) => {
-      const points = d.points || 0
-      const target = d.target || 0
+      const points = d.points
+      const target = d.target
       const growthPercent = target > 0 ? Math.min(100, Math.round((points / target) * 100)) : 0
       const list = (d.list || []).map((it) => Object.assign({}, it, {
         statusLabel: STATUS_LABEL[it.status] || it.status || ''
       }))
       this.setData({
+        hasGrowth: Boolean(d.levelName || points != null || target != null || d.streakDays != null || d.weekGain != null),
         growth: {
           levelName: d.levelName || '',
-          points,
-          target,
-          streakDays: d.streakDays || 0,
-          weekGain: d.weekGain || 0
+          points: points != null ? points : '',
+          target: target != null ? target : '',
+          streakDays: d.streakDays != null ? d.streakDays : '',
+          weekGain: d.weekGain != null ? d.weekGain : ''
         },
         growthPercent,
         list

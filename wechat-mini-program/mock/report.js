@@ -1,9 +1,16 @@
 // 业绩上报 mock
+function projects() {
+  return [
+    { id: 1, name: '2026 春季旺季营销项目', status: '进行中', statusCode: 'ACTIVE' },
+    { id: 3, name: '2026 企业微信客户拓展项目', status: '进行中', statusCode: 'ACTIVE' }
+  ]
+}
+
 function indicators() {
   return [
-    { id: 1, name: '存款净增额', unit: '万元' },
-    { id: 2, name: '理财销售额', unit: '万元' },
-    { id: 3, name: '信用卡发卡量', unit: '张' }
+    { id: 1, projectId: 1, name: '存款净增额', unit: '万元' },
+    { id: 2, projectId: 1, name: '定期存款', unit: '万元' },
+    { id: 3, projectId: 3, name: '企业微信添加量', unit: '户' }
   ]
 }
 
@@ -19,4 +26,4 @@ function submit() {
   return { id: Date.now() }
 }
 
-module.exports = { indicators, history, submit }
+module.exports = { projects, indicators, history, submit }

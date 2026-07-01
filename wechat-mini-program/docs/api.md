@@ -39,21 +39,21 @@
 | auth | `GET /api/mini/profile` | ✅ 已实现 |
 | auth | `GET /api/mini/account` | ✅ 已实现（前端暂未接入） |
 | home | `GET /api/mini/home` | ✅ 已实现（积分/排名为占位值） |
-| practice | `GET /api/mini/practice/tasks` | ✅ 已实现（演示数据） |
-| practice | `GET /api/mini/practice/tasks/{taskId}` | ✅ 已实现（演示数据） |
-| practice | `POST /api/mini/practice/dialog/start` | ✅ 已实现（规则生成） |
-| practice | `POST /api/mini/practice/dialog/reply` | ✅ 已实现（规则生成） |
-| practice | `POST /api/mini/practice/dialog/finish` | ✅ 已实现（规则生成） |
+| practice | `GET /api/mini/practice/tasks` | ✅ 已实现（算法元数据） |
+| practice | `GET /api/mini/practice/tasks/{taskId}` | ✅ 已实现（算法元数据） |
+| practice | `POST /api/mini/practice/dialog/start` | ✅ 已接入算法服务 |
+| practice | `POST /api/mini/practice/dialog/reply` | ✅ 已接入算法服务 |
+| practice | `POST /api/mini/practice/dialog/finish` | ✅ 已接入算法服务 |
 | practice | `GET /api/mini/practice/result/{taskId}` | 🟡 Mock（`finish` 已返回完整结果，冗余） |
 | practice | `GET /api/mini/practice/review/{taskId}` | 🟡 Mock |
 | practice | `GET /api/mini/practice/history` | 🟡 Mock |
-| report | `GET /api/report/indicators`、`POST /api/report`、`GET /api/report/history`、`POST /api/upload` | 🟡 Mock（后端 `/api/admin/reports` 为管理端，小程序口径未实现） |
+| report | `GET /api/admin/projects`、`GET /api/admin/projects/{projectId}/indicators`、`POST /api/admin/reports/submit`、`GET /api/mini/reports/history`、`POST /api/admin/reports/attachments` | ✅ 小程序上报接入 Web 同一套数据；历史页只看本人记录 |
 | ranking | `GET /api/mini/ranking` | 🟡 Mock（后端仅 `/api/admin/rankings`） |
 | news | `GET /api/news`、`GET /api/news/{id}` | 🟡 Mock |
 | script | `GET /api/mini/scripts[/{id}]`、`POST /api/mini/scripts` | 🟡 Mock |
 | admin | `/api/mini/admin/*`（workspace / templates / tasks / analysis / employees） | 🟡 Mock |
 
-> 说明：practice 五个「已实现」接口当前由后端返回**固定演示数据**（`source: "RULE_BASED"`，规则生成，非真实大模型 / 数据库），字段形状即下文，后续接 AI/DB 时形状不变。
+> 说明：practice 任务展示来自算法元数据，start/reply/finish 由 Spring Boot 网关调用算法服务。
 
 ---
 
@@ -134,24 +134,29 @@
 
 ---
 
-## 3. 业绩上报 `api.report` 🟡（后端未实现，前端 mock）
+## 3. 业绩上报 `api.report` ✅
 
-> 后端已有管理端 `/api/admin/reports`（提交/审核/积分），但**小程序口径的 `/report/*` 未实现**，前端暂走本地 mock。
+> 小程序已接入 Web 端同一套项目、指标、业绩上报和审核记录。提交后 Web 端业绩审核页可直接查看并通过/驳回；CITY、BRANCH 角色不提交业绩，只做审核。
 
-### 🟡 GET /api/report/indicators — 上报指标
-- data：`[ { "id":1,"name":"存款净增额","unit":"万元" }, ... ]`
+### ✅ GET /api/admin/projects — 可选择项目
+- data：项目列表，用于上报页项目下拉选择。
 
-### 🟡 POST /api/report — 提交上报
+### ✅ GET /api/admin/projects/{projectId}/indicators — 项目指标
+- data：项目下已配置指标列表。
+
+### ✅ POST /api/admin/reports/submit — 提交上报
 - 调用页：[pages/report](../pages/report/report.js)
-- Body：`{ "indicatorId":1, "value":"8.5", "images":["https://.../a.jpg"] }`
-- data：`{ "id": 123 }`；图片先经 `POST /upload` 换取 url 再放入 `images`。
+- Body：`{ "projectId":1, "indicatorId":1, "reportDate":"2026-06-25", "result":"8.5", "attachmentUrl":"/api/admin/reports/attachments/files/..." }`
+- data：后端 `task_results` 记录。
 
-### 🟡 GET /api/report/history — 本人上报历史
-- data：`[ { "id":1,"date":"2026-06-14","indicator":"存款净增额","value":"8.5万元","status":"已通过","statusClass":"approved","reason":"" } ]`
-- `statusClass`：`approved|rejected|pending`。
+### ✅ GET /api/mini/reports/history — 本人上报历史
+- 小程序历史页专用接口，只返回当前登录人的上报记录。
+- Web 审核页继续使用 `/api/admin/reports` 按审核范围查看记录。
+- 小程序历史页会映射为：`project / indicator / value / time / status / reason / attachmentUrl`。
 
-### 🟡 POST /api/upload — 文件上传（multipart，字段 `file`）
-- 配合 `wx.uploadFile`；data：`{ "url":"https://.../a.jpg" }`
+### ✅ POST /api/admin/reports/attachments — 文件上传
+- multipart 字段：`file`。
+- 配合 `wx.uploadFile`；data：`{ "url":"/api/admin/reports/attachments/files/...", "fileName":"..." }`。
 
 ---
 
@@ -177,8 +182,8 @@
 
 ## 6. 陪练 `api.practice`
 
-> ✅ 任务列表/详情 + 对话流（start/reply/finish）已由后端实现，当前返回固定演示数据（`source:"RULE_BASED"`）。
-> 对话流以 **`sessionId` 串联**：`start` 返回 `sessionId`，后续 `reply`/`finish` 用它定位会话。固定 **3 轮**。
+> ✅ 任务列表/详情由后端根据算法元数据动态组装，对话流由 Spring Boot 转发至 AI 陪练服务。
+> 对话流以 **`sessionId` 串联**：`start` 返回 `sessionId`，后续 `reply`/`finish` 用它定位会话。
 
 ### ✅ GET /api/mini/practice/tasks?tab=assigned|self|done — 任务列表（含成长信息）
 - 前端方法：`api.practice.getTasks(tab)`；调用页 [pages/practice/list](../pages/practice/list/list.js)
@@ -186,22 +191,22 @@
 - data（成长信息并入返回体，`list` 仅含当前 tab）：
 ```json
 {
-  "levelName": "Lv5 专业进阶",
-  "points": 1260,
-  "target": 1800,
-  "streakDays": 7,
-  "weekGain": 320,
+  "levelName": null,
+  "points": null,
+  "target": null,
+  "streakDays": null,
+  "weekGain": null,
   "list": [
     {
-      "taskId": "t1",
-      "title": "风险揭示话术",
-      "scene": "理财产品风险揭示",
-      "level": "must",
-      "levelText": "必须完成",
-      "status": "IN_PROGRESS",
-      "statusText": "进行中",
-      "deadline": "2026-06-28",
-      "rewardPoints": 50
+      "taskId": "practice-{customer-id}",
+      "title": "来自算法 profile.scene_name",
+      "scene": "来自算法 business_name 或 scene_name",
+      "level": "recommend",
+      "levelText": "强烈推荐",
+      "status": "PENDING",
+      "statusText": "待完成",
+      "deadline": "",
+      "rewardPoints": null
     }
   ]
 }
@@ -214,28 +219,37 @@
 - data：
 ```json
 {
-  "taskId": "t1", "title": "风险揭示话术", "scene": "理财产品风险揭示",
-  "rounds": 3, "customerName": "王女士", "customerDesc": "35岁，企业白领，有一笔闲置资金",
-  "tags": ["流动性担忧","利率敏感","风险厌恶"],
-  "background": "...", "goal": "...",
-  "requirements": ["完成 3 轮对话","综合得分 ≥ 80 分"],
-  "duration": "15-20 分钟", "progress": 0, "scriptId": "s1"
+  "taskId": "practice-{customer-id}",
+  "aiSceneId": "算法 scene_id",
+  "title": "算法 scene_name",
+  "scene": "算法 business_name 或 scene_name",
+  "rounds": 3,
+  "customerName": "算法 customer_type",
+  "customerDesc": "算法 personality 或 concern",
+  "tags": ["算法 expected_intents 原值"],
+  "background": "算法 opening_question",
+  "goal": "算法 followup_strategy",
+  "difficulty": "算法 difficulty_level",
+  "requirements": [],
+  "duration": "",
+  "progress": 0,
+  "scriptId": ""
 }
 ```
 
 ### ✅ POST /api/mini/practice/dialog/start — 开始对话
 - 前端方法：`api.practice.startDialog(taskId)`
-- Body：`{ "taskId":"t1" }`
+- Body：`{ "taskId":"任务列表返回的 taskId" }`
 - data：
 ```json
 {
-  "sessionId": "s-xxxx",
-  "taskId": "t1",
+  "sessionId": "S_xxxx",
+  "taskId": "任务列表返回的 taskId",
   "round": 1,
   "totalRounds": 3,
-  "liveScore": 70,
-  "messages": [ { "role": "ai", "content": "您好，我最近想了解一下存款产品……" } ],
-  "source": "RULE_BASED"
+  "difficultyLevel": "算法返回的难度等级",
+  "difficultyRecommendation": null,
+  "messages": [ { "role": "ai", "content": "算法返回的客户开场内容" } ]
 }
 ```
 
@@ -247,10 +261,8 @@
 {
   "round": 2,
   "totalRounds": 3,
-  "liveScore": 78,
-  "message": { "role": "ai", "content": "如果资金需要随时支取，您会怎么建议呢？" },
-  "finished": false,
-  "source": "RULE_BASED"
+  "message": { "role": "ai", "content": "算法返回的客户追问内容" },
+  "finished": false
 }
 ```
 - 最后一轮回复后 `finished:true`、`message:null`，前端据此引导进入「结束/评分」。
@@ -261,23 +273,25 @@
 - data（**直接返回完整评分报告**）：
 ```json
 {
-  "resultId": "r-xxxx",
-  "taskId": "t1",
-  "score": 82,
-  "scoreDelta": 6,
-  "certificationTitle": "新晋「合规揭示达人」",
-  "certificationDesc": "合规表达达标，完成专项认证",
+  "resultId": "算法结果引用",
+  "taskId": "业务 taskId",
+  "score": 0,
+  "scoreDelta": 0,
+  "certificationTitle": "",
+  "certificationDesc": "",
   "dimensionScores": [
-    { "name": "合规度", "score": 92, "level": "优秀" },
-    { "name": "共情力", "score": 84, "level": "良好" }
+    { "name": "算法维度名称", "score": 0, "level": "算法返回等级" }
   ],
-  "rewardPoints": 80,
-  "rewardExp": 120,
-  "weakTags": ["流动性解释不足","风险提示不足"],
-  "suggestion": "……",
-  "source": "RULE_BASED"
+  "rewardPoints": 0,
+  "rewardExp": 0,
+  "weakTags": ["算法返回的薄弱项"],
+  "suggestion": "算法返回的改进建议",
+  "source": "算法返回的评分来源"
 }
 ```
+
+`score`、`dimensionScores`、`weakTags`、`suggestion`、`source` 是算法真实结果。
+`scoreDelta`、奖励和认证字段当前为联调兼容字段，小程序不作为正式业务结果展示。
 
 ### 🟡 GET /api/mini/practice/result/{taskId} — 评分报告（后端未单独实现）
 - 调用页：[pages/practice/result](../pages/practice/result/result.js)
@@ -292,18 +306,18 @@
 
 ---
 
-## 7. 话术库 `api.script` 🟡（后端未实现，前端 mock）
+## 7. 话术库 `api.script`
 
-### 🟡 GET /api/mini/scripts — 列表
-- data：`[ { "scriptId":"s1","scene":"理财产品风险揭示","title":"稳健型客户风险揭示","tags":["合规表达","风险提示"],"date":"06/12" } ]`
+### ✅ GET /api/mini/scripts — 列表
+- 数据源：算法项目 `data/marketing_chunks.json` 中启用、合规通过且有员工侧话术内容的 chunk。
+- data：`[ { "scriptId","chunkId","sceneId","scene","title","businessName","knowledgeType","tags":[],"sourceFile","date" } ]`
 
-### 🟡 GET /api/mini/scripts/{id} — 详情
-- data：`{ "scriptId","scene","title","tags":[],"standard":"标准话术","sourceTaskId":"t1" }`
-- `sourceTaskId` 存在时展示「我的优化话术」块，缺省自动隐藏。
+### ✅ GET /api/mini/scripts/{id} — 详情
+- data：`{ "scriptId","chunkId","sceneId","scene","title","businessName","knowledgeType","tags":[],"standard","content","sourceFile","complianceStatus","reviewStatus" }`
+- `standard` 兼容现有页面字段，内容来自算法 chunk 的 `tutor_view_text`，为空时使用原始 `content`。
 
 ### 🟡 POST /api/mini/scripts — 收藏优化话术
-- Body：`{ "taskId":"t1","optimized":"...","scene":"...","title":"...","tags":[] }`
-- data：`{ "scriptId":"s9" }`
+- 当前后端未实现。
 
 ---
 
@@ -355,7 +369,7 @@
 | auth | `api.auth.getProfile` | `GET /api/mini/profile` | ✅ |
 | auth | `api.auth.logout` | `POST /api/auth/logout` | 🟡 |
 | home | `api.home.getSummary` | `GET /api/mini/home` | ✅ |
-| report | `api.report.getIndicators/submit/getHistory` | `/api/report/*` | 🟡 |
+| report | `api.report.getReportOptions/getProjectIndicators/uploadAttachment/submit/getHistory` | `/api/admin/projects/*`、`/api/admin/reports/*`、`/api/mini/reports/history` | ✅ |
 | ranking | `api.ranking.getRanking` | `GET /api/mini/ranking` | 🟡 |
 | news | `api.news.getList/getDetail` | `/api/news` | 🟡 |
 | practice | `api.practice.getTasks/getTaskDetail/startDialog/replyDialog/finishDialog` | `/api/mini/practice/*` | ✅ |

@@ -49,6 +49,9 @@ public class PerformanceServiceImpl implements PerformanceService {
         }
 
         Employee current = employeeRepository.findByIdWithOrganization(currentId).orElse(null);
+        if (current != null && isCityOrBranchAdminLevel(current.getLevel())) {
+            throw new IllegalArgumentException("CITY和BRANCH账号无需提交业绩上报，请在Web端审核员工上报");
+        }
         report.setSubmitterId(currentId);
         if (current != null && (report.getSubmitter() == null || report.getSubmitter().isBlank())) {
             report.setSubmitter(current.getName());
@@ -211,6 +214,14 @@ public class PerformanceServiceImpl implements PerformanceService {
             return reviewerParam;
         }
         return "admin";
+    }
+
+    private boolean isCityOrBranchAdminLevel(String level) {
+        if (level == null || level.isBlank()) {
+            return false;
+        }
+        String normalized = level.trim().toUpperCase();
+        return "CITY".equals(normalized) || "BRANCH".equals(normalized);
     }
 
     private void assertCanReview(TaskResult report) {

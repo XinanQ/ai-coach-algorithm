@@ -1,11 +1,13 @@
 <template>
   <div class="page">
+    <p v-if="message" class="form-message-top" :class="{ danger: hasInvalidAllocation || messageError }">{{ message }}</p>
+
     <header class="page-header">
       <div>
         <h1>{{ isWorkbench ? '分解工作台' : '下发分解' }}</h1>
         <p>{{ headerDescription }}</p>
       </div>
-      <button v-if="!activePlan?.readOnly" class="button primary" :disabled="!activePlan" @click="saveDecompositionPlan">保存分解</button>
+      <button v-if="!activePlan?.readOnly" class="button primary" :disabled="!activePlan || saving" @click="saveDecompositionPlan">{{ saving ? '保存中…' : '保存分解' }}</button>
       <span v-else class="badge neutral">上级下发 · 仅供查看</span>
     </header>
 
@@ -31,7 +33,7 @@
         </thead>
         <tbody>
           <tr v-for="planItem in plans" :key="planItem.id" :class="{ 'active-row': planItem.id === activePlan?.id }">
-            <td>{{ planItem.project.name }}</td>
+            <td>{{ planItem.project?.name || planItem.projectName || planItem.currentOrganization }}</td>
             <td>{{ sourceLabel(planItem) }}</td>
             <td>{{ planItem.currentLevel }}</td>
             <td>{{ planItem.nextLevel }} · {{ planItem.targets.length }} 个</td>
@@ -55,7 +57,7 @@
       <article class="stat-card">
         <span>{{ activePlan.originType === 'created' ? '项目属性' : '项目来源' }}</span>
         <strong>{{ sourceLabel(activePlan) }}</strong>
-        <small>{{ activePlan.project.name }}</small>
+        <small>{{ activePlan.project?.name || activePlan.projectName || activePlan.currentOrganization }}</small>
       </article>
       <article class="stat-card">
         <span>当前层级</span>
@@ -95,6 +97,9 @@
           <div class="progress-track">
             <div class="progress-fill" :style="{ width: `${summary.progress}%` }"></div>
           </div>
+          <Transition name="saved-fade">
+            <small v-if="savedIndicatorIds.includes(summary.indicatorId)" class="saved-hint">✓ 已保存</small>
+          </Transition>
         </button>
       </div>
       <p v-else class="muted">该项目尚未配置指标，请先完成指标配置后再下发分解。</p>
@@ -142,7 +147,6 @@
           </tr>
         </tbody>
       </table>
-      <p v-if="message" class="form-message" :class="{ danger: hasInvalidAllocation }">{{ message }}</p>
     </section>
 
     <section v-else class="panel empty-state">
@@ -153,11 +157,12 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { getCurrentUser } from '../auth/permissions'
 import { resolveOrgId } from '../auth/orgScope'
-import { buildPlanForProject, getDecomposition, saveDecomposition } from '../api/decomposition'
+import { buildPlanForProject, buildReceivedPlanForProject, getDecomposition, saveDecomposition } from '../api/decomposition'
+import { getProject } from '../api/projects'
 
 const route = useRoute()
 const currentUser = getCurrentUser()
@@ -165,6 +170,53 @@ const plans = ref([])
 const activePlanId = ref('')
 const selectedIndicatorId = ref(null)
 const message = ref('')
+const messageError = ref(false)
+const saving = ref(false)
+// 保存成功后，在「指标余额」里命中的指标卡片上闪现「✓ 已保存」，几秒后自动淡出
+const savedIndicatorIds = ref([])
+let savedHintTimer = null
+
+function flashSavedHints(ids) {
+  if (savedHintTimer) clearTimeout(savedHintTimer)
+  savedIndicatorIds.value = ids
+  savedHintTimer = setTimeout(() => {
+    savedIndicatorIds.value = []
+    savedHintTimer = null
+  }, 3000)
+}
+
+onBeforeUnmount(() => {
+  if (savedHintTimer) clearTimeout(savedHintTimer)
+})
+
+// 记录加载时的分配基线（按 直属对象+指标 维度），用于判断本次到底改了哪些指标
+let allocationBaseline = {}
+
+function snapshotAllocations(plan) {
+  const map = {}
+  if (!plan) return map
+  plan.targets.forEach((target) => {
+    target.indicators.forEach((ind) => {
+      map[`${target.id}:${ind.indicatorId}`] = Number(ind.currentAllocation || 0)
+    })
+  })
+  return map
+}
+
+function changedIndicatorIds() {
+  const plan = activePlan.value
+  if (!plan) return []
+  const changed = new Set()
+  plan.targets.forEach((target) => {
+    target.indicators.forEach((ind) => {
+      const before = allocationBaseline[`${target.id}:${ind.indicatorId}`] ?? 0
+      if (before !== Number(ind.currentAllocation || 0)) {
+        changed.add(ind.indicatorId)
+      }
+    })
+  })
+  return [...changed]
+}
 
 const isWorkbench = computed(() => !route.params.id)
 const activePlan = computed(() => plans.value.find((plan) => plan.id === activePlanId.value) || null)
@@ -190,7 +242,10 @@ const indicatorSummaries = computed(() => {
     )
     const currentTotal = rows.reduce((sum, row) => sum + Number(row?.currentAllocation || 0), 0)
     const allocatedTotal = rows.reduce((sum, row) => sum + Number(row?.allocated || 0), 0)
-    const totalTask = rows.reduce((sum, row) => sum + Number(row?.totalTask || 0), 0)
+    const defaultTotalTask = rows.reduce((sum, row) => sum + Number(row?.totalTask || 0), 0)
+    const totalTask = activePlan.value.originType === 'received'
+      ? Number(activePlan.value.receivedTotals?.find((item) => item.indicatorId === indicator.indicatorId)?.totalTask || defaultTotalTask)
+      : defaultTotalTask
     const usedTotal = allocatedTotal + currentTotal
     const remaining = totalTask - usedTotal
 
@@ -202,7 +257,7 @@ const indicatorSummaries = computed(() => {
       allocatedTotal,
       currentTotal,
       remaining,
-      progress: Math.min(100, Math.round((usedTotal / totalTask) * 100))
+      progress: totalTask ? Math.min(100, Math.round((usedTotal / totalTask) * 100)) : 0
     }
   })
 })
@@ -217,7 +272,9 @@ const visibleRows = computed(() => {
   return activePlan.value.targets.map((target) => {
     const row = target.indicators.find((item) => item.indicatorId === selectedIndicatorId.value)
     const used = Number(row.allocated || 0) + Number(row.currentAllocation || 0)
-    const percent = row.totalTask ? Math.round((used / row.totalTask) * 100) : 0
+    const percent = activePlan.value.originType === 'received' && selectedSummary.totalTask
+      ? Math.round((Number(row.currentAllocation || 0) / selectedSummary.totalTask) * 100)
+      : row.totalTask ? Math.round((used / row.totalTask) * 100) : 0
 
     return {
       targetId: target.id,
@@ -240,6 +297,9 @@ function selectPlan(planId) {
   activePlanId.value = planId
   selectedIndicatorId.value = indicatorSummaries.value[0]?.indicatorId || null
   message.value = ''
+  // 每次切换选中计划都重记基线，否则在工作台切到别的项目后，
+  // 变更判断会拿旧项目的基线去比，导致未改动的指标被误判为「已保存」。
+  allocationBaseline = snapshotAllocations(activePlan.value)
 }
 
 function sourceLabel(plan) {
@@ -247,8 +307,35 @@ function sourceLabel(plan) {
   return plan.originType === 'created' ? '本级创建' : plan.receivedFrom
 }
 
+// 工作台：把同一项目折叠成一条可编辑计划。只读的"上级下发收到记录"转成
+// "继续向下分发"的可编辑计划；同项目已有可编辑记录则优先用它（与单项目路由逻辑一致）。
+async function normalizeWorkbenchPlans(list) {
+  const byProject = new Map()
+  list.forEach((plan) => {
+    const key = String(plan.projectId)
+    const existing = byProject.get(key)
+    if (!existing || (existing.readOnly && !plan.readOnly)) {
+      byProject.set(key, plan)
+    }
+  })
+
+  const normalized = []
+  for (const plan of byProject.values()) {
+    if (plan.originType === 'received' && plan.readOnly) {
+      // 本机构是叶子（无直属下级）时 buildReceivedPlanForProject 返回 null，回退为只读查看
+      const editable = await buildReceivedPlanForProject(plan.projectId, currentUser, plan)
+      normalized.push(editable || plan)
+    } else {
+      normalized.push(plan)
+    }
+  }
+  return normalized
+}
+
 async function loadDecomposition() {
   message.value = ''
+  messageError.value = false
+  savedIndicatorIds.value = []
   const projectId = route.params.id
   let result = await getDecomposition({
     projectId,
@@ -256,25 +343,88 @@ async function loadDecomposition() {
     organizationId: resolveOrgId(currentUser)
   })
 
-  // 后端项目在 mock 中没有预置分解计划时，按机构下属 + 项目指标动态生成
-  if (!result && projectId) {
-    result = await buildPlanForProject(projectId, currentUser)
+  if (projectId) {
+    if (result && result.originType === 'received' && result.readOnly) {
+      // 上级下发、只读的收到记录 → 转成可编辑的"继续向下分发"计划（分配对象为本机构直属下级）
+      const editable = await buildReceivedPlanForProject(projectId, currentUser, result)
+      if (editable) result = editable
+    } else if (!result) {
+      // 本级创建但尚未分解过：按机构下属 + 项目指标动态生成可编辑计划
+      result = await buildPlanForProject(projectId, currentUser)
+    }
   }
 
-  plans.value = Array.isArray(result) ? result : result ? [result] : []
-  selectPlan(plans.value[0]?.id || '')
+  let list = Array.isArray(result) ? result : result ? [result] : []
+
+  // 工作台（无 projectId）：每个项目折叠成一条可编辑计划，只读收到记录转可编辑
+  if (!projectId && list.length) {
+    list = await normalizeWorkbenchPlans(list)
+  }
+
+  // 后端 / 本地保存的记录不含 project 展示对象，补全项目名，避免渲染缺失（单项目与工作台都适用）
+  if (list.some((plan) => !plan.project)) {
+    const projectCache = new Map()
+    for (const plan of list) {
+      if (plan.project) continue
+      const pid = plan.projectId ?? projectId
+      if (pid == null) continue
+      const key = String(pid)
+      if (!projectCache.has(key)) {
+        projectCache.set(key, await getProject(pid).catch(() => null))
+      }
+      const project = projectCache.get(key)
+      if (project) {
+        plan.project = project
+        plan.projectName = project.name
+      }
+    }
+  }
+
+  plans.value = list
+  // 重新加载后尽量保持当前选中的计划（如保存后刷新），找不到再退回第一个，
+  // 避免在工作台里保存后选中项跳回列表第一个、提示错位。
+  const keepActive = plans.value.some((plan) => plan.id === activePlanId.value)
+  selectPlan(keepActive ? activePlanId.value : (plans.value[0]?.id || ''))
 }
 
 async function saveDecompositionPlan() {
-  if (!activePlan.value) return
+  if (!activePlan.value || saving.value) return
 
   if (hasInvalidAllocation.value) {
+    messageError.value = true
     message.value = '请先调整超分或负数的指标，再提交分解方案。'
     return
   }
 
-  await saveDecomposition(activePlan.value)
-  message.value = `已保存 ${activePlan.value.currentOrganization} 到直属${activePlan.value.nextLevel}的分解方案。`
+  // 保存前先算出本次相对基线改动过的指标，成功后只在这些卡片上提示
+  const changedIds = changedIndicatorIds()
+  saving.value = true
+  message.value = ''
+  messageError.value = false
+
+  try {
+    const res = await saveDecomposition(activePlan.value)
+    // 后端也可能返回 { success:false, message } 而不抛错，这里要如实反馈
+    if (res && res.success === false) {
+      messageError.value = true
+      message.value = `保存失败：${res.message || res.error || '后端未接受本次分解'}`
+      return
+    }
+
+    // 重新拉取，确保页面显示的是后端真正持久化的结果（loadDecomposition 会重置提示状态）
+    await loadDecomposition()
+    // 成功：只在本次改动过的指标卡片内闪现「✓ 已保存」
+    flashSavedHints(changedIds)
+    if (res && res.offline) {
+      messageError.value = true
+      message.value = '后端不可达，已本地暂存，恢复网络后请重新保存同步。'
+    }
+  } catch (e) {
+    messageError.value = true
+    message.value = `保存失败：${e.message || '请稍后重试'}`
+  } finally {
+    saving.value = false
+  }
 }
 
 onMounted(loadDecomposition)
@@ -357,9 +507,34 @@ watch(() => route.params.id, loadDecomposition)
   color: #92400e;
 }
 
-.form-message {
-  margin-top: 14px;
+.form-message-top {
+  margin: 0 0 16px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border-left: 4px solid #0f766e;
+  background: #f0fdfa;
   color: #0f766e;
+  font-weight: 600;
+}
+
+.form-message-top.danger {
+  border-left-color: #dc2626;
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.saved-hint {
+  color: #0f766e;
+  font-weight: 600;
+}
+
+/* 「✓ 已保存」几秒后自动淡出 */
+.saved-fade-leave-active {
+  transition: opacity 0.6s ease;
+}
+
+.saved-fade-leave-to {
+  opacity: 0;
 }
 
 .danger {

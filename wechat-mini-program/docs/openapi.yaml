@@ -108,23 +108,34 @@ paths:
                   - $ref: '#/components/schemas/Envelope'
                   - properties:
                       data: { $ref: '#/components/schemas/HomeSummary' }
-  /report/indicators:
+  /admin/projects:
     get:
       tags: [report]
-      summary: 上报指标列表
+      summary: 可选择项目列表
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/Envelope'
-                  - properties:
-                      data:
-                        type: array
-                        items: { $ref: '#/components/schemas/Indicator' }
-  /report:
+                type: array
+                items:
+                  type: object
+  /admin/projects/{projectId}/indicators:
+    get:
+      tags: [report]
+      summary: 项目指标列表
+      parameters:
+        - { in: path, name: projectId, required: true, schema: { type: integer } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Indicator' }
+  /admin/reports/submit:
     post:
       tags: [report]
       summary: 提交业绩上报
@@ -134,30 +145,38 @@ paths:
           application/json:
             schema:
               type: object
-              required: [indicatorId, value]
+              required: [projectId, indicatorId, reportDate, result]
               properties:
+                projectId: { type: integer }
                 indicatorId: { type: integer }
-                value: { type: string }
-                images:
-                  type: array
-                  items: { type: string, format: uri }
+                reportDate: { type: string, format: date }
+                result: { type: string }
+                attachmentUrl: { type: string }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReportRecord' }
+  /admin/reports:
+    get:
+      tags: [report]
+      summary: 上报历史/审核记录
+      parameters:
+        - { in: query, name: submitterId, schema: { type: integer } }
+        - { in: query, name: status, schema: { type: string, enum: [PENDING, APPROVED, REJECTED] } }
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/Envelope'
-                  - properties:
-                      data: { $ref: '#/components/schemas/IdResult' }
-  /report/history:
+                type: array
+                items: { $ref: '#/components/schemas/ReportRecord' }
+  /mini/reports/history:
     get:
       tags: [report]
-      summary: 本人上报历史
-      parameters:
-        - { in: query, name: page, schema: { type: integer } }
-        - { in: query, name: size, schema: { type: integer } }
+      summary: 小程序本人上报历史
       responses:
         '200':
           description: OK
@@ -170,10 +189,10 @@ paths:
                       data:
                         type: array
                         items: { $ref: '#/components/schemas/ReportRecord' }
-  /upload:
+  /admin/reports/attachments:
     post:
       tags: [report]
-      summary: 文件上传（图片）
+      summary: 上报附件上传
       requestBody:
         content:
           multipart/form-data:
@@ -187,13 +206,10 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/Envelope'
-                  - properties:
-                      data:
-                        type: object
-                        properties:
-                          url: { type: string, format: uri }
+                type: object
+                properties:
+                  url: { type: string }
+                  fileName: { type: string }
   /ranking:
     get:
       tags: [ranking]

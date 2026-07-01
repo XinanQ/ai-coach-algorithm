@@ -38,9 +38,7 @@
         <label class="form-field">
           项目状态
           <select v-model="form.status" class="select">
-            <option>未开始</option>
-            <option>进行中</option>
-            <option>已结束</option>
+            <option v-for="opt in PROJECT_STATUS_OPTIONS" :key="opt.code" :value="opt.code">{{ opt.label }}</option>
           </select>
         </label>
         <label class="form-field">
@@ -99,9 +97,47 @@
             <button class="button danger-button" type="button" @click="removeIndicator(index)">删除</button>
           </div>
           <div class="form-grid">
+            <label class="form-field indicator-picker">
+              指标名称（搜索复用，没有则新建）
+              <el-select
+                v-model="indicator.indicatorId"
+                filterable
+                :filter-method="(q) => (indicatorQuery = q)"
+                placeholder="搜索指标库…"
+                class="indicator-select"
+                @change="(val) => onIndicatorPicked(index, val)"
+                @visible-change="() => (indicatorQuery = '')"
+              >
+                <el-option
+                  v-for="opt in filteredIndicatorOptions"
+                  :key="opt.id"
+                  :label="opt.name"
+                  :value="opt.id"
+                >
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+                    <span>{{ opt.name }}</span>
+                    <span
+                      style="color:#dc2626;cursor:pointer;font-size:12px;line-height:1"
+                      title="从指标库删除该指标"
+                      @click.stop="deleteIndicatorOption(opt)"
+                    >✕</span>
+                  </div>
+                </el-option>
+                <template #footer>
+                  <el-button
+                    text
+                    type="primary"
+                    :disabled="!indicatorQuery.trim() || creatingIndicator"
+                    @click="createIndicatorFromQuery(index)"
+                  >
+                    ＋ 新建指标{{ indicatorQuery.trim() ? `「${indicatorQuery.trim()}」` : '' }}
+                  </el-button>
+                </template>
+              </el-select>
+            </label>
             <label class="form-field">
-              指标名称
-              <input v-model.trim="indicator.name" class="field" placeholder="例如：定期存款" />
+              目标值 / 任务量
+              <input v-model.number="indicator.targetValue" class="field" type="number" min="0" placeholder="例如：500" />
             </label>
             <label class="form-field">
               指标类型
@@ -258,6 +294,19 @@
             下发分解
           </router-link>
           <button v-else class="button" disabled>待上级下发明细</button>
+          <label class="status-select">
+            状态
+            <select
+              v-if="nextStatusOptions(project.statusCode).length"
+              class="select"
+              :value="''"
+              @change="onStatusSelect(project, $event)"
+            >
+              <option value="" disabled>{{ statusLabels[project.statusCode] || project.status }} ›</option>
+              <option v-for="opt in nextStatusOptions(project.statusCode)" :key="opt.code" :value="opt.code">{{ opt.label }}</option>
+            </select>
+            <span v-else class="status-terminal">{{ statusLabels[project.statusCode] || project.status }} · 终态</span>
+          </label>
           <button v-if="project.canDelete" class="button danger-button" @click="removeProject(project)">
             删除项目
           </button>
@@ -270,8 +319,10 @@
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { getCurrentUser } from '../auth/permissions'
-import { createProject, deleteProject, getOrganizations, getProjects, saveProjectConfig } from '../api/projects'
-import { saveIndicators } from '../api/indicators'
+import { ElMessageBox } from 'element-plus'
+import { createProject, deleteProject, getOrganizations, getProjects, saveProjectConfig, setProjectStatus } from '../api/projects'
+import { getDecomposableProjectIds } from '../api/decomposition'
+import { getIndicatorLibrary, createLibraryIndicator, deleteLibraryIndicator, saveProjectIndicators } from '../api/indicators'
 
 const projects = ref([])
 const currentUser = getCurrentUser()
@@ -305,7 +356,7 @@ const baseForm = () => {
     endDate: addMonths(startDate, 2),
     reportDeadline: '00:00',
     attachmentRequired: false,
-    status: '未开始',
+    status: 'PLANNED',
     attachment: null,
     ownerOrg: currentUser?.organization || '',
     manager: currentUser?.name || ''
@@ -335,16 +386,92 @@ const indicatorWeightTotal = computed(() =>
 
 function addIndicator() {
   indicatorList.value.push({
+    indicatorId: null,
     name: '',
     indicatorType: '结果指标',
     valueType: '金额',
     unit: '万元',
+    targetValue: 0,
     weight: 0,
     pointRule: 0,
     bigOrderEnabled: false,
     bigOrderThreshold: 0,
     talentCount: 0
   })
+}
+
+// 指标库：搜索复用优先，搜不到再新建入库
+const indicatorLibrary = ref([])
+const indicatorQuery = ref('')
+const creatingIndicator = ref(false)
+
+const filteredIndicatorOptions = computed(() => {
+  const q = indicatorQuery.value.trim().toLowerCase()
+  if (!q) return indicatorLibrary.value
+  return indicatorLibrary.value.filter((opt) => (opt.name || '').toLowerCase().includes(q))
+})
+
+async function loadIndicatorLibrary() {
+  try {
+    indicatorLibrary.value = await getIndicatorLibrary()
+  } catch {
+    indicatorLibrary.value = []
+  }
+}
+
+function onIndicatorPicked(index, id) {
+  const opt = indicatorLibrary.value.find((o) => o.id === id)
+  if (!opt) return
+  indicatorList.value[index].name = opt.name
+  if (opt.unit) indicatorList.value[index].unit = opt.unit
+}
+
+async function createIndicatorFromQuery(index) {
+  const name = indicatorQuery.value.trim()
+  if (!name || creatingIndicator.value) return
+  creatingIndicator.value = true
+  try {
+    const created = await createLibraryIndicator({ name, unit: indicatorList.value[index].unit })
+    indicatorLibrary.value = [created, ...indicatorLibrary.value.filter((o) => o.id !== created.id)]
+    indicatorList.value[index].indicatorId = created.id
+    indicatorList.value[index].name = created.name
+    if (created.unit) indicatorList.value[index].unit = created.unit
+    indicatorQuery.value = ''
+  } catch (err) {
+    message.value = err.message || '创建指标失败。'
+    messageType.value = 'error'
+  } finally {
+    creatingIndicator.value = false
+  }
+}
+
+async function deleteIndicatorOption(opt) {
+  try {
+    await ElMessageBox.confirm(
+      `确定从指标库删除「${opt.name}」吗？若已被其他项目引用，删除后可能影响其展示。`,
+      '删除指标',
+      { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' }
+    )
+  } catch {
+    return // 用户取消
+  }
+
+  try {
+    await deleteLibraryIndicator(opt.id)
+    indicatorLibrary.value = indicatorLibrary.value.filter((o) => o.id !== opt.id)
+    // 若已被某个指标卡片选中，一并清空其选择
+    indicatorList.value.forEach((card) => {
+      if (card.indicatorId === opt.id) {
+        card.indicatorId = null
+        card.name = ''
+      }
+    })
+    message.value = `已从指标库删除「${opt.name}」。`
+    messageType.value = 'success'
+  } catch (err) {
+    message.value = err.message || '删除指标失败，可能已被项目引用。'
+    messageType.value = 'error'
+  }
 }
 
 function removeIndicator(index) {
@@ -436,7 +563,15 @@ function cancelWizard() {
 }
 
 async function loadProjects() {
-  projects.value = await getProjects(currentUser)
+  const [list, decomposableIds] = await Promise.all([
+    getProjects(currentUser),
+    getDecomposableProjectIds(currentUser)
+  ])
+  // 本机构收到上级下发的项目也允许继续下发，并入「下发分解」按钮判定
+  const idSet = new Set(decomposableIds.map((id) => String(id)))
+  projects.value = list.map((project) =>
+    project.canDecompose ? project : { ...project, canDecompose: idSet.has(String(project.id)) }
+  )
 }
 
 async function saveProject() {
@@ -448,19 +583,23 @@ async function saveProject() {
     return
   }
 
+  // 每个指标都必须选/建库指标，否则挂不到项目（后端要求 indicatorId）
+  const unlinked = indicatorList.value.some((indicator) => !indicator.indicatorId)
+  if (indicatorList.value.length && unlinked) {
+    currentStep.value = 2
+    message.value = '请为每个指标从指标库中选择，或在下拉底部新建后再保存。'
+    messageType.value = 'error'
+    return
+  }
+
   try {
     const result = await createProject(
       { ...form, attachment: undefined, visibleOrgIds: config.participatingOrgIds },
       currentUser
     )
 
-    // 详细指标与分解设置按项目 id 持久化
-    const indicatorsToSave = indicatorList.value.map((indicator, index) => ({
-      ...indicator,
-      id: `${result.id}-${index}`,
-      projectId: result.id
-    }))
-    await saveIndicators(result.id, indicatorsToSave)
+    // 把选/建好的库指标真正挂接到项目（后端持久化），并本地镜像
+    await saveProjectIndicators(result.id, indicatorList.value)
     await saveProjectConfig(result.id, { ...config })
 
     await loadProjects()
@@ -490,8 +629,92 @@ async function removeProject(project) {
   }
 }
 
+// 项目状态：与后端 ProjectStatus 枚举对齐。code 用于提交（新建 / 改状态）与后端 statusCode 比对，label 仅用于显示。
+const PROJECT_STATUS_OPTIONS = [
+  { code: 'DRAFT', label: '草稿' },
+  { code: 'PLANNED', label: '未开始' },
+  { code: 'ACTIVE', label: '进行中' },
+  { code: 'PAUSED', label: '已暂停' },
+  { code: 'COMPLETED', label: '已结束' },
+  { code: 'CANCELLED', label: '已取消' }
+]
+const statusLabels = Object.fromEntries(PROJECT_STATUS_OPTIONS.map((opt) => [opt.code, opt.label]))
+
+// 合法状态流转（状态机），须与后端 ProjectServiceImpl.ALLOWED_TRANSITIONS 一致。
+// 状态下拉只列出「当前状态允许的下一步」，从源头杜绝乱跳；终态无下一步。
+const ALLOWED_TRANSITIONS = {
+  DRAFT: ['PLANNED', 'CANCELLED'],
+  PLANNED: ['ACTIVE', 'CANCELLED'],
+  ACTIVE: ['PAUSED', 'COMPLETED', 'CANCELLED'],
+  PAUSED: ['ACTIVE', 'COMPLETED', 'CANCELLED'],
+  COMPLETED: [],
+  CANCELLED: []
+}
+// 终态目标：变更到这两个状态不可逆，需强确认（手输项目名）。
+const TERMINAL_TARGETS = ['COMPLETED', 'CANCELLED']
+
+function nextStatusOptions(statusCode) {
+  const codes = ALLOWED_TRANSITIONS[statusCode] || []
+  return PROJECT_STATUS_OPTIONS.filter((opt) => codes.includes(opt.code))
+}
+
+// 选中即把下拉复位回「当前状态」占位（selectedIndex=0），
+// 避免未确认时下拉视觉上停在新状态（顶部徽章始终是后端真值，不受影响）。
+function onStatusSelect(project, event) {
+  const statusCode = event.target.value
+  event.target.selectedIndex = 0
+  if (statusCode) {
+    changeStatus(project, statusCode)
+  }
+}
+
+async function changeStatus(project, statusCode) {
+  if (!statusCode || statusCode === project.statusCode) return
+
+  const label = statusLabels[statusCode] || statusCode
+
+  try {
+    if (TERMINAL_TARGETS.includes(statusCode)) {
+      // 终态：强确认，要求手输项目完整名称，防误触
+      await ElMessageBox.prompt(
+        `此操作将把项目「${project.name}」置为「${label}」，终态不可逆。请输入项目完整名称以确认：`,
+        '高危操作确认',
+        {
+          confirmButtonText: '确认变更',
+          cancelButtonText: '取消',
+          type: 'warning',
+          inputPlaceholder: project.name,
+          inputValidator: (val) => (val && val.trim() === project.name) || '项目名称不一致，无法确认',
+          inputErrorMessage: '项目名称不一致'
+        }
+      )
+    } else {
+      // 可逆变更：普通确认弹窗
+      await ElMessageBox.confirm(
+        `将项目「${project.name}」状态变更为「${label}」？`,
+        '确认状态变更',
+        { confirmButtonText: '确认', cancelButtonText: '取消', type: 'warning' }
+      )
+    }
+  } catch {
+    // 用户取消：下拉已在 onStatusSelect 中复位，徽章仍是后端真值，无需其它处理
+    return
+  }
+
+  try {
+    await setProjectStatus(project.id, statusCode)
+    await loadProjects()
+    message.value = `项目“${project.name}”状态已更新为「${label}」。`
+    messageType.value = 'success'
+  } catch (err) {
+    message.value = err.message || '更新项目状态失败。'
+    messageType.value = 'error'
+    await loadProjects()
+  }
+}
+
 onMounted(async () => {
-  await loadProjects()
+  await Promise.all([loadProjects(), loadIndicatorLibrary()])
 })
 </script>
 
@@ -499,6 +722,10 @@ onMounted(async () => {
 .project-card {
   display: grid;
   gap: 16px;
+}
+
+.indicator-select {
+  width: 100%;
 }
 
 .project-title {
@@ -520,6 +747,28 @@ onMounted(async () => {
 
 .project-card p {
   color: #4b5563;
+}
+
+.status-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.status-select .select {
+  width: auto;
+  min-width: 96px;
+  padding: 6px 8px;
+}
+
+.status-terminal {
+  font-size: 13px;
+  color: #9ca3af;
+  padding: 6px 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
 }
 
 dl {

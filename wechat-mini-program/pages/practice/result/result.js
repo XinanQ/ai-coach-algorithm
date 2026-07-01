@@ -1,32 +1,39 @@
-const api = require('../../../api/index')
-
 Page({
   data: {
+    hasResult: false,
     taskId: '',
-    score: 0,
-    delta: 6,
-    cert: '新晋「合规揭示达人」',
-    certDesc: '合规表达达标，完成专项认证',
-    dimensions: [],
-    rewardPoints: 80,
-    rewardExp: 120,
-    suggestion: ''
+    resultId: '',
+    score: null,
+    dimensionScores: [],
+    weakTags: [],
+    suggestion: '',
+    source: ''
   },
   onLoad(query) {
-    const score = Number(query.score || 0)
-    const taskId = query.taskId || ''
-    this.setData({ taskId })
-    api.practice.getResult(taskId, score).then((d) => {
-      this.setData({
-        score: d.score,
-        delta: d.delta,
-        cert: d.cert,
-        certDesc: d.certDesc,
-        dimensions: d.dimensions,
-        rewardPoints: d.rewardPoints,
-        rewardExp: d.rewardExp,
-        suggestion: d.suggestion
+    const sessionId = decodeURIComponent(query.sessionId || '')
+    const taskId = decodeURIComponent(query.taskId || '')
+    const cacheKey = `practiceFinishResult:${sessionId}`
+    const result = sessionId ? wx.getStorageSync(cacheKey) : null
+
+    if (!result || typeof result !== 'object') {
+      this.setData({ taskId })
+      wx.showToast({
+        title: '未找到本次陪练结果，请重新完成陪练',
+        icon: 'none'
       })
+      return
+    }
+
+    wx.removeStorageSync(cacheKey)
+    this.setData({
+      hasResult: true,
+      taskId: result.taskId || taskId,
+      resultId: result.resultId || '',
+      score: result.score != null ? result.score : null,
+      dimensionScores: Array.isArray(result.dimensionScores) ? result.dimensionScores : [],
+      weakTags: Array.isArray(result.weakTags) ? result.weakTags : [],
+      suggestion: result.suggestion || '',
+      source: result.source || ''
     })
   },
   goReview() {

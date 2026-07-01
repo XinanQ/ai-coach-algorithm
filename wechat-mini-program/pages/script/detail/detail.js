@@ -3,15 +3,19 @@ const api = require('../../../api/index')
 Page({
   data: {
     detail: {},
-    standardOnly: false
+    displayContent: ''
   },
   onLoad(query) {
-    // standard=1 时来自任务详情「查看标准话术」，只看标准话术
     api.script.getDetail(query.id || '').then((detail) => {
-      this.setData({ detail, standardOnly: query.standard === '1' })
+      this.setData({
+        detail,
+        displayContent: detail.standard || detail.content || ''
+      })
     })
   },
   copy() {
-    wx.setClipboardData({ data: this.data.detail.standard })
+    const content = this.data.displayContent
+    if (!content) return
+    wx.setClipboardData({ data: content })
   }
 })

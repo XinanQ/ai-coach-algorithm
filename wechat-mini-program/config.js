@@ -9,5 +9,4 @@ module.exports = {
 
   // 数据来源开关：true = 使用本地 mock；后端就绪后改为 false 即走真实接口
   USE_MOCK: false
-
 }

@@ -619,3 +619,7 @@ miniprogram_npm/
 wechat-mini-program/config.local.js
 wechat-mini-program/.env
 wechat-mini-program/.env.*
+
+# 每日上报附件
+backend/uploads/
+uploads/

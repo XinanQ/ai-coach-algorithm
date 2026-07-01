@@ -4,19 +4,29 @@
     <text class="big-title">上报历史</text>
   </view>
 
-  <view class="list">
-    <view class="row" wx:for="{{records}}" wx:key="id">
+  <view class="loading" wx:if="{{loading}}">加载中...</view>
+
+  <view class="list" wx:elif="{{records.length > 0}}">
+    <view class="row row-{{item.statusClass}}" wx:for="{{records}}" wx:key="id">
       <view class="row-top">
-        <text class="indicator">{{item.indicator}}</text>
+        <text class="project">{{item.project}}</text>
         <text class="status status-{{item.statusClass}}">{{item.status}}</text>
       </view>
-      <view class="row-bottom">
+
+      <view class="metric-line">
+        <text class="indicator">{{item.indicator}}</text>
         <text class="value">{{item.value}}</text>
-        <text class="date">{{item.date}}</text>
       </view>
-      <text class="reason" wx:if="{{item.reason}}">驳回原因：{{item.reason}}</text>
+
+      <view class="meta-line">
+        <text>{{item.time}}</text>
+        <text>{{item.attachmentUrl ? '有附件' : '无附件'}}</text>
+      </view>
+
+      <text class="reason rejected" wx:if="{{item.statusClass === 'rejected'}}">审核意见：{{item.reason || '未填写驳回原因'}}</text>
+      <text class="reason approved" wx:elif="{{item.statusClass === 'approved' && item.reason}}">审核意见：{{item.reason}}</text>
     </view>
   </view>
 
-  <view class="empty" wx:if="{{records.length === 0}}">暂无记录</view>
+  <view class="empty" wx:else>暂无上报记录</view>
 </view>

@@ -108,18 +108,45 @@ page {
   color: var(--text-secondary);
 }
 .task-name {
+  display: block;
   font-size: 32rpx;
   font-weight: 700;
-  letter-spacing: -0.5rpx;
+  line-height: 1.45;
+}
+.task-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+  margin-top: 16rpx;
+}
+.task-tag {
+  padding: 4rpx 12rpx;
+  border-radius: 8rpx;
+  background: var(--surface-2);
+  color: var(--text-secondary);
+  font-size: 20rpx;
 }
 .task-meta {
   display: flex;
   justify-content: space-between;
+  align-items: flex-end;
+  gap: 20rpx;
   margin-top: 16rpx;
+}
+.task-context {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
 }
 .task-scene {
   font-size: 24rpx;
   color: var(--text-secondary);
+}
+.task-difficulty {
+  font-size: 22rpx;
+  color: var(--text-secondary);
+  border-left: 1rpx solid var(--border);
+  padding-left: 12rpx;
 }
 .task-deadline {
   font-size: 22rpx;
