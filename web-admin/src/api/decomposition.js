@@ -389,6 +389,13 @@ export async function buildReceivedPlanForProject(projectId, user, received) {
   const inbound = received?.targets?.[0]?.indicators || []
   if (inbound.length === 0) return null
 
+  const receivedTotals = inbound.map((ind) => ({
+    indicatorId: ind.indicatorId,
+    indicator: ind.indicator,
+    unit: ind.unit || '',
+    totalTask: Number(ind.totalTask || 0)
+  }))
+
   base.id = `received-plan-${projectId}-${base.currentOrgId}`
   base.originType = 'received'
   base.receivedFrom = received?.receivedFrom || ''
@@ -396,15 +403,16 @@ export async function buildReceivedPlanForProject(projectId, user, received) {
   base.readOnly = false
   base.targets = base.targets.map((target) => ({
     ...target,
-    indicators: inbound.map((ind) => ({
+    indicators: receivedTotals.map((ind) => ({
       indicatorId: ind.indicatorId,
       indicator: ind.indicator,
-      unit: ind.unit || '',
-      totalTask: Number(ind.totalTask || 0),
+      unit: ind.unit,
+      totalTask: 0,
       allocated: 0,
       currentAllocation: 0
     }))
   }))
+  base.receivedTotals = receivedTotals
   return base
 }
 

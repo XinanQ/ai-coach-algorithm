@@ -242,7 +242,10 @@ const indicatorSummaries = computed(() => {
     )
     const currentTotal = rows.reduce((sum, row) => sum + Number(row?.currentAllocation || 0), 0)
     const allocatedTotal = rows.reduce((sum, row) => sum + Number(row?.allocated || 0), 0)
-    const totalTask = rows.reduce((sum, row) => sum + Number(row?.totalTask || 0), 0)
+    const defaultTotalTask = rows.reduce((sum, row) => sum + Number(row?.totalTask || 0), 0)
+    const totalTask = activePlan.value.originType === 'received'
+      ? Number(activePlan.value.receivedTotals?.find((item) => item.indicatorId === indicator.indicatorId)?.totalTask || defaultTotalTask)
+      : defaultTotalTask
     const usedTotal = allocatedTotal + currentTotal
     const remaining = totalTask - usedTotal
 
@@ -254,7 +257,7 @@ const indicatorSummaries = computed(() => {
       allocatedTotal,
       currentTotal,
       remaining,
-      progress: Math.min(100, Math.round((usedTotal / totalTask) * 100))
+      progress: totalTask ? Math.min(100, Math.round((usedTotal / totalTask) * 100)) : 0
     }
   })
 })
@@ -269,7 +272,9 @@ const visibleRows = computed(() => {
   return activePlan.value.targets.map((target) => {
     const row = target.indicators.find((item) => item.indicatorId === selectedIndicatorId.value)
     const used = Number(row.allocated || 0) + Number(row.currentAllocation || 0)
-    const percent = row.totalTask ? Math.round((used / row.totalTask) * 100) : 0
+    const percent = activePlan.value.originType === 'received' && selectedSummary.totalTask
+      ? Math.round((Number(row.currentAllocation || 0) / selectedSummary.totalTask) * 100)
+      : row.totalTask ? Math.round((used / row.totalTask) * 100) : 0
 
     return {
       targetId: target.id,
