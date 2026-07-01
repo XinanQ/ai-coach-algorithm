@@ -1,6 +1,7 @@
 package com.employee;
 
 import com.employee.dto.EmployeeCreateRequest;
+import com.employee.dto.EmployeeImportPreviewResponse;
 import com.employee.dto.EmployeeUpdateRequest;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -28,6 +29,10 @@ public interface EmployeeService {
     void deleteById(Long id);
 
     List<Employee> importFromExcel(MultipartFile file) throws IOException;
+
+    EmployeeImportPreviewResponse previewImport(MultipartFile file) throws IOException;
+
+    byte[] exportImportTemplate() throws IOException;
 
     byte[] exportToExcel() throws IOException;
 

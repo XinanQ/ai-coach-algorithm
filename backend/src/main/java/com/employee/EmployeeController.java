@@ -3,6 +3,7 @@ package com.employee;
 import com.auth.UserAccount;
 import com.auth.UserAccountRepository;
 import com.employee.dto.EmployeeCreateRequest;
+import com.employee.dto.EmployeeImportPreviewResponse;
 import com.employee.dto.EmployeeResponse;
 import com.employee.dto.EmployeeUpdateRequest;
 import org.springframework.http.HttpHeaders;
@@ -35,6 +36,52 @@ public class EmployeeController {
         return employees.stream()
                 .map(employee -> EmployeeResponse.from(employee, employeeNos.get(employee.getId())))
                 .collect(Collectors.toList());
+    }
+
+    @GetMapping("/export")
+    public ResponseEntity<byte[]> exportExcel() {
+        try {
+            byte[] data = service.exportVisibleToExcel();
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+            headers.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=employees.xlsx");
+            return ResponseEntity.ok().headers(headers).body(data);
+        } catch (Exception ex) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @GetMapping("/template")
+    public ResponseEntity<byte[]> downloadTemplate() {
+        try {
+            byte[] data = service.exportImportTemplate();
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+            headers.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=employee_import_template.xlsx");
+            return ResponseEntity.ok().headers(headers).body(data);
+        } catch (Exception ex) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @PostMapping("/import/preview")
+    public ResponseEntity<?> previewImport(@RequestParam("file") MultipartFile file) {
+        try {
+            EmployeeImportPreviewResponse preview = service.previewImport(file);
+            return ResponseEntity.ok(preview);
+        } catch (Exception ex) {
+            return ResponseEntity.badRequest().body("Failed to preview import: " + ex.getMessage());
+        }
+    }
+
+    @PostMapping("/import")
+    public ResponseEntity<?> importExcel(@RequestParam("file") MultipartFile file) {
+        try {
+            List<Employee> imported = service.importFromExcel(file);
+            return ResponseEntity.ok().body("Imported " + imported.size() + " employees");
+        } catch (Exception ex) {
+            return ResponseEntity.badRequest().body("Failed to import: " + ex.getMessage());
+        }
     }
 
     @GetMapping("/{id}")
@@ -73,29 +120,6 @@ public class EmployeeController {
             service.deleteById(existing.getId());
             return ResponseEntity.noContent().<Void>build();
         }).orElseGet(() -> ResponseEntity.notFound().build());
-    }
-
-    @PostMapping("/import")
-    public ResponseEntity<?> importExcel(@RequestParam("file") MultipartFile file) {
-        try {
-            List<Employee> imported = service.importFromExcel(file);
-            return ResponseEntity.ok().body("Imported " + imported.size() + " employees");
-        } catch (Exception ex) {
-            return ResponseEntity.badRequest().body("Failed to import: " + ex.getMessage());
-        }
-    }
-
-    @GetMapping("/export")
-    public ResponseEntity<byte[]> exportExcel() {
-        try {
-            byte[] data = service.exportVisibleToExcel();
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
-            headers.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=employees.xlsx");
-            return ResponseEntity.ok().headers(headers).body(data);
-        } catch (Exception ex) {
-            return ResponseEntity.internalServerError().build();
-        }
     }
 
     private Map<Long, String> loadEmployeeNos(List<Employee> employees) {
