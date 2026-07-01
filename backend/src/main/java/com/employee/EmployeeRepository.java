@@ -13,6 +13,9 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 
     List<Employee> findByOrganization_IdIn(Collection<Long> organizationIds);
 
+    @Query("select e from Employee e left join fetch e.organization where e.organization.id in :organizationIds")
+    List<Employee> findByOrganization_IdInWithOrganization(Collection<Long> organizationIds);
+
     @Query("select e from Employee e left join fetch e.organization where e.id = :id")
     Optional<Employee> findByIdWithOrganization(Long id);
 }
