@@ -1,0 +1,74 @@
+services:
+  ai-coach-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PYTHON_IMAGE: ${AI_COACH_PYTHON_IMAGE:-python:3.11-slim}
+    container_name: ai-coach-api
+    ports:
+      - "${AI_COACH_API_PORT:-8000}:8000"
+    environment:
+      AI_COACH_EMBEDDING_BACKEND: ${AI_COACH_DOCKER_EMBEDDING_BACKEND:-hash}
+      AI_COACH_EMBEDDING_MODEL: ${AI_COACH_DOCKER_EMBEDDING_MODEL:-local_hash_embedding_v1}
+      AI_COACH_HASH_EMBEDDING_DIM: ${AI_COACH_HASH_EMBEDDING_DIM:-384}
+      AI_COACH_SHORT_MEMORY_BACKEND: redis
+      AI_COACH_LONG_MEMORY_BACKEND: postgres
+      AI_COACH_REDIS_URL: redis://redis:6379/0
+      AI_COACH_POSTGRES_DSN: postgresql://ai_coach:ai_coach_dev@postgres:5432/ai_coach
+      AI_COACH_SESSION_TTL_SECONDS: ${AI_COACH_SESSION_TTL_SECONDS:-86400}
+      AI_COACH_SCORER: ${AI_COACH_SCORER:-llm}
+      AI_COACH_CUSTOMER_LLM: ${AI_COACH_CUSTOMER_LLM:-llm}
+      AI_COACH_LLM_MODEL: ${AI_COACH_LLM_MODEL:-deepseek-chat}
+      AI_COACH_LLM_TIMEOUT: ${AI_COACH_LLM_TIMEOUT:-20}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+    command: python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - .:/app
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5).read()"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    container_name: ai-coach-redis
+    ports:
+      - "${AI_COACH_REDIS_PORT:-6379}:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: ai-coach-postgres
+    environment:
+      POSTGRES_DB: ai_coach
+      POSTGRES_USER: ai_coach
+      POSTGRES_PASSWORD: ai_coach_dev
+    ports:
+      - "${AI_COACH_POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ai_coach -d ai_coach"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  redis_data:
+  postgres_data:
+

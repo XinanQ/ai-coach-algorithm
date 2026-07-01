@@ -1,0 +1,1 @@
+"""Gold data construction utilities."""

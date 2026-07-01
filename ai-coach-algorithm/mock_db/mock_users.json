@@ -1,0 +1,14 @@
+[
+  {
+    "user_id": "U001",
+    "name": "张三",
+    "role": "客户经理",
+    "branch_id": "BR001"
+  },
+  {
+    "user_id": "U002",
+    "name": "李四",
+    "role": "新员工",
+    "branch_id": "BR001"
+  }
+]

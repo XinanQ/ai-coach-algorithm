@@ -1,0 +1,29 @@
+embedding_backend: sentence_transformers
+embedding_model: BAAI/bge-small-zh-v1.5
+embedding_fallback: local_hash_embedding_v1
+
+vector_db: chroma_persistent_vector_store
+vector_backend: chroma
+
+intent_analyzer_backend: rule
+intent_analyzer_next: bert_mini
+bert_mini_model: uer/chinese_roberta_L-2_H-128
+
+short_term_memory_backend: redis_with_json_fallback
+long_term_memory_backend: postgresql_with_json_fallback
+redis_url_env: AI_COACH_REDIS_URL
+postgres_dsn_env: AI_COACH_POSTGRES_DSN
+
+llm_feedback: qwen_deepseek_gpt_api
+asr_provider: wechat_or_xfyun_or_aliyun
+
+status:
+  embedding: real_chinese_embedding_default_with_hash_fallback
+  rag: multi_route_with_chroma_vector_recall
+  vector_store: persistent_chroma
+  intent_understanding: rule_proxy_with_bert_mini_adapter
+  short_term_memory: redis_adapter_ready_json_fallback
+  long_term_memory: postgresql_adapter_ready_json_fallback
+  llm: template_feedback_first
+  asr: placeholder
+

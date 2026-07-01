@@ -1,0 +1,23 @@
+{
+  "sample_size": 50,
+  "keyword_only": {
+    "micro_precision": 0.2952,
+    "micro_recall": 0.8611,
+    "micro_f1": 0.4397
+  },
+  "llm_only": {
+    "micro_precision": 0.8333,
+    "micro_recall": 0.6944,
+    "micro_f1": 0.7576
+  },
+  "llm_primary": {
+    "micro_precision": 0.3867,
+    "micro_recall": 0.8056,
+    "micro_f1": 0.5225
+  },
+  "union": {
+    "micro_precision": 0.2991,
+    "micro_recall": 0.8889,
+    "micro_f1": 0.4476
+  }
+}

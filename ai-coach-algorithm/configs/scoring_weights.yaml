@@ -1,0 +1,9 @@
+keyword_score: 20
+semantic_score: 25
+completeness_score: 20
+fluency_score: 15
+compliance_score: 20
+
+# W1说明：
+# semantic_score 第一周先用规则占位分，W3接入embedding后替换。
+# compliance_score 是金融场景强约束维度，高风险禁语会限制总分上限。

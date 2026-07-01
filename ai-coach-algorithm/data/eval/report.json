@@ -1,0 +1,100 @@
+{
+  "run_id": "eval_20260701_133459",
+  "timestamp": "2026-07-01T13:34:59.244877",
+  "stages": [
+    {
+      "stage": "llm_intent_detection",
+      "primary_metric": "llm_only_micro_f1",
+      "value": 0.7576,
+      "gold_size": 50,
+      "details": {
+        "result_source": "cached:data/eval/llm_intent_eval.json",
+        "strategies": {
+          "keyword_only": {
+            "micro_precision": 0.2952,
+            "micro_recall": 0.8611,
+            "micro_f1": 0.4397
+          },
+          "llm_only": {
+            "micro_precision": 0.8333,
+            "micro_recall": 0.6944,
+            "micro_f1": 0.7576
+          },
+          "llm_primary": {
+            "micro_precision": 0.3867,
+            "micro_recall": 0.8056,
+            "micro_f1": 0.5225
+          },
+          "union": {
+            "micro_precision": 0.2991,
+            "micro_recall": 0.8889,
+            "micro_f1": 0.4476
+          }
+        }
+      }
+    },
+    {
+      "stage": "gap_computation",
+      "primary_metric": "accuracy",
+      "value": 0.9481,
+      "gold_size": 104,
+      "details": {
+        "params": {
+          "threshold": 0.1
+        },
+        "accuracy": 0.9481,
+        "false_covered_rate": 0.0236,
+        "false_missing_rate": 0.0283,
+        "total_intents_evaluated": 212
+      }
+    },
+    {
+      "stage": "chunk_retrieval",
+      "primary_metric": "recall@3",
+      "value": 0.4355,
+      "gold_size": 70,
+      "details": {
+        "params": {
+          "top_k": 3,
+          "fusion_weights": null
+        },
+        "recall@3": 0.4355,
+        "mrr": 0.8048,
+        "precision@3": 0.7571,
+        "by_route": {
+          "tutor": {
+            "recall@3": 0.3677,
+            "mrr": 0.5591,
+            "precision@3": 0.4516,
+            "count": 31
+          },
+          "customer": {
+            "recall@3": 0.4894,
+            "mrr": 1.0,
+            "precision@3": 1.0,
+            "count": 39
+          }
+        }
+      }
+    },
+    {
+      "stage": "must_point_coverage",
+      "primary_metric": "point_f1",
+      "value": 0.7951,
+      "gold_size": 45,
+      "details": {
+        "params": {
+          "threshold": 0.3,
+          "kw_weight": 0.4,
+          "sem_weight": 0.6
+        },
+        "point_precision": 0.6978,
+        "point_recall": 0.9238,
+        "point_f1": 0.7951,
+        "coverage_rate_mae": 0.1293
+      }
+    }
+  ],
+  "end_to_end_estimate": 0.2487,
+  "bottleneck": "chunk_retrieval"
+}

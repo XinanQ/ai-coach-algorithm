@@ -1,0 +1,137 @@
+{
+  "businesses": {
+    "INS": {
+      "business_name": "保险营销",
+      "folder": "保险营销话术",
+      "default_scene": "INS_GENERAL",
+      "scenes": {
+        "INS_INVITE": "保险电话邀约",
+        "INS_PROCESS": "保险营销流程",
+        "INS_OBJECTION": "保险异议处理",
+        "INS_PERIODIC": "期交保险营销",
+        "INS_DIVIDEND": "分红险异议处理",
+        "INS_GENERAL": "保险综合营销"
+      },
+      "scene_rules": [
+        {
+          "scene_id": "INS_PERIODIC",
+          "keywords": ["期交", "期缴"],
+          "source_keywords": ["期交", "期缴"]
+        },
+        {
+          "scene_id": "INS_DIVIDEND",
+          "keywords": ["分红"],
+          "source_keywords": ["分红"]
+        },
+        {
+          "scene_id": "INS_OBJECTION",
+          "keywords": ["异议", "怎么办", "顾虑"]
+        },
+        {
+          "scene_id": "INS_PROCESS",
+          "keywords": ["流程", "步骤"]
+        },
+        {
+          "scene_id": "INS_INVITE",
+          "keywords": ["邀约", "预约", "电话"],
+          "source_keywords": ["邀约", "预约"]
+        }
+      ]
+    },
+    "FUND": {
+      "business_name": "基金营销",
+      "folder": "基金营销话术",
+      "default_scene": "FUND_GENERAL",
+      "scenes": {
+        "FUND_INVITE": "基金电话邀约",
+        "FUND_SALE": "基金销售关键点",
+        "FUND_OBJECTION": "基金异议处理",
+        "FUND_FIXED_INVEST": "基金定投营销",
+        "FUND_GENERAL": "基金综合营销"
+      },
+      "scene_rules": [
+        {
+          "scene_id": "FUND_OBJECTION",
+          "keywords": ["异议", "风险吗", "考虑考虑"]
+        },
+        {
+          "scene_id": "FUND_FIXED_INVEST",
+          "keywords": ["定投"],
+          "source_keywords": ["定投"]
+        },
+        {
+          "scene_id": "FUND_INVITE",
+          "keywords": ["邀约", "电话"],
+          "requires_dialogue": true
+        },
+        {
+          "scene_id": "FUND_SALE",
+          "keywords": ["关键点", "销售"],
+          "source_keywords": ["关键点"]
+        }
+      ]
+    },
+    "WM": {
+      "business_name": "理财营销",
+      "folder": "理财营销话术",
+      "default_scene": "WM_GENERAL",
+      "scenes": {
+        "WM_ASSET": "理财底层资产解析",
+        "WM_PRODUCT": "理财产品介绍",
+        "WM_OBJECTION": "理财异议处理",
+        "WM_RISK": "理财风险说明",
+        "WM_GENERAL": "理财综合营销"
+      },
+      "scene_rules": [
+        {
+          "scene_id": "WM_ASSET",
+          "keywords": ["底层资产", "核心要素"],
+          "source_keywords": ["底层资产", "核心要素"]
+        },
+        {
+          "scene_id": "WM_OBJECTION",
+          "keywords": ["异议"]
+        },
+        {
+          "scene_id": "WM_RISK",
+          "keywords": ["风险"]
+        },
+        {
+          "scene_id": "WM_PRODUCT",
+          "keywords": ["产品"],
+          "source_keywords": ["产品"]
+        }
+      ]
+    },
+    "CC": {
+      "business_name": "信用卡营销",
+      "folder": "信用卡营销话术",
+      "default_scene": "CC_GENERAL",
+      "scenes": {
+        "CC_INVITE": "信用卡邀约",
+        "CC_FEE": "信用卡费用说明",
+        "CC_INSTALLMENT": "信用卡分期营销",
+        "CC_RISK": "信用卡用卡风险说明",
+        "CC_GENERAL": "信用卡综合营销"
+      },
+      "scene_rules": [
+        {
+          "scene_id": "CC_FEE",
+          "keywords": ["年费", "费用", "减免"]
+        },
+        {
+          "scene_id": "CC_INSTALLMENT",
+          "keywords": ["分期", "账单分期", "手续费"]
+        },
+        {
+          "scene_id": "CC_RISK",
+          "keywords": ["征信", "逾期", "还款", "风险"]
+        },
+        {
+          "scene_id": "CC_INVITE",
+          "keywords": ["邀约", "申请", "办卡", "权益"]
+        }
+      ]
+    }
+  }
+}
