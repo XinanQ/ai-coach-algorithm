@@ -28,7 +28,7 @@ def load_gold(path: Path = GOLD_PATH) -> list[dict[str, Any]]:
 
 def evaluate(
     *,
-    threshold: float = 0.30,
+    threshold: float = 0.50,
     kw_weight: float = 0.4,
     sem_weight: float = 0.6,
     gold_path: Path = GOLD_PATH,
@@ -90,6 +90,21 @@ def evaluate(
     f1 = 2 * precision * recall / max(precision + recall, 1e-8)
     mae = sum(coverage_ae) / max(len(coverage_ae), 1)
 
+    # Enhanced error analysis by quality
+    quality_stats = {}
+    if verbose:
+        by_quality: dict[str, list[dict]] = {"good": [], "partial": [], "poor": []}
+        for err in errors:
+            quality = err.get("quality", "unknown")
+            if quality in by_quality:
+                by_quality[quality].append(err)
+
+        for qual, errs in by_quality.items():
+            if errs:
+                avg_f1 = sum(e["point_f1"] for e in errs) / len(errs)
+                quality_stats[f"{qual}_count"] = len(errs)
+                quality_stats[f"{qual}_avg_f1"] = round(avg_f1, 4)
+
     details: dict[str, Any] = {
         "params": {"threshold": threshold, "kw_weight": kw_weight, "sem_weight": sem_weight},
         "point_precision": round(precision, 4),
@@ -99,6 +114,7 @@ def evaluate(
     }
     if verbose:
         details["errors"] = errors[:30]
+        details["quality_stats"] = quality_stats
 
     return StageResult(
         stage="must_point_coverage",
@@ -113,7 +129,7 @@ def main() -> None:
     import argparse
 
     parser = argparse.ArgumentParser(description="Evaluate must-point coverage stage.")
-    parser.add_argument("--threshold", type=float, default=0.30)
+    parser.add_argument("--threshold", type=float, default=0.50)
     parser.add_argument("--kw-weight", type=float, default=0.4)
     parser.add_argument("--sem-weight", type=float, default=0.6)
     parser.add_argument("--verbose", action="store_true")

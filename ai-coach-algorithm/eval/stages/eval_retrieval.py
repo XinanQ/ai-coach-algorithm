@@ -25,6 +25,13 @@ def load_gold(path: Path = GOLD_PATH) -> list[dict[str, Any]]:
     return rows
 
 
+def _extract_chunk_id(item_id: str) -> str:
+    """Extract pure chunk ID from Chroma ID format 'route:MCH_XXX' or 'MCH_XXX'."""
+    if ":" in str(item_id):
+        return str(item_id).split(":", 1)[1]
+    return str(item_id)
+
+
 def evaluate(
     *,
     top_k: int = 3,
@@ -51,7 +58,11 @@ def evaluate(
                 scene_id=row.get("scene_id"),
                 fusion_weights=fusion_weights,
             )
-            pred_ids = [item.get("chunk_id", item.get("id", "")) for item in result.get("items", [])]
+            # Extract chunk IDs from items, handling both 'route:MCH_XXX' and 'MCH_XXX' formats
+            pred_ids = []
+            for item in result.get("items", []):
+                item_id = item.get("chunk_id") or item.get("id") or item.get("metadata", {}).get("chunk_id", "")
+                pred_ids.append(_extract_chunk_id(item_id))
         except Exception as exc:
             pred_ids = []
             if verbose:
@@ -66,9 +77,12 @@ def evaluate(
             errors.append({
                 "id": row["id"],
                 "route": row["route"],
+                "scene_id": row.get("scene_id"),
                 "gold": gold_ids,
                 "pred": pred_ids[:top_k],
                 "recall": round(recall_at_k(gold_ids, pred_ids, k=top_k), 3),
+                "gold_count": len(gold_ids),
+                "found_gold": len(set(gold_ids) & set(pred_ids[:top_k])),
             })
 
     avg_recall = sum(recall_scores) / max(len(recall_scores), 1)
@@ -94,6 +108,20 @@ def evaluate(
         for rt, d in by_route.items()
     }
 
+    # Enhanced error analysis
+    error_analysis = {}
+    if verbose and errors:
+        # Categorize errors by recall level
+        perfect_cases = sum(1 for r in recall_scores if r >= 1.0)
+        partial_cases = sum(1 for r in recall_scores if 0.0 < r < 1.0)
+        failed_cases = sum(1 for r in recall_scores if r == 0.0)
+        error_analysis = {
+            "perfect_recall": perfect_cases,
+            "partial_recall": partial_cases,
+            "failed_recall": failed_cases,
+            "total_cases": len(recall_scores),
+        }
+
     details: dict[str, Any] = {
         "params": {"top_k": top_k, "fusion_weights": fusion_weights},
         f"recall@{top_k}": round(avg_recall, 4),
@@ -103,6 +131,7 @@ def evaluate(
     }
     if verbose:
         details["errors"] = errors[:30]
+        details["error_analysis"] = error_analysis
 
     return StageResult(
         stage="chunk_retrieval",

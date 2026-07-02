@@ -1,0 +1,666 @@
+{
+  "stage": "chunk_retrieval",
+  "primary_metric": "recall@3",
+  "value": 0.4178,
+  "gold_size": 70,
+  "details": {
+    "params": {
+      "top_k": 3,
+      "fusion_weights": null
+    },
+    "recall@3": 0.4178,
+    "mrr": 0.8095,
+    "precision@3": 0.7619,
+    "by_route": {
+      "tutor": {
+        "recall@3": 0.3277,
+        "mrr": 0.5699,
+        "precision@3": 0.4624,
+        "count": 31
+      },
+      "customer": {
+        "recall@3": 0.4894,
+        "mrr": 1.0,
+        "precision@3": 1.0,
+        "count": 39
+      }
+    },
+    "errors": [
+      {
+        "id": "RG_tutor_MSC_FUND_FUND_FIXED_INVEST_PHONE_INVITATION",
+        "route": "tutor",
+        "gold": [
+          "MCH_000133",
+          "MCH_000134",
+          "MCH_000139"
+        ],
+        "pred": [
+          "MCH_000139",
+          "MCH_000141",
+          "MCH_000121"
+        ],
+        "recall": 0.333
+      },
+      {
+        "id": "RG_tutor_MSC_FUND_FUND_FIXED_INVEST_PRODUCT_INTRO",
+        "route": "tutor",
+        "gold": [
+          "MCH_000120",
+          "MCH_000130",
+          "MCH_000131",
+          "MCH_000140"
+        ],
+        "pred": [
+          "MCH_000131",
+          "MCH_000139",
+          "MCH_000140"
+        ],
+        "recall": 0.5
+      },
+      {
+        "id": "RG_tutor_MSC_FUND_FUND_FIXED_INVEST_RAW_SCRIPT",
+        "route": "tutor",
+        "gold": [
+          "MCH_000121",
+          "MCH_000122",
+          "MCH_000123",
+          "MCH_000132",
+          "MCH_000135",
+          "MCH_000141"
+        ],
+        "pred": [
+          "MCH_000140",
+          "MCH_000139",
+          "MCH_000131"
+        ],
+        "recall": 0.0
+      },
+      {
+        "id": "RG_tutor_MSC_FUND_FUND_GENERAL_PRODUCT_INTRO",
+        "route": "tutor",
+        "gold": [
+          "MCH_000113",
+          "MCH_000124",
+          "MCH_000125",
+          "MCH_000136",
+          "MCH_000138",
+          "MCH_000142",
+          "MCH_000143",
+          "MCH_000144",
+          "MCH_000145",
+          "MCH_000147",
+          "MCH_000148",
+          "MCH_000149"
+        ],
+        "pred": [
+          "MCH_000136",
+          "MCH_000145",
+          "MCH_000138"
+        ],
+        "recall": 0.25
+      },
+      {
+        "id": "RG_tutor_MSC_FUND_FUND_GENERAL_RAW_SCRIPT",
+        "route": "tutor",
+        "gold": [
+          "MCH_000146",
+          "MCH_000150",
+          "MCH_000151",
+          "MCH_000152"
+        ],
+        "pred": [
+          "MCH_000136",
+          "MCH_000138",
+          "MCH_000145"
+        ],
+        "recall": 0.0
+      },
+      {
+        "id": "RG_tutor_MSC_FUND_FUND_GENERAL_SALES_PROCESS",
+        "route": "tutor",
+        "gold": [
+          "MCH_000126",
+          "MCH_000127"
+        ],
+        "pred": [
+          "MCH_000136",
+          "MCH_000138",
+          "MCH_000145"
+        ],
+        "recall": 0.0
+      },
+      {
+        "id": "RG_tutor_MSC_FUND_FUND_OBJECTION_OBJECTION_HANDLING",
+        "route": "tutor",
+        "gold": [
+          "MCH_000114",
+          "MCH_000115",
+          "MCH_000117",
+          "MCH_000118",
+          "MCH_000119",
+          "MCH_000129"
+        ],
+        "pred": [
+          "MCH_000114",
+          "MCH_000119",
+          "MCH_000117"
+        ],
+        "recall": 0.5
+      },
+      {
+        "id": "RG_tutor_MSC_INS_INS_DIVIDEND_OBJECTION_HANDLING",
+        "route": "tutor",
+        "gold": [
+          "MCH_000063",
+          "MCH_000064",
+          "MCH_000066",
+          "MCH_000067"
+        ],
+        "pred": [
+          "MCH_000063",
+          "MCH_000064",
+          "MCH_000069"
+        ],
+        "recall": 0.5
+      },
+      {
+        "id": "RG_tutor_MSC_INS_INS_DIVIDEND_PRODUCT_INTRO",
+        "route": "tutor",
+        "gold": [
+          "MCH_000010",
+          "MCH_000047",
+          "MCH_000065",
+          "MCH_000068",
+          "MCH_000069"
+        ],
+        "pred": [
+          "MCH_000063",
+          "MCH_000069",
+          "MCH_000064"
+        ],
+        "recall": 0.2
+      },
+      {
+        "id": "RG_tutor_MSC_INS_INS_DIVIDEND_SALES_PROCESS",
+        "route": "tutor",
+        "gold": [
+          "MCH_000045"
+        ],
+        "pred": [
+          "MCH_000063",
+          "MCH_000064",
+          "MCH_000069"
+        ],
+        "recall": 0.0
+      },
+      {
+        "id": "RG_tutor_MSC_INS_INS_GENERAL_OBJECTION_HANDLING",
+        "route": "tutor",
+        "gold": [
+          "MCH_000061"
+        ],
+        "pred": [
+          "MCH_000028",
+          "MCH_000034",
+          "MCH_000011"
+        ],
+        "recall": 0.0
+      },
+      {
+        "id": "RG_tutor_MSC_INS_INS_GENERAL_PRODUCT_INTRO",
+        "route": "tutor",
+        "gold": [
+          "MCH_000011",
+          "MCH_000012",
+          "MCH_000014",
+          "MCH_000018",
+          "MCH_000022",
+          "MCH_000037",
+          "MCH_000038",
+          "MCH_000039",
+          "MCH_000040",
+          "MCH_000041",
+          "MCH_000042",
+          "MCH_000043",
+          "MCH_000044",
+          "MCH_000046",
+          "MCH_000049",
+          "MCH_000051",
+          "MCH_000052",
+          "MCH_000054",
+          "MCH_000056"
+        ],
+        "pred": [
+          "MCH_000028",
+          "MCH_000034",
+          "MCH_000037"
+        ],
+        "recall": 0.053
+      },
+      {
+        "id": "RG_tutor_MSC_INS_INS_GENERAL_RAW_SCRIPT",
+        "route": "tutor",
+        "gold": [
+          "MCH_000015",
+          "MCH_000023",
+          "MCH_000024",
+          "MCH_000025",
+          "MCH_000026",
+          "MCH_000027",
+          "MCH_000028",
+          "MCH_000034",
+          "MCH_000035",
+          "MCH_000036",
+          "MCH_000050",
+          "MCH_000053",
+          "MCH_000055",
+          "MCH_000057",
+          "MCH_000059",
+          "MCH_000060",
+          "MCH_000062"
+        ],
+        "pred": [
+          "MCH_000028",
+          "MCH_000034",
+          "MCH_000037"
+        ],
+        "recall": 0.118
+      },
+      {
+        "id": "RG_tutor_MSC_INS_INS_GENERAL_SALES_PROCESS",
+        "route": "tutor",
+        "gold": [
+          "MCH_000013"
+        ],
+        "pred": [
+          "MCH_000034",
+          "MCH_000028",
+          "MCH_000037"
+        ],
+        "recall": 0.0
+      },
+      {
+        "id": "RG_tutor_MSC_INS_INS_INVITE_PHONE_INVITATION",
+        "route": "tutor",
+        "gold": [
+          "MCH_000001",
+          "MCH_000002",
+          "MCH_000003",
+          "MCH_000004",
+          "MCH_000005",
+          "MCH_000006",
+          "MCH_000007",
+          "MCH_000008",
+          "MCH_000009",
+          "MCH_000016",
+          "MCH_000017",
+          "MCH_000019",
+          "MCH_000020",
+          "MCH_000021"
+        ],
+        "pred": [
+          "MCH_000017",
+          "MCH_000016",
+          "MCH_000001"
+        ],
+        "recall": 0.214
+      },
+      {
+        "id": "RG_tutor_MSC_INS_INS_PERIODIC_COMPLIANCE_NOTE",
+        "route": "tutor",
+        "gold": [
+          "MCH_000075",
+          "MCH_000076",
+          "MCH_000106"
+        ],
+        "pred": [
+          "MCH_000075",
+          "MCH_000093",
+          "MCH_000086"
+        ],
+        "recall": 0.333
+      },
+      {
+        "id": "RG_tutor_MSC_INS_INS_PERIODIC_OBJECTION_HANDLING",
+        "route": "tutor",
+        "gold": [
+          "MCH_000071",
+          "MCH_000072",
+          "MCH_000086",
+          "MCH_000087",
+          "MCH_000099",
+          "MCH_000100",
+          "MCH_000101"
+        ],
+        "pred": [
+          "MCH_000075",
+          "MCH_000104",
+          "MCH_000086"
+        ],
+        "recall": 0.143
+      },
+      {
+        "id": "RG_tutor_MSC_INS_INS_PERIODIC_PHONE_INVITATION",
+        "route": "tutor",
+        "gold": [
+          "MCH_000077",
+          "MCH_000078",
+          "MCH_000079",
+          "MCH_000080",
+          "MCH_000081",
+          "MCH_000082",
+          "MCH_000088",
+          "MCH_000093",
+          "MCH_000094",
+          "MCH_000097",
+          "MCH_000104",
+          "MCH_000105",
+          "MCH_000110",
+          "MCH_000111"
+        ],
+        "pred": [
+          "MCH_000075",
+          "MCH_000110",
+          "MCH_000111"
+        ],
+        "recall": 0.143
+      },
+      {
+        "id": "RG_tutor_MSC_INS_INS_PERIODIC_PRODUCT_INTRO",
+        "route": "tutor",
+        "gold": [
+          "MCH_000070",
+          "MCH_000073",
+          "MCH_000084",
+          "MCH_000085",
+          "MCH_000090",
+          "MCH_000091",
+          "MCH_000098",
+          "MCH_000102",
+          "MCH_000103"
+        ],
+        "pred": [
+          "MCH_000075",
+          "MCH_000086",
+          "MCH_000104"
+        ],
+        "recall": 0.0
+      },
+      {
+        "id": "RG_tutor_MSC_INS_INS_PERIODIC_RAW_SCRIPT",
+        "route": "tutor",
+        "gold": [
+          "MCH_000074",
+          "MCH_000083",
+          "MCH_000089",
+          "MCH_000092",
+          "MCH_000095",
+          "MCH_000096"
+        ],
+        "pred": [
+          "MCH_000075",
+          "MCH_000110",
+          "MCH_000078"
+        ],
+        "recall": 0.0
+      },
+      {
+        "id": "RG_tutor_MSC_INS_INS_PERIODIC_SALES_PROCESS",
+        "route": "tutor",
+        "gold": [
+          "MCH_000107",
+          "MCH_000108",
+          "MCH_000109"
+        ],
+        "pred": [
+          "MCH_000075",
+          "MCH_000104",
+          "MCH_000086"
+        ],
+        "recall": 0.0
+      },
+      {
+        "id": "RG_tutor_MSC_INS_INS_PROCESS_SALES_PROCESS",
+        "route": "tutor",
+        "gold": [
+          "MCH_000029",
+          "MCH_000030",
+          "MCH_000031",
+          "MCH_000032",
+          "MCH_000033"
+        ],
+        "pred": [
+          "MCH_000031",
+          "MCH_000029",
+          "MCH_000032"
+        ],
+        "recall": 0.6
+      },
+      {
+        "id": "RG_tutor_MSC_WM_WM_ASSET_COMPLIANCE_NOTE",
+        "route": "tutor",
+        "gold": [
+          "MCH_000161"
+        ],
+        "pred": [
+          "MCH_000167",
+          "MCH_000162",
+          "MCH_000166"
+        ],
+        "recall": 0.0
+      },
+      {
+        "id": "RG_tutor_MSC_WM_WM_ASSET_PRODUCT_INTRO",
+        "route": "tutor",
+        "gold": [
+          "MCH_000153",
+          "MCH_000154",
+          "MCH_000155",
+          "MCH_000156",
+          "MCH_000157",
+          "MCH_000160",
+          "MCH_000162",
+          "MCH_000163",
+          "MCH_000164",
+          "MCH_000166",
+          "MCH_000167"
+        ],
+        "pred": [
+          "MCH_000167",
+          "MCH_000162",
+          "MCH_000166"
+        ],
+        "recall": 0.273
+      },
+      {
+        "id": "RG_tutor_MSC_WM_WM_ASSET_RAW_SCRIPT",
+        "route": "tutor",
+        "gold": [
+          "MCH_000158",
+          "MCH_000159",
+          "MCH_000165"
+        ],
+        "pred": [
+          "MCH_000167",
+          "MCH_000166",
+          "MCH_000164"
+        ],
+        "recall": 0.0
+      },
+      {
+        "id": "RG_customer_CUST_RATE_DIVIDEND_LOW",
+        "route": "customer",
+        "gold": [
+          "MCH_000010",
+          "MCH_000045",
+          "MCH_000047",
+          "MCH_000063",
+          "MCH_000064",
+          "MCH_000065",
+          "MCH_000066",
+          "MCH_000067",
+          "MCH_000068",
+          "MCH_000069"
+        ],
+        "pred": [
+          "MCH_000069",
+          "MCH_000047",
+          "MCH_000064"
+        ],
+        "recall": 0.3
+      },
+      {
+        "id": "RG_customer_CUST_RATE_DIVIDEND",
+        "route": "customer",
+        "gold": [
+          "MCH_000010",
+          "MCH_000045",
+          "MCH_000047",
+          "MCH_000063",
+          "MCH_000064",
+          "MCH_000065",
+          "MCH_000066",
+          "MCH_000067",
+          "MCH_000068",
+          "MCH_000069"
+        ],
+        "pred": [
+          "MCH_000047",
+          "MCH_000064",
+          "MCH_000063"
+        ],
+        "recall": 0.3
+      },
+      {
+        "id": "RG_customer_CUST_RATE_DIVIDEND_HIGH",
+        "route": "customer",
+        "gold": [
+          "MCH_000010",
+          "MCH_000045",
+          "MCH_000047",
+          "MCH_000063",
+          "MCH_000064",
+          "MCH_000065",
+          "MCH_000066",
+          "MCH_000067",
+          "MCH_000068",
+          "MCH_000069"
+        ],
+        "pred": [
+          "MCH_000064",
+          "MCH_000047",
+          "MCH_000069"
+        ],
+        "recall": 0.3
+      },
+      {
+        "id": "RG_customer_CUST_LIQUIDITY_PERIODIC_LOW",
+        "route": "customer",
+        "gold": [
+          "MCH_000070",
+          "MCH_000071",
+          "MCH_000072",
+          "MCH_000073",
+          "MCH_000074",
+          "MCH_000075",
+          "MCH_000076",
+          "MCH_000077",
+          "MCH_000078",
+          "MCH_000079",
+          "MCH_000080",
+          "MCH_000081",
+          "MCH_000082",
+          "MCH_000083",
+          "MCH_000084",
+          "MCH_000085",
+          "MCH_000086",
+          "MCH_000087",
+          "MCH_000088",
+          "MCH_000089",
+          "MCH_000090",
+          "MCH_000091",
+          "MCH_000092",
+          "MCH_000093",
+          "MCH_000094",
+          "MCH_000095",
+          "MCH_000096",
+          "MCH_000097",
+          "MCH_000098",
+          "MCH_000099",
+          "MCH_000100",
+          "MCH_000101",
+          "MCH_000102",
+          "MCH_000103",
+          "MCH_000104",
+          "MCH_000105",
+          "MCH_000106",
+          "MCH_000107",
+          "MCH_000108",
+          "MCH_000109",
+          "MCH_000110",
+          "MCH_000111"
+        ],
+        "pred": [
+          "MCH_000103",
+          "MCH_000101",
+          "MCH_000102"
+        ],
+        "recall": 0.071
+      },
+      {
+        "id": "RG_customer_CUST_LIQUIDITY_PERIODIC",
+        "route": "customer",
+        "gold": [
+          "MCH_000070",
+          "MCH_000071",
+          "MCH_000072",
+          "MCH_000073",
+          "MCH_000074",
+          "MCH_000075",
+          "MCH_000076",
+          "MCH_000077",
+          "MCH_000078",
+          "MCH_000079",
+          "MCH_000080",
+          "MCH_000081",
+          "MCH_000082",
+          "MCH_000083",
+          "MCH_000084",
+          "MCH_000085",
+          "MCH_000086",
+          "MCH_000087",
+          "MCH_000088",
+          "MCH_000089",
+          "MCH_000090",
+          "MCH_000091",
+          "MCH_000092",
+          "MCH_000093",
+          "MCH_000094",
+          "MCH_000095",
+          "MCH_000096",
+          "MCH_000097",
+          "MCH_000098",
+          "MCH_000099",
+          "MCH_000100",
+          "MCH_000101",
+          "MCH_000102",
+          "MCH_000103",
+          "MCH_000104",
+          "MCH_000105",
+          "MCH_000106",
+          "MCH_000107",
+          "MCH_000108",
+          "MCH_000109",
+          "MCH_000110",
+          "MCH_000111"
+        ],
+        "pred": [
+          "MCH_000072",
+          "MCH_000073",
+          "MCH_000102"
+        ],
+        "recall": 0.071
+      }
+    ]
+  }
+}

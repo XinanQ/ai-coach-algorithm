@@ -1,6 +1,6 @@
 {
-  "run_id": "eval_20260701_133459",
-  "timestamp": "2026-07-01T13:34:59.244877",
+  "run_id": "eval_20260703_013025",
+  "timestamp": "2026-07-03T01:30:25.761512",
   "stages": [
     {
       "stage": "llm_intent_detection",
@@ -51,21 +51,21 @@
     {
       "stage": "chunk_retrieval",
       "primary_metric": "recall@3",
-      "value": 0.4355,
+      "value": 0.5393,
       "gold_size": 70,
       "details": {
         "params": {
           "top_k": 3,
           "fusion_weights": null
         },
-        "recall@3": 0.4355,
-        "mrr": 0.8048,
-        "precision@3": 0.7571,
+        "recall@3": 0.5393,
+        "mrr": 0.9714,
+        "precision@3": 0.9095,
         "by_route": {
           "tutor": {
-            "recall@3": 0.3677,
-            "mrr": 0.5591,
-            "precision@3": 0.4516,
+            "recall@3": 0.6021,
+            "mrr": 0.9355,
+            "precision@3": 0.7957,
             "count": 31
           },
           "customer": {
@@ -80,21 +80,21 @@
     {
       "stage": "must_point_coverage",
       "primary_metric": "point_f1",
-      "value": 0.7951,
+      "value": 0.7286,
       "gold_size": 45,
       "details": {
         "params": {
-          "threshold": 0.3,
+          "threshold": 0.5,
           "kw_weight": 0.4,
           "sem_weight": 0.6
         },
-        "point_precision": 0.6978,
-        "point_recall": 0.9238,
-        "point_f1": 0.7951,
-        "coverage_rate_mae": 0.1293
+        "point_precision": 0.5976,
+        "point_recall": 0.9333,
+        "point_f1": 0.7286,
+        "coverage_rate_mae": 0.167
       }
     }
   ],
-  "end_to_end_estimate": 0.2487,
+  "end_to_end_estimate": 0.2822,
   "bottleneck": "chunk_retrieval"
 }
