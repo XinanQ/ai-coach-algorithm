@@ -245,19 +245,22 @@ def _build_tutor_hyde_query(
                 scoring_focus.extend(config["scoring_focus"])
         if not ideal_answers:
             ideal_answers.append(
-                "理想回答应先识别客户核心顾虑，再结合业务知识给出准确解释，避免承诺或编造，并给出清晰的下一步办理或查询引导。"
+                "识别客户核心顾虑，结合业务知识准确解释，避免承诺编造，给出清晰下一步引导。"
             )
             scoring_focus.extend(["需求识别", "业务解释", "合规边界", "下一步引导"])
         anchor = "employee_keyword_pattern"
 
-    goal_line = clean_text(answer_goal) if answer_goal else "评估员工回答是否覆盖场景标准要点、合规边界并给出下一步引导。"
-    expanded_query = "\n".join(
+    # 优化：压缩HyDE查询，移除冗余模板文字，只保留核心语义
+    # 旧版本包含大量模板："员工回答或客户问题："、"场景评分目标："等
+    # 新版本直接拼接核心内容，减少embedding噪音
+    goal_line = clean_text(answer_goal) if answer_goal else "覆盖标准要点、合规边界、下一步引导"
+    expanded_query = " ".join(
         [
-            f"员工回答或客户问题：{query_value}",
-            f"场景评分目标：{goal_line}",
-            "导师评分检索目标：寻找标准话术、合规边界、业务解释、缺失点和改进建议。",
-            "HyDE 假设理想回答（应覆盖的标准要点）：" + " ".join(ideal_answers),
-            "评分关注点：" + "、".join(dict.fromkeys(scoring_focus)),
+            query_value,
+            goal_line,
+            "标准话术合规边界业务解释缺失点改进建议",
+            " ".join(ideal_answers),
+            " ".join(dict.fromkeys(scoring_focus)),
         ]
     )
     return {
@@ -284,10 +287,10 @@ def _retrieve_tutor_hyde(
     fusion_weights: dict[str, float] | None = None,
 ) -> dict[str, Any]:
     w = fusion_weights or {}
-    w_hyde = w.get("hyde_semantic", 0.55)
-    w_orig = w.get("original_semantic", 0.20)
-    w_kw = w.get("keyword_overlap", 0.15)
-    w_type = w.get("type_boost", 0.20)  # 类型匹配增强权重（提高到0.20以增强类型区分）
+    w_hyde = w.get("hyde_semantic", 0.50)  # 降低hyde权重，防止过度膨胀
+    w_orig = w.get("original_semantic", 0.25)  # 提高原始查询权重
+    w_kw = w.get("keyword_overlap", 0.10)  # 降低关键词权重
+    w_type = w.get("type_boost", 0.15)  # 类型匹配权重
 
     hyde = _build_tutor_hyde_query(query, must_points=must_points, answer_goal=answer_goal)
     where = {"scene_id": scene_id} if scene_id else None
@@ -295,9 +298,9 @@ def _retrieve_tutor_hyde(
     # 推断查询类型偏好
     query_type_hint = _infer_query_type_preference(query, must_points)
 
-    # 扩大召回候选池
-    hyde_items = store.query(collection_name, hyde["expanded_query"], adapter, top_k=max(top_k * 8, 40), where=where)
-    original_items = store.query(collection_name, query, adapter, top_k=max(top_k * 6, 30), where=where)
+    # 扩大召回候选池：提高召回率，特别是对于gold数量大的case
+    hyde_items = store.query(collection_name, hyde["expanded_query"], adapter, top_k=max(top_k * 10, 50), where=where)
+    original_items = store.query(collection_name, query, adapter, top_k=max(top_k * 8, 40), where=where)
 
     # 类型感知融合：优先匹配的types获得更高权重
     fused = _merge_ranked_items_with_type_boost(
@@ -315,14 +318,15 @@ def _retrieve_tutor_hyde(
         item["retrieval_source"] = "tutor_hyde_chroma_fusion_v4"
 
     # 场景内优先重排：同场景chunk给予额外加分
+    # 提高加分权重，确保同场景chunks优先被召回
     for item in fused:
         if scene_id and item.get("metadata", {}).get("scene_id") == scene_id:
-            item["score"] = round(item["score"] + 0.08, 4)
+            item["score"] = round(item["score"] + 0.12, 4)
 
     ranked = sorted(fused, key=lambda item: item["score"], reverse=True)[:top_k]
 
     trace: dict[str, Any] = {
-        "algorithm": "tutor_hyde_chroma_fusion_v4",
+        "algorithm": "tutor_hyde_chroma_fusion_v5",
         "hyde": hyde,
         "inferred_type": query_type_hint,
         "weights": {
@@ -347,7 +351,7 @@ def _retrieve_tutor_hyde(
             {"id": f"mp_{idx}", "text": point, "keywords": key_terms or []}
             for idx, point in enumerate(must_points)
         ]
-        trace["must_point_coverage"] = evaluate_coverage(dimensions, query, adapter, threshold=TUTOR_MUST_POINT_THRESHOLD)
+        trace["must_point_coverage"] = evaluate_coverage(dimensions, query, adapter, threshold=TUTOR_MUST_POINT_THRESHOLD, kw_weight=0.3, sem_weight=0.7)
     return {"items": ranked, "trace": trace}
 
 
@@ -404,15 +408,16 @@ def _build_customer_query_plan(
 
     # Query压缩：避免过长的query影响embedding质量
     query_clean = clean_text(query)
-    if len(query_clean) > 100:
-        query_clean = query_clean[:100] + "..."  # 保留前100字符即可
+    if len(query_clean) > 150:
+        query_clean = query_clean[:150]  # 提高到150字符，保留更多信息
 
-    rewritten_query = "\n".join(
+    # 优化：压缩customer查询，移除冗余模板文字
+    rewritten_query = " ".join(
         [
-            f"员工回答：{query_clean}",
-            "客户下一轮追问目标：抓住员工尚未充分回应的客户顾虑，提出自然、尖锐但合规的追问。",
-            "客户尚未被满足的顾虑：" + "、".join(driving_labels),
-            "追问方向：" + " ".join(expansions),
+            query_clean,
+            "客户追问：尚未满足的顾虑：",
+            "、".join(driving_labels),
+            " ".join(expansions),
         ]
     )
     return {
@@ -462,18 +467,18 @@ def _retrieve_customer_intent_fusion(
     fusion_weights: dict[str, float] | None = None,
 ) -> dict[str, Any]:
     w = fusion_weights or {}
-    w_intent_sem = w.get("intent_semantic", 0.50)
-    w_orig_sem = w.get("original_semantic", 0.20)
-    w_kw_recall = w.get("keyword_recall", 0.15)
-    w_kw_overlap = w.get("keyword_overlap", 0.10)
-    w_intent_match = w.get("intent_match", 0.05)
+    w_intent_sem = w.get("intent_semantic", 0.55)  # 提高intent语义权重
+    w_orig_sem = w.get("original_semantic", 0.25)  # 提高原始查询权重
+    w_kw_recall = w.get("keyword_recall", 0.10)  # 降低keyword召回权重
+    w_kw_overlap = w.get("keyword_overlap", 0.05)  # 降低keyword重叠权重
+    w_intent_match = w.get("intent_match", 0.05)  # 保持intent匹配权重
 
     plan = _build_customer_query_plan(query, adapter, focus_intents=focus_intents)
     where = {"scene_id": scene_id} if scene_id else None
-    # 扩大召回候选池：customer route的gold数量通常更多
-    semantic_items = store.query(collection_name, plan["rewritten_query"], adapter, top_k=max(top_k * 8, 40), where=where)
-    original_items = store.query(collection_name, query, adapter, top_k=max(top_k * 5, 25), where=where)
-    keyword_items = _fallback_retrieve(query, route="customer", top_k=max(top_k * 3, 15), scene_id=scene_id)
+    # 扩大召回候选池：customer route的gold数量通常更多，需要更大的候选池
+    semantic_items = store.query(collection_name, plan["rewritten_query"], adapter, top_k=max(top_k * 12, 60), where=where)
+    original_items = store.query(collection_name, query, adapter, top_k=max(top_k * 10, 50), where=where)
+    keyword_items = _fallback_retrieve(query, route="customer", top_k=max(top_k * 4, 20), scene_id=scene_id)
     fused = _merge_ranked_items(
         [
             ("intent_semantic", semantic_items, w_intent_sem),
@@ -488,11 +493,12 @@ def _retrieve_customer_intent_fusion(
         item["keyword_score"] = keyword
         item["intent_match_score"] = intent
         item["score"] = round(item["fusion_score"] + w_kw_overlap * keyword + w_intent_match * intent, 4)
-        item["retrieval_source"] = "customer_intent_embedding_keyword_fusion_v2"
+        item["retrieval_source"] = "customer_intent_embedding_keyword_fusion_v3"
     # 场景内优先重排：同场景chunk给予额外加分
+    # 提高加分权重，确保同场景chunks优先被召回
     for item in fused:
         if scene_id and item.get("metadata", {}).get("scene_id") == scene_id:
-            item["score"] = round(item["score"] + 0.05, 4)
+            item["score"] = round(item["score"] + 0.10, 4)
     ranked = sorted(fused, key=lambda item: item["score"], reverse=True)[:top_k]
     return {
         "items": ranked,

@@ -6,6 +6,7 @@ must_points against gold labels, reports point-level P/R/F1.
 from __future__ import annotations
 
 import json
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -28,9 +29,9 @@ def load_gold(path: Path = GOLD_PATH) -> list[dict[str, Any]]:
 
 def evaluate(
     *,
-    threshold: float = 0.50,
-    kw_weight: float = 0.4,
-    sem_weight: float = 0.6,
+    threshold: float = 0.30,
+    kw_weight: float = 0.3,
+    sem_weight: float = 0.7,
     gold_path: Path = GOLD_PATH,
     verbose: bool = False,
 ) -> StageResult:
@@ -129,10 +130,11 @@ def main() -> None:
     import argparse
 
     parser = argparse.ArgumentParser(description="Evaluate must-point coverage stage.")
-    parser.add_argument("--threshold", type=float, default=0.50)
-    parser.add_argument("--kw-weight", type=float, default=0.4)
-    parser.add_argument("--sem-weight", type=float, default=0.6)
+    parser.add_argument("--threshold", type=float, default=0.30)
+    parser.add_argument("--kw-weight", type=float, default=0.3)
+    parser.add_argument("--sem-weight", type=float, default=0.7)
     parser.add_argument("--verbose", action="store_true")
+    parser.add_argument("--save-verbose", action="store_true", help="Save verbose errors to file")
     args = parser.parse_args()
 
     result = evaluate(
@@ -142,6 +144,12 @@ def main() -> None:
         verbose=args.verbose,
     )
     print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+
+    if args.save_verbose and verbose and "errors" in result.details:
+        verbose_path = f"data/eval/must_point_verbose_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        with open(verbose_path, "w", encoding="utf-8") as f:
+            json.dump({"stage": "must_point_coverage", "details": result.details}, f, ensure_ascii=False, indent=2)
+        print(f"\nVerbose errors saved to {verbose_path}")
 
 
 if __name__ == "__main__":

@@ -6,6 +6,7 @@ chunk_ids against gold_chunk_ids, reports Recall@K, MRR, Precision@K.
 from __future__ import annotations
 
 import json
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -120,6 +121,30 @@ def evaluate(
             "partial_recall": partial_cases,
             "failed_recall": failed_cases,
             "total_cases": len(recall_scores),
+            "perfect_recall_rate": round(perfect_cases / len(recall_scores), 4),
+            "failed_recall_rate": round(failed_cases / len(recall_scores), 4),
+        }
+
+    # 分析失败原因
+    failure_patterns = {}
+    if verbose and errors:
+        # 按gold数量分组分析
+        by_gold_count = {"small": [], "medium": [], "large": []}
+        for err in errors:
+            gc = err["gold_count"]
+            if gc <= 3:
+                by_gold_count["small"].append(err)
+            elif gc <= 10:
+                by_gold_count["medium"].append(err)
+            else:
+                by_gold_count["large"].append(err)
+
+        failure_patterns = {
+            "by_gold_count": {
+                "small (<=3)": {"count": len(by_gold_count["small"]), "avg_recall": round(sum(e["recall"] for e in by_gold_count["small"]) / max(len(by_gold_count["small"]), 1), 4)},
+                "medium (4-10)": {"count": len(by_gold_count["medium"]), "avg_recall": round(sum(e["recall"] for e in by_gold_count["medium"]) / max(len(by_gold_count["medium"]), 1), 4)},
+                "large (>10)": {"count": len(by_gold_count["large"]), "avg_recall": round(sum(e["recall"] for e in by_gold_count["large"]) / max(len(by_gold_count["large"]), 1), 4)},
+            }
         }
 
     details: dict[str, Any] = {
@@ -132,6 +157,7 @@ def evaluate(
     if verbose:
         details["errors"] = errors[:30]
         details["error_analysis"] = error_analysis
+        details["failure_patterns"] = failure_patterns
 
     return StageResult(
         stage="chunk_retrieval",
@@ -147,6 +173,23 @@ def main() -> None:
 
     parser = argparse.ArgumentParser(description="Evaluate chunk retrieval stage.")
     parser.add_argument("--top-k", type=int, default=3)
+    parser.add_argument("--route", choices=["tutor", "customer"])
+    parser.add_argument("--verbose", action="store_true")
+    parser.add_argument("--save-verbose", action="store_true", help="Save verbose errors to file")
+    args = parser.parse_args()
+
+    result = evaluate(top_k=args.top_k, route_filter=args.route, verbose=args.verbose)
+    print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+
+    if args.save_verbose and verbose and "errors" in result.details:
+        verbose_path = f"data/eval/retrieval_verbose_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        with open(verbose_path, "w", encoding="utf-8") as f:
+            json.dump({"stage": "chunk_retrieval", "details": result.details}, f, ensure_ascii=False, indent=2)
+        print(f"\nVerbose errors saved to {verbose_path}")
+
+
+if __name__ == "__main__":
+    main()
     parser.add_argument("--route", choices=["tutor", "customer"])
     parser.add_argument("--verbose", action="store_true")
     args = parser.parse_args()

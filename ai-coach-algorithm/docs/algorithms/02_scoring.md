@@ -21,7 +21,7 @@
 | key | 中文 | 权重 | 看什么 | 数据来源 |
 |---|---|---|---|---|
 | `compliance` | 合规度 | 30% | 是否踩 `compliance_red_lines` | criterion 红线词表 |
-| `objection_handling` | 异议处理 | 30% | `must_points` 覆盖率 | criterion 标准要点 |
+| `objection_handling` | 异议处理 | 30% | `must_points` 覆盖率 | criterion 标准要点 + coverage评估(v5: kw=0.3, sem=0.7) |
 | `logic_structure` | 逻辑结构 | 20% | 60% 覆盖率 + 40% 检索语义贴合 | coverage + 检索结果 |
 | `empathy` | 共情力 | 20% | 共情词命中 + 引导词奖励 | 文本分析 |
 
@@ -182,7 +182,7 @@ messages = builder.to_chat_messages({
 compliance = _score_compliance(answer, red_lines)
    # 命中任何 red_line 直接扣 40,无命中给满分
 objection = _score_objection(answer, coverage)
-   # 有 coverage 时用 coverage_rate × 100,否则关键词粗估
+   # 有 coverage 时用 coverage_rate × 100(v5: kw_weight=0.3, sem_weight=0.7),否则关键词粗估
 logic = _score_logic(answer, coverage, retrieval_items)
    # 60% 覆盖率 + 40% 检索贴合度
 empathy = _score_empathy(answer)

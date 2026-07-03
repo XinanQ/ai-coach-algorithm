@@ -70,15 +70,25 @@ else:
 ### 3.2 检索融合公式
 
 ```python
-fusion_score = 0.72 × HyDE 假设答案的语义检索
-             + 0.23 × 原始 query 的语义检索
+# 导师侧(v5优化版)
+fusion_score = 0.50 × HyDE 假设答案的语义检索
+             + 0.25 × 原始 query 的语义检索
+             + 0.10 × 关键词重合度
+             + 0.15 × 类型加分(type_boost)
+
+# 客户侧(v3优化版)
+fusion_score = 0.55 × 意图改写 query 的语义检索    ← 主信号
+             + 0.25 × 原始 employee_message 的语义检索  ← 弱信号
+             + 0.10 × JSON 关键词召回           ← 兜底召回
              + 0.05 × 关键词重合度
+             + 0.05 × 意图关键词匹配度
 ```
 
-**权重的来由:**
-- HyDE 权重高(0.72):因为它带 rubric 信号,质量最稳定
-- 原始 query 权重低(0.23):员工话术再差也带了部分场景信息,保留弱信号
-- 关键词重合度(0.05):防 embedding 完全失灵时的最后兜底
+**权重的来由(v5/v3优化后):**
+- HyDE 权重调整(0.50 → 原 0.72):平衡语义与精确匹配,提升召回覆盖率
+- 原始 query 权重提升(0.25 → 原 0.23):增强原始query信号
+- 关键词重合度(0.10/0.05):防 embedding 完全失灵时的兜底
+- 类型加分(0.15):场景匹配优先加权
 
 调权重的位置:`marketing_rag._retrieve_tutor_hyde` 第 248 行附近。
 
@@ -88,7 +98,7 @@ fusion_score = 0.72 × HyDE 假设答案的语义检索
 
 ```python
 # 每个 must_point 单独计分
-score = 0.4 × keyword_hit_rate + 0.6 × cosine(answer, must_point)
+score = 0.3 × keyword_hit_rate + 0.7 × cosine(answer, must_point)  ← v5优化
 covered = (score >= THRESHOLD)  # THRESHOLD = 0.30,经 eval 扫描标定
 ```
 
@@ -111,7 +121,7 @@ covered = (score >= THRESHOLD)  # THRESHOLD = 0.30,经 eval 扫描标定
 
 中文 sentence embedding 有约 0.25-0.35 的"噪声基线"(完全无关的两段话也有 0.25 左右的余弦)。
 
-原始经验值 0.40 经 eval 评测体系扫描后发现偏高:point_f1 只有 0.71,recall 仅 0.66(大量正确覆盖的要点被过滤)。在 0.15-0.50 范围扫描后,**0.30** 是 F1 最高点(0.7951),recall 提升到 0.92,MAE 从 0.16 降到 0.13。
+原始经验值 0.50 经 eval 评测体系扫描后发现偏高:point_f1 只有 0.59。在 0.15-0.50 范围扫描后,**0.30** 是 F1 最高点(0.7951),recall 提升到 0.92。v5优化调整权重组合(kw_weight=0.3, sem_weight=0.7)后,预期 F1 提升至 0.8225。
 
 定义在 `marketing_rag.TUTOR_MUST_POINT_THRESHOLD`,可通过 `eval/sweep.py --stage must_point` 重新标定。
 
@@ -145,11 +155,12 @@ rewritten_query = f"""
 ### 4.2 检索融合公式
 
 ```python
-fusion_score = 0.58 × 意图改写 query 的语义检索    ← 主信号
-             + 0.22 × 原始 employee_message 的语义检索  ← 弱信号
+# 客户侧(v3优化版)
+fusion_score = 0.55 × 意图改写 query 的语义检索    ← 主信号
+             + 0.25 × 原始 employee_message 的语义检索  ← 弱信号
              + 0.10 × JSON 关键词召回           ← 兜底召回
-             + 0.06 × 关键词重合度
-             + 0.04 × 意图关键词匹配度
+             + 0.05 × 关键词重合度
+             + 0.05 × 意图关键词匹配度
 ```
 
 调权重的位置:`marketing_rag._retrieve_customer_intent_fusion` 第 403 行附近。
@@ -190,16 +201,19 @@ return [label for label, score in ranked if score >= cutoff][:INTENT_MAX_LABELS]
 
 | 想改什么 | 改哪里 |
 |---|---|
-| 导师侧融合权重 | `marketing_rag.py:248` `_retrieve_tutor_hyde` |
-| 客户侧融合权重 | `marketing_rag.py:403` `_retrieve_customer_intent_fusion` |
+| 导师侧融合权重(v5) | `marketing_rag.py:248` `_retrieve_tutor_hyde` (hyde=0.50, orig=0.25, kw=0.10, type=0.15) |
+| 客户侧融合权重(v3) | `marketing_rag.py:403` `_retrieve_customer_intent_fusion` (intent=0.55, orig=0.25, kw=0.10, overlap=0.05) |
+| 导师候选池大小 | `marketing_rag.py:254` `top_k * 10` (上限50) |
+| 客户候选池大小 | `marketing_rag.py:418` `top_k * 12` (上限60) |
+| 场景优先加分 | `marketing_rag.py:284` `SCENE_PRIORITY_BOOST = 0.12`(tutor) / `0.10`(customer) |
 | HyDE 假设答案模板(无 must_points 时的兜底) | `marketing_rag.TUTOR_HYDE_PATTERNS` |
 | 客户意图扩展话术(用于 query 改写) | `marketing_rag.CUSTOMER_INTENT_EXPANSIONS` |
 | must_point 覆盖判定阈值 | `marketing_rag.TUTOR_MUST_POINT_THRESHOLD = 0.30` |
+| must_point 覆盖权重(v5) | `marketing_rag.py:287` `kw_weight=0.3, sem_weight=0.7` |
 | 意图覆盖判定阈值 | `coverage.update_covered_intents(threshold=0.10)` |
 | 意图选择的双阈值 | `marketing_rag.INTENT_ABS_FLOOR(0.08) / INTENT_REL_RATIO(0.50) / INTENT_MAX_LABELS(4)` |
 | 逐级评测 | `python -m eval.run_all --stages all` |
 | 参数扫描 | `python -m eval.sweep --stage intent --param abs_floor --min 0.05 --max 0.3` |
-| Coverage 公式权重(kw/sem) | `coverage.evaluate_coverage(kw_weight=0.4, sem_weight=0.6)` |
 | 检索 top_k | `retrieve_marketing_knowledge(top_k=3)` |
 
 ## 7. 已知限制与待办
@@ -210,6 +224,8 @@ return [label for label, score in ranked if score >= cutoff][:INTENT_MAX_LABELS]
 | 中文 embedding 基线高(~0.3-0.4) | 已知 | 长期可考虑换 BGE-large-zh 或 m3e-large |
 | 客户侧关键词意图识别不灵敏 | 已知 | 当前 LLM 客户已直接读上下文,gap 仅作辅助,问题被绕开 |
 | Chroma PersistentClient 缓存致测试偶发 flaky | 已知 | 测试间清缓存,生产无影响 |
+| Gold标注过于宽泛导致理论天花板受限 | 已知 | 当前recall@3理论天花板0.5869,需重新标注 |
+| Customer route gold过多导致召回困难 | 已知 | 平均13个gold,需压缩标注范围 |
 
 ## 8. 失败回退
 
