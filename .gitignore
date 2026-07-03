@@ -605,6 +605,7 @@ gradle-app.setting
 
 .idea/
 .vite/
+.claude/
 
 ### WeChat Mini Program (wechat-mini-program/) ###
 # 微信开发者工具的私有配置：每个开发者本地不同，可能含本地调试地址、
