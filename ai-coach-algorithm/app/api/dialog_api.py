@@ -8,6 +8,7 @@ from fastapi.responses import StreamingResponse
 from app.api.dialog_presenter import present_finish, present_reply, present_start
 from app.core.adaptive_difficulty import recommend_difficulty
 from app.core.dialog_manager import finish_dialogue, list_profiles, reply_dialogue, reply_dialogue_stream, start_dialogue
+from app.core.practice_catalog import with_profile_display_fields
 from app.schemas.dialog_schema import DialogFinishRequest, DialogReplyRequest, DialogStartRequest
 
 
@@ -16,7 +17,7 @@ router = APIRouter(prefix="/dialog", tags=["dialog"])
 
 @router.get("/profiles")
 def profiles() -> dict[str, object]:
-    return {"profiles": list_profiles()}
+    return {"profiles": [with_profile_display_fields(profile) for profile in list_profiles()]}
 
 
 @router.post("/start")

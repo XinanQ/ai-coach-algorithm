@@ -29,9 +29,9 @@ def load_gold(path: Path = GOLD_PATH) -> list[dict[str, Any]]:
 
 def evaluate(
     *,
-    threshold: float = 0.30,
-    kw_weight: float = 0.3,
-    sem_weight: float = 0.7,
+    threshold: float = 0.60,
+    kw_weight: float = 0.25,
+    sem_weight: float = 0.75,
     gold_path: Path = GOLD_PATH,
     verbose: bool = False,
 ) -> StageResult:
@@ -130,9 +130,9 @@ def main() -> None:
     import argparse
 
     parser = argparse.ArgumentParser(description="Evaluate must-point coverage stage.")
-    parser.add_argument("--threshold", type=float, default=0.30)
-    parser.add_argument("--kw-weight", type=float, default=0.3)
-    parser.add_argument("--sem-weight", type=float, default=0.7)
+    parser.add_argument("--threshold", type=float, default=0.60)
+    parser.add_argument("--kw-weight", type=float, default=0.25)
+    parser.add_argument("--sem-weight", type=float, default=0.75)
     parser.add_argument("--verbose", action="store_true")
     parser.add_argument("--save-verbose", action="store_true", help="Save verbose errors to file")
     args = parser.parse_args()
@@ -145,7 +145,7 @@ def main() -> None:
     )
     print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
 
-    if args.save_verbose and verbose and "errors" in result.details:
+    if args.save_verbose and args.verbose and "errors" in result.details:
         verbose_path = f"data/eval/must_point_verbose_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         with open(verbose_path, "w", encoding="utf-8") as f:
             json.dump({"stage": "must_point_coverage", "details": result.details}, f, ensure_ascii=False, indent=2)

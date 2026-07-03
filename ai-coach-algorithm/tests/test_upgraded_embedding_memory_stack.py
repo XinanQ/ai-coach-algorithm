@@ -66,6 +66,40 @@ def test_memory_manager_json_fallback_roundtrip(tmp_path: Path, monkeypatch) -> 
     assert manager.retrieve_history("资金安排", user_id="U001")
 
 
+def test_practice_task_catalog_returns_display_ready_cards() -> None:
+    client = TestClient(app)
+    tasks = client.get("/practice/tasks")
+    assert tasks.status_code == 200
+    body = tasks.json()
+    assert body["levelName"] == "Lv5 专业进阶"
+    assert body["selectedTab"] == "self"
+    assert body["selectedDirection"] == "objection"
+    assert [item["label"] for item in body["directions"]] == [
+        "客户触达",
+        "需求识别",
+        "产品讲解",
+        "异议处理",
+        "成交促成",
+        "合规风险",
+        "售后维护",
+    ]
+    assert body["list"]
+    card = body["list"][0]
+    assert {"taskId", "sceneId", "customerId", "title", "category", "durationText", "tags"} <= set(card)
+    assert card["tags"] and all("_" not in tag for tag in card["tags"])
+    assert card["intentTags"] and any("_" in tag for tag in card["intentTags"])
+
+    detail = client.get(f"/practice/tasks/{card['taskId']}")
+    assert detail.status_code == 200
+    assert detail.json()["openingQuestion"]
+
+    profiles = client.get("/dialog/profiles")
+    assert profiles.status_code == 200
+    profile = profiles.json()["profiles"][0]
+    assert profile["tags"] and all("_" not in tag for tag in profile["tags"])
+    assert profile["expectedIntents"] and any("_" in tag for tag in profile["expectedIntents"])
+
+
 def test_api_health_and_dialog_flow() -> None:
     client = TestClient(app)
     health = client.get("/health")

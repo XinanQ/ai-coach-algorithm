@@ -12,6 +12,41 @@ from app.core.intent_labels import INTENT_KEYWORDS, INTENT_LABEL_DESCRIPTIONS, I
 from app.core.text_cleaner import clean_text, lexical_similarity
 
 
+# Default configuration for two-stage retrieval
+# Stage 1: Candidate retrieval pool size
+DEFAULT_CANDIDATE_POOL_SIZE = 20
+# Stage 2: Final top-N to return to LLM
+DEFAULT_FINAL_TOP_K = 3
+
+# Lightweight rerank feature weights - route-specific
+RERANK_WEIGHTS = {
+    "semantic_score": 0.40,      # Embedding similarity from fusion
+    "lexical_similarity": 0.15,   # Text overlap with query
+    "scene_boost": 0.20,          # Same scene match
+    "type_boost": 0.10,           # Knowledge type match
+    "rank_decay": 0.15,           # Position decay in candidate pool
+}
+
+# Tutor route rerank weights - more emphasis on type/scene
+TUTOR_RERANK_WEIGHTS = {
+    "semantic_score": 0.35,      # Slightly lower semantic weight
+    "lexical_similarity": 0.15,
+    "scene_boost": 0.25,          # Higher scene priority
+    "type_boost": 0.15,           # Higher type priority
+    "rank_decay": 0.10,
+}
+
+# Customer route rerank weights - more emphasis on semantic/intent
+CUSTOMER_RERANK_WEIGHTS = {
+    "semantic_score": 0.45,
+    "lexical_similarity": 0.15,
+    "scene_boost": 0.15,
+    "type_boost": 0.05,
+    "intent_boost": 0.10,         # Customer-specific: intent matching
+    "rank_decay": 0.10,
+}
+
+
 TUTOR_HYDE_PATTERNS = {
     "liquidity": {
         "keywords": ["提前取", "急用", "流动", "不方便", "短期", "随时"],
@@ -36,10 +71,10 @@ TUTOR_HYDE_PATTERNS = {
 }
 
 
-# Provisional rubric-coverage threshold; see note where it is used.
-# Empirically separates genuinely-mentioned must_points (~0.40-0.60) from the
-# Chinese semantic baseline of unmentioned ones (~0.25-0.35). Needs calibration.
-TUTOR_MUST_POINT_THRESHOLD = 0.30
+# Calibrated on data/eval/must_point_coverage_gold.jsonl.
+TUTOR_MUST_POINT_THRESHOLD = 0.60
+TUTOR_MUST_POINT_KW_WEIGHT = 0.25
+TUTOR_MUST_POINT_SEM_WEIGHT = 0.75
 
 
 CUSTOMER_INTENT_EXPANSIONS = {
@@ -152,11 +187,19 @@ def _intent_semantic_scores(query: str, adapter: EmbeddingAdapter) -> dict[str, 
     }
 
 
+def _canonical_item_id(item: dict[str, Any]) -> str:
+    """Normalize IDs across Chroma and JSON fallback results for deduping."""
+    raw_id = item.get("metadata", {}).get("chunk_id") or item.get("chunk_id") or item.get("id")
+    if raw_id:
+        return str(raw_id).split(":", 1)[-1]
+    return str(item.get("content", "")[:80])
+
+
 def _merge_ranked_items(candidate_groups: list[tuple[str, list[dict[str, Any]], float]]) -> list[dict[str, Any]]:
     merged: dict[str, dict[str, Any]] = {}
     for source_name, items, weight in candidate_groups:
         for rank, item in enumerate(items):
-            item_id = str(item.get("id") or item.get("metadata", {}).get("chunk_id") or item.get("content", "")[:80])
+            item_id = _canonical_item_id(item)
             base_score = float(item.get("score") or 0.0)
             rank_bonus = 1.0 / (rank + 1)
             weighted_score = weight * base_score + 0.03 * rank_bonus
@@ -219,6 +262,113 @@ def _compress_must_points(must_points: list[str], max_length: int = 200) -> list
     return compressed
 
 
+def _lightweight_rerank(
+    candidates: list[dict[str, Any]],
+    query: str,
+    scene_id: str | None = None,
+    route: str = "tutor",
+    query_type_hint: str | None = None,
+    weights: dict[str, float] | None = None,
+    intent_labels: list[str] | None = None,
+) -> list[dict[str, Any]]:
+    """Lightweight reranking stage for two-stage RAG architecture.
+
+    Reranks candidate pool using multiple signals:
+    - semantic_score: Fusion score from retrieval stage
+    - lexical_similarity: Text overlap with query
+    - scene_boost: Same scene match
+    - type_boost: Knowledge type match
+    - intent_boost: Intent keyword match (customer route only)
+    - rank_decay: Position decay in candidate pool
+
+    Args:
+        candidates: Candidate pool from stage 1
+        query: Original query
+        scene_id: Scene ID for matching
+        route: "tutor" or "customer"
+        query_type_hint: Inferred knowledge type preference
+        weights: Custom rerank weights (overrides defaults)
+        intent_labels: Intent labels for intent_boost (customer route)
+
+    Returns:
+        Reranked candidates with rerank_score field
+    """
+    # Select route-specific default weights
+    if weights is None:
+        if route == "customer":
+            weights = CUSTOMER_RERANK_WEIGHTS.copy()
+        else:
+            weights = TUTOR_RERANK_WEIGHTS.copy()
+
+    w_semantic = weights.get("semantic_score", 0.40)
+    w_lexical = weights.get("lexical_similarity", 0.15)
+    w_scene = weights.get("scene_boost", 0.20)
+    w_type = weights.get("type_boost", 0.10)
+    w_intent = weights.get("intent_boost", 0.0)
+    w_rank = weights.get("rank_decay", 0.15)
+
+    query_clean = clean_text(query)
+
+    for rank, item in enumerate(candidates):
+        # Base semantic score from fusion
+        semantic_score = float(item.get("fusion_score", item.get("score", 0)))
+
+        # Lexical similarity
+        content = item.get("content", "")
+        title = item.get("metadata", {}).get("title", "")
+        lexical_score = lexical_similarity(query_clean, clean_text(content + " " + title))
+
+        # Scene boost
+        scene_score = 0.0
+        if scene_id:
+            chunk_scene = item.get("metadata", {}).get("scene_id")
+            if chunk_scene == scene_id:
+                scene_score = 1.0
+            elif chunk_scene and scene_id in str(chunk_scene):
+                scene_score = 0.5
+
+        # Type boost (for tutor route with type inference)
+        type_score = 0.0
+        if query_type_hint:
+            chunk_type = item.get("metadata", {}).get("knowledge_type", "")
+            if chunk_type == query_type_hint:
+                type_score = 1.0
+            elif _are_related_types(chunk_type, query_type_hint):
+                type_score = 0.5
+
+        # Intent boost (for customer route)
+        intent_score = 0.0
+        if w_intent > 0 and intent_labels and route == "customer":
+            intent_score = _intent_match_score(intent_labels, content)
+
+        # Rank decay (higher rank in candidate pool gets decay bonus)
+        rank_decay = 1.0 / (rank + 1)
+
+        # Compute rerank score
+        rerank_score = (
+            w_semantic * semantic_score
+            + w_lexical * lexical_score
+            + w_scene * scene_score
+            + w_type * type_score
+            + w_intent * intent_score
+            + w_rank * rank_decay
+        )
+
+        item["rerank_score"] = round(rerank_score, 4)
+        item["rerank_components"] = {
+            "semantic_score": round(semantic_score, 4),
+            "lexical_similarity": round(lexical_score, 4),
+            "scene_boost": round(scene_score, 4),
+            "type_boost": round(type_score, 4),
+            "intent_boost": round(intent_score, 4) if w_intent > 0 else 0.0,
+            "rank_decay": round(rank_decay, 4),
+        }
+
+    # Sort by rerank_score descending
+    reranked = sorted(candidates, key=lambda item: item.get("rerank_score", 0), reverse=True)
+    return reranked
+
+
 def _build_tutor_hyde_query(
     query: str,
     must_points: list[str] | None = None,
@@ -279,18 +429,34 @@ def _retrieve_tutor_hyde(
     collection_name: str,
     query: str,
     adapter: EmbeddingAdapter,
-    top_k: int,
+    final_k: int,
+    candidate_k: int,
     scene_id: str | None,
     must_points: list[str] | None = None,
     answer_goal: str | None = None,
     key_terms: list[str] | None = None,
     fusion_weights: dict[str, float] | None = None,
+    eval_mode: bool = False,
 ) -> dict[str, Any]:
+    """Two-stage retrieval for tutor route.
+
+    Stage 1 (Candidate): Retrieve large candidate pool from multiple sources
+    Stage 2 (Rerank): Lightweight reranking using multiple signals
+    Stage 3 (Final): Return top-k chunks to LLM
+
+    Args:
+        final_k: Final number of chunks to return to LLM (default 3)
+        candidate_k: Candidate pool size for stage 1 (default 20)
+        eval_mode: If True, return full candidate pool for evaluation
+
+    Returns:
+        Dict with items (final top-k) and optional candidate_items (if eval_mode)
+    """
     w = fusion_weights or {}
-    w_hyde = w.get("hyde_semantic", 0.50)  # 降低hyde权重，防止过度膨胀
-    w_orig = w.get("original_semantic", 0.25)  # 提高原始查询权重
-    w_kw = w.get("keyword_overlap", 0.10)  # 降低关键词权重
-    w_type = w.get("type_boost", 0.15)  # 类型匹配权重
+    w_hyde = w.get("hyde_semantic", 0.50)
+    w_orig = w.get("original_semantic", 0.25)
+    w_kw = w.get("keyword_overlap", 0.10)
+    w_type = w.get("type_boost", 0.15)
 
     hyde = _build_tutor_hyde_query(query, must_points=must_points, answer_goal=answer_goal)
     where = {"scene_id": scene_id} if scene_id else None
@@ -298,9 +464,9 @@ def _retrieve_tutor_hyde(
     # 推断查询类型偏好
     query_type_hint = _infer_query_type_preference(query, must_points)
 
-    # 扩大召回候选池：提高召回率，特别是对于gold数量大的case
-    hyde_items = store.query(collection_name, hyde["expanded_query"], adapter, top_k=max(top_k * 10, 50), where=where)
-    original_items = store.query(collection_name, query, adapter, top_k=max(top_k * 8, 40), where=where)
+    # Stage 1: Candidate retrieval - retrieve larger pool
+    hyde_items = store.query(collection_name, hyde["expanded_query"], adapter, top_k=max(candidate_k * 3, 50), where=where)
+    original_items = store.query(collection_name, query, adapter, top_k=max(candidate_k * 2, 40), where=where)
 
     # 类型感知融合：优先匹配的types获得更高权重
     fused = _merge_ranked_items_with_type_boost(
@@ -313,46 +479,67 @@ def _retrieve_tutor_hyde(
     for item in fused:
         keyword = _keyword_score(query, item.get("content", ""))
         item["keyword_score"] = keyword
-        # 使用fusion_score（包含type boost）作为基础分数
         item["score"] = round(item.get("fusion_score", item.get("score", 0)) + w_kw * keyword, 4)
-        item["retrieval_source"] = "tutor_hyde_chroma_fusion_v4"
+        item["retrieval_source"] = "tutor_hyde_chroma_fusion_v6_stage1"
 
-    # 场景内优先重排：同场景chunk给予额外加分
-    # 提高加分权重，确保同场景chunks优先被召回
-    for item in fused:
-        if scene_id and item.get("metadata", {}).get("scene_id") == scene_id:
-            item["score"] = round(item["score"] + 0.12, 4)
+    # Candidate pool (before rerank)
+    candidates = sorted(fused, key=lambda item: item.get("score", 0), reverse=True)[:candidate_k]
 
-    ranked = sorted(fused, key=lambda item: item["score"], reverse=True)[:top_k]
+    # Stage 2: Lightweight reranking
+    reranked = _lightweight_rerank(
+        candidates, query, scene_id=scene_id, route="tutor",
+        query_type_hint=query_type_hint, weights=None,  # Uses TUTOR_RERANK_WEIGHTS
+    )
+
+    # Stage 3: Final selection
+    ranked = reranked[:final_k]
 
     trace: dict[str, Any] = {
-        "algorithm": "tutor_hyde_chroma_fusion_v5",
+        "algorithm": "tutor_hyde_two_stage_v6",
+        "architecture": {
+            "stage1_candidate_pool_size": candidate_k,
+            "stage2_rerank_algorithm": "lightweight_multisignal",
+            "stage3_final_top_k": final_k,
+        },
         "hyde": hyde,
         "inferred_type": query_type_hint,
-        "weights": {
+        "fusion_weights": {
             "hyde_semantic": w_hyde,
             "original_semantic": w_orig,
             "keyword_overlap": w_kw,
             "type_boost": w_type,
         },
+        "rerank_weights": TUTOR_RERANK_WEIGHTS,
         "candidate_counts": {
             "hyde_semantic": len(hyde_items),
             "original_semantic": len(original_items),
             "fused": len(fused),
+            "candidates": len(candidates),
+            "reranked": len(reranked),
         },
     }
-    # Rubric coverage: which must_points did the employee answer actually cover?
-    # The missing ones are the omissions the tutor should penalize.
-    # NOTE: 0.45 is a provisional threshold — Chinese semantic similarity has a
-    # ~0.4 baseline floor, so this needs proper calibration against a labeled set
-    # (tracked as a P1 follow-up). Until then treat coverage as directional.
     if must_points:
         dimensions = [
             {"id": f"mp_{idx}", "text": point, "keywords": key_terms or []}
             for idx, point in enumerate(must_points)
         ]
-        trace["must_point_coverage"] = evaluate_coverage(dimensions, query, adapter, threshold=TUTOR_MUST_POINT_THRESHOLD, kw_weight=0.3, sem_weight=0.7)
-    return {"items": ranked, "trace": trace}
+        trace["must_point_coverage"] = evaluate_coverage(
+            dimensions,
+            query,
+            adapter,
+            threshold=TUTOR_MUST_POINT_THRESHOLD,
+            kw_weight=TUTOR_MUST_POINT_KW_WEIGHT,
+            sem_weight=TUTOR_MUST_POINT_SEM_WEIGHT,
+        )
+
+    result = {"items": ranked, "trace": trace}
+
+    # In eval mode, return candidate pool and reranked results
+    if eval_mode:
+        result["candidate_items"] = candidates
+        result["reranked_items"] = reranked
+
+    return result
 
 
 # Intent selection thresholds (tuned for the keyword + semantic-prototype scale).
@@ -461,24 +648,38 @@ def _retrieve_customer_intent_fusion(
     collection_name: str,
     query: str,
     adapter: EmbeddingAdapter,
-    top_k: int,
+    final_k: int,
+    candidate_k: int,
     scene_id: str | None,
     focus_intents: list[str] | None = None,
     fusion_weights: dict[str, float] | None = None,
+    eval_mode: bool = False,
 ) -> dict[str, Any]:
+    """Two-stage retrieval for customer route.
+
+    Stage 1 (Candidate): Retrieve large candidate pool from intent-driven semantic search
+    Stage 2 (Rerank): Lightweight reranking using multiple signals
+    Stage 3 (Final): Return top-k chunks to LLM
+
+    Args:
+        final_k: Final number of chunks to return to LLM (default 3)
+        candidate_k: Candidate pool size for stage 1 (default 20)
+        eval_mode: If True, return full candidate pool for evaluation
+    """
     w = fusion_weights or {}
-    w_intent_sem = w.get("intent_semantic", 0.55)  # 提高intent语义权重
-    w_orig_sem = w.get("original_semantic", 0.25)  # 提高原始查询权重
-    w_kw_recall = w.get("keyword_recall", 0.10)  # 降低keyword召回权重
-    w_kw_overlap = w.get("keyword_overlap", 0.05)  # 降低keyword重叠权重
-    w_intent_match = w.get("intent_match", 0.05)  # 保持intent匹配权重
+    w_intent_sem = w.get("intent_semantic", 0.55)
+    w_orig_sem = w.get("original_semantic", 0.25)
+    w_kw_recall = w.get("keyword_recall", 0.10)
+    w_kw_overlap = w.get("keyword_overlap", 0.05)
+    w_intent_match = w.get("intent_match", 0.05)
 
     plan = _build_customer_query_plan(query, adapter, focus_intents=focus_intents)
     where = {"scene_id": scene_id} if scene_id else None
-    # 扩大召回候选池：customer route的gold数量通常更多，需要更大的候选池
-    semantic_items = store.query(collection_name, plan["rewritten_query"], adapter, top_k=max(top_k * 12, 60), where=where)
-    original_items = store.query(collection_name, query, adapter, top_k=max(top_k * 10, 50), where=where)
-    keyword_items = _fallback_retrieve(query, route="customer", top_k=max(top_k * 4, 20), scene_id=scene_id)
+
+    # Stage 1: Candidate retrieval - retrieve larger pool
+    semantic_items = store.query(collection_name, plan["rewritten_query"], adapter, top_k=max(candidate_k * 3, 60), where=where)
+    original_items = store.query(collection_name, query, adapter, top_k=max(candidate_k * 2, 50), where=where)
+    keyword_items = _fallback_retrieve(query, route="customer", top_k=candidate_k, scene_id=scene_id)
     fused = _merge_ranked_items(
         [
             ("intent_semantic", semantic_items, w_intent_sem),
@@ -486,6 +687,7 @@ def _retrieve_customer_intent_fusion(
             ("keyword_recall", keyword_items, w_kw_recall),
         ]
     )
+
     for item in fused:
         content = item.get("content", "")
         keyword = _keyword_score(query, content)
@@ -493,94 +695,159 @@ def _retrieve_customer_intent_fusion(
         item["keyword_score"] = keyword
         item["intent_match_score"] = intent
         item["score"] = round(item["fusion_score"] + w_kw_overlap * keyword + w_intent_match * intent, 4)
-        item["retrieval_source"] = "customer_intent_embedding_keyword_fusion_v3"
-    # 场景内优先重排：同场景chunk给予额外加分
-    # 提高加分权重，确保同场景chunks优先被召回
-    for item in fused:
-        if scene_id and item.get("metadata", {}).get("scene_id") == scene_id:
-            item["score"] = round(item["score"] + 0.10, 4)
-    ranked = sorted(fused, key=lambda item: item["score"], reverse=True)[:top_k]
-    return {
-        "items": ranked,
-        "trace": {
-            "algorithm": "customer_intent_embedding_keyword_fusion_v2",
-            "query_plan": plan,
-            "weights": {
-                "intent_semantic": w_intent_sem,
-                "original_semantic": w_orig_sem,
-                "keyword_recall": w_kw_recall,
-                "keyword_overlap": w_kw_overlap,
-                "intent_match": w_intent_match,
-            },
-            "candidate_counts": {
-                "intent_semantic": len(semantic_items),
-                "original_semantic": len(original_items),
-                "keyword_recall": len(keyword_items),
-                "fused": len(fused),
-            },
+        item["retrieval_source"] = "customer_intent_embedding_keyword_fusion_v6_stage1"
+
+    # Candidate pool (before rerank)
+    candidates = sorted(fused, key=lambda item: item.get("score", 0), reverse=True)[:candidate_k]
+
+    # Stage 2: Lightweight reranking with intent boost
+    reranked = _lightweight_rerank(
+        candidates, query, scene_id=scene_id, route="customer",
+        query_type_hint=None, weights=None,  # Uses CUSTOMER_RERANK_WEIGHTS
+        intent_labels=plan["intent_labels"],
+    )
+
+    # Stage 3: Final selection
+    ranked = sorted(reranked, key=lambda item: item.get("rerank_score", 0), reverse=True)[:final_k]
+
+    trace = {
+        "algorithm": "customer_intent_two_stage_v6",
+        "architecture": {
+            "stage1_candidate_pool_size": candidate_k,
+            "stage2_rerank_algorithm": "lightweight_multisignal_with_intent",
+            "stage3_final_top_k": final_k,
+        },
+        "query_plan": plan,
+        "fusion_weights": {
+            "intent_semantic": w_intent_sem,
+            "original_semantic": w_orig_sem,
+            "keyword_recall": w_kw_recall,
+            "keyword_overlap": w_kw_overlap,
+            "intent_match": w_intent_match,
+        },
+        "rerank_weights": CUSTOMER_RERANK_WEIGHTS,
+        "candidate_counts": {
+            "intent_semantic": len(semantic_items),
+            "original_semantic": len(original_items),
+            "keyword_recall": len(keyword_items),
+            "fused": len(fused),
+            "candidates": len(candidates),
+            "reranked": len(reranked),
         },
     }
 
+    result = {"items": ranked, "trace": trace}
 
-def _get_adaptive_top_k(
-    base_top_k: int,
+    # In eval mode, return candidate pool and reranked results
+    if eval_mode:
+        result["candidate_items"] = candidates
+        result["reranked_items"] = reranked
+
+    return result
+
+
+def _get_adaptive_candidate_k(
+    final_k: int,
     route: str,
     scene_id: str | None = None,
     query: str | None = None,
     must_points: list[str] | None = None,
 ) -> int:
-    """根据场景和查询特征动态调整top_k。
+    """Calculate adaptive candidate pool size based on context.
 
-    策略：
-    - tutor route且有must_points时：需要检索更多候选（因为gold数量通常较多）
-    - customer route：适中即可
-    - query过长时：增大候选池
+    Strategies:
+    - tutor route with must_points: larger pool (gold count usually higher)
+    - customer route: moderate pool
+    - long queries: larger pool
+    - specific scenes with many gold chunks: larger pool
+
+    Returns candidate pool size (min 10, max 60).
     """
-    adaptive_k = base_top_k
+    base_candidate_k = DEFAULT_CANDIDATE_POOL_SIZE  # 20
 
-    # route基础倍数
-    route_multiplier = {"tutor": 2.0, "customer": 1.5}.get(route, 1.5)
-    adaptive_k = max(adaptive_k, int(base_top_k * route_multiplier))
+    # Route-specific multiplier
+    route_multiplier = {"tutor": 1.5, "customer": 1.0}.get(route, 1.0)
+    adaptive_k = int(base_candidate_k * route_multiplier)
 
-    # must_points数量影响
+    # must_points suggest more gold chunks
     if must_points and len(must_points) > 3:
-        adaptive_k = max(adaptive_k, int(base_top_k * 3))
+        adaptive_k = max(adaptive_k, int(base_candidate_k * 2))
 
-    # query长度影响
+    # Long query may need broader search
     if query and len(clean_text(query)) > 150:
-        adaptive_k = max(adaptive_k, int(base_top_k * 2.5))
+        adaptive_k = max(adaptive_k, int(base_candidate_k * 1.5))
 
-    # 特定场景的gold数量通常较多，给予更高倍数
+    # Specific scenes known to have many gold chunks
     high_gold_scenes = {
         "INS_PERIODIC", "INS_GENERAL", "FUND_GENERAL",
         "WM_ASSET", "INS_DIVIDEND",
     }
     if scene_id and scene_id in high_gold_scenes:
-        adaptive_k = max(adaptive_k, int(base_top_k * 3))
+        adaptive_k = max(adaptive_k, int(base_candidate_k * 2))
 
-    return min(adaptive_k, 20)  # 最大限制在20
+    # Ensure minimum and maximum bounds
+    return min(max(adaptive_k, 10), 60)
 
 
 def retrieve_marketing_knowledge(
     query: str,
     route: str = "tutor",
-    top_k: int = 5,
+    final_k: int = 3,
+    top_k: int | None = None,
+    candidate_k: int | None = None,
     scene_id: str | None = None,
     focus_intents: list[str] | None = None,
     must_points: list[str] | None = None,
     answer_goal: str | None = None,
     key_terms: list[str] | None = None,
     fusion_weights: dict[str, float] | None = None,
+    eval_mode: bool = False,
 ) -> dict[str, Any]:
+    """Two-stage retrieval: candidate pool → lightweight rerank → final top-k.
+
+    Args:
+        query: Search query
+        route: "tutor" or "customer"
+        final_k: Final number of chunks to return to LLM (default 3)
+        top_k: Backward-compatible alias for final_k
+        candidate_k: Candidate pool size for stage 1 (default: 20 or adaptive)
+        scene_id: Optional scene filter
+        focus_intents: Customer route: intents to focus on (from gap analysis)
+        must_points: Tutor route: must-points for coverage evaluation
+        answer_goal: Tutor route: optional scoring rubric goal
+        key_terms: Tutor route: optional key terms from rubric
+        fusion_weights: Optional fusion weight overrides
+        eval_mode: If True, return candidate_items and reranked_items for evaluation
+
+    Returns:
+        Dict with:
+        - items: Final top-k chunks (always)
+        - candidate_items: Candidate pool (only if eval_mode)
+        - reranked_items: Reranked full list (only if eval_mode)
+        - trace: Execution trace with timing and algorithm details
+    """
+    import time
+
+    start_time = time.perf_counter()
+
+    if top_k is not None:
+        final_k = top_k
+
     route = "customer" if route == "customer" else "tutor"
     scene_id = _normalize_scene_id(scene_id)
 
-    # 应用智能top_k
-    adaptive_top_k = _get_adaptive_top_k(top_k, route, scene_id, query, must_points)
+    # Default or adaptive candidate pool size
+    if candidate_k is None:
+        candidate_k = _get_adaptive_candidate_k(
+            final_k, route, scene_id, query, must_points
+        )
 
     manifest = load_vector_manifest()
+    retrieval_trace = {}
+
     if manifest:
         try:
+            retrieval_start = time.perf_counter()
             adapter_info = manifest.get("embedding_adapter") or {}
             adapter = get_embedding_adapter(
                 backend=adapter_info.get("active_backend") or manifest.get("embedding_backend"),
@@ -590,30 +857,50 @@ def retrieve_marketing_knowledge(
             )
             collection_name = manifest["collections"][route]["name"]
             store = ChromaMarketingVectorStore()
+
             if route == "customer":
                 result = _retrieve_customer_intent_fusion(
-                    store, collection_name, query, adapter, adaptive_top_k, scene_id,
-                    focus_intents=focus_intents, fusion_weights=fusion_weights,
+                    store, collection_name, query, adapter,
+                    final_k=final_k,
+                    candidate_k=candidate_k,
+                    scene_id=scene_id,
+                    focus_intents=focus_intents,
+                    fusion_weights=fusion_weights,
+                    eval_mode=eval_mode,
                 )
             else:
                 result = _retrieve_tutor_hyde(
-                    store, collection_name, query, adapter, adaptive_top_k, scene_id,
-                    must_points=must_points, answer_goal=answer_goal, key_terms=key_terms,
+                    store, collection_name, query, adapter,
+                    final_k=final_k,
+                    candidate_k=candidate_k,
+                    scene_id=scene_id,
+                    must_points=must_points,
+                    answer_goal=answer_goal,
+                    key_terms=key_terms,
                     fusion_weights=fusion_weights,
+                    eval_mode=eval_mode,
                 )
+
+            retrieval_elapsed_ms = (time.perf_counter() - retrieval_start) * 1000
+            retrieval_trace = result.get("trace", {})
+            retrieval_trace["retrieval_elapsed_ms"] = round(retrieval_elapsed_ms, 2)
+
             return {
                 "query": query,
                 "route": route,
-                "items": result["items"][:top_k],  # 返回用户请求的top_k数量
+                "items": result["items"],
                 "retrieval_backend": "chroma",
                 "retrieval_algorithm": result["trace"]["algorithm"],
-                "retrieval_trace": result["trace"],
+                "retrieval_trace": retrieval_trace,
                 "embedding_adapter": adapter.describe(),
-                "adaptive_top_k": adaptive_top_k,  # 记录实际使用的top_k
-                "user_requested_top_k": top_k,
+                "final_k": final_k,
+                "candidate_k": candidate_k,
+                "eval_mode": eval_mode,
+                **({"candidate_items": result["candidate_items"],
+                    "reranked_items": result["reranked_items"]} if eval_mode else {}),
             }
         except Exception as exc:
-            fallback_items = _fallback_retrieve(query, route=route, top_k=top_k, scene_id=scene_id)
+            fallback_items = _fallback_retrieve(query, route=route, top_k=final_k, scene_id=scene_id)
             return {
                 "query": query,
                 "route": route,
@@ -621,18 +908,21 @@ def retrieve_marketing_knowledge(
                 "retrieval_backend": "json_lexical_fallback",
                 "retrieval_algorithm": f"{route}_lexical_fallback",
                 "fallback_reason": str(exc)[:500],
-                "adaptive_top_k": top_k,
-                "user_requested_top_k": top_k,
+                "final_k": final_k,
+                "candidate_k": final_k,
+                "eval_mode": eval_mode,
             }
+
     return {
         "query": query,
         "route": route,
-        "items": _fallback_retrieve(query, route=route, top_k=top_k, scene_id=scene_id),
+        "items": _fallback_retrieve(query, route=route, top_k=final_k, scene_id=scene_id),
         "retrieval_backend": "json_lexical_fallback",
         "retrieval_algorithm": f"{route}_lexical_fallback",
         "fallback_reason": "vector manifest not found",
-        "adaptive_top_k": top_k,
-        "user_requested_top_k": top_k,
+        "final_k": final_k,
+        "candidate_k": final_k,
+        "eval_mode": eval_mode,
     }
 
 
@@ -744,7 +1034,7 @@ def _merge_ranked_items_with_type_boost(
     merged: dict[str, dict[str, Any]] = {}
     for source_name, items, weight in candidate_groups:
         for rank, item in enumerate(items):
-            item_id = str(item.get("id") or item.get("metadata", {}).get("chunk_id") or item.get("content", "")[:80])
+            item_id = _canonical_item_id(item)
             base_score = float(item.get("score") or 0)
             rank_bonus = 1.0 / (rank + 1)
             weighted_score = weight * base_score + 0.03 * rank_bonus

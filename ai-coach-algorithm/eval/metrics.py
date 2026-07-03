@@ -52,6 +52,32 @@ def mrr(gold_ids: list[str], pred_ids: list[str]) -> float:
     return 0.0
 
 
+def ceiling_at_k(gold_ids: list[str], k: int) -> float:
+    """Calculate the mathematical ceiling for recall@k.
+
+    The ceiling is the maximum possible recall given k and the number of gold items.
+    If gold has N items, the max we can retrieve is min(k, N), so ceiling = min(k, N) / N.
+
+    This explains why recall@3 can never reach 1.0 when gold has >3 items.
+    """
+    if not gold_ids:
+        return 1.0
+    return min(k, len(gold_ids)) / len(gold_ids)
+
+
+def normalized_recall_at_k(gold_ids: list[str], pred_ids: list[str], k: int = 3) -> float:
+    """Calculate recall@k normalized by the mathematical ceiling.
+
+    This answers: "What fraction of the theoretical maximum did we achieve?"
+    A value of 0.8 means we got 80% of what was mathematically possible.
+
+    Useful when gold sets vary widely in size (e.g., 3 vs 12 gold chunks).
+    """
+    recall = recall_at_k(gold_ids, pred_ids, k)
+    ceiling = ceiling_at_k(gold_ids, k)
+    return recall / max(ceiling, 1e-8)
+
+
 def point_level_prf1(
     gold_covered: set[str],
     gold_missing: set[str],

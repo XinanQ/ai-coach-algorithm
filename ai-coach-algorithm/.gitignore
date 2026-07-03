@@ -92,3 +92,6 @@ mock_db/auto_update_history.json
 *.pptx
 ~$*
 *.bat
+
+# Evaluation verbose output (temporary diagnostic files)
+data/eval/*_verbose_*.json

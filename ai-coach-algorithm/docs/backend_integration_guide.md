@@ -61,6 +61,68 @@ curl http://127.0.0.1:8000/health
 
 Docker Compose 当前定位为**开发/联调环境**，已覆盖算法服务本体、Redis、PostgreSQL 和健康检查。生产部署仍需另行补充服务鉴权、密钥管理、资源限制、日志采集和真实内网域名。
 
+## 2.1 任务首页/场景目录接口（可选）
+
+如果小程序任务页需要先做成“训练方向 + 推荐场景卡片”的样式，Java 后端可以临时调用算法侧任务目录接口，再补齐真实业务字段：
+
+```text
+GET /practice/tasks?tab=self&direction=objection
+GET /practice/tasks/{taskId}
+```
+
+`/practice/tasks` 的响应已经按页面展示做了 camelCase 和中文标签适配：
+
+```json
+{
+  "levelName": "Lv5 专业进阶",
+  "points": 1260,
+  "target": 1800,
+  "streakDays": 7,
+  "weekGain": 320,
+  "tabs": [
+    { "key": "assigned", "label": "上级下发" },
+    { "key": "self", "label": "自主任务" },
+    { "key": "done", "label": "已完成" }
+  ],
+  "directions": [
+    { "key": "customer_touch", "label": "客户触达" },
+    { "key": "needs", "label": "需求识别" },
+    { "key": "product", "label": "产品讲解" },
+    { "key": "objection", "label": "异议处理" },
+    { "key": "close", "label": "成交促成" },
+    { "key": "compliance", "label": "合规风险" },
+    { "key": "service", "label": "售后维护" }
+  ],
+  "selectedTab": "self",
+  "selectedDirection": "objection",
+  "list": [
+    {
+      "taskId": "TASK_FUND_LOSS_OBJECTION",
+      "sceneId": "FUND_OBJECTION",
+      "customerId": "CUST_SAFETY_FUND",
+      "category": "基金",
+      "title": "基金亏损客户异议处理",
+      "tags": ["存量客户", "怕亏", "中等"],
+      "intentTags": ["safety_concern", "rate_concern"],
+      "intentLabels": ["本金安全", "收益关注"],
+      "durationText": "8分钟",
+      "description": "客户曾亏损，抗拒继续购买"
+    }
+  ]
+}
+```
+
+字段边界：
+
+| 字段 | 建议来源 | 说明 |
+|---|---|---|
+| `sceneId` / `customerId` / `intentTags` / `intentLabels` | 算法 | 用于启动陪练和解释算法标签 |
+| `title` / `category` / `tags` / `durationText` / `description` | 算法可先提供 | 页面展示字段，当前来自算法场景目录 |
+| `points` / `target` / `streakDays` / `weekGain` | Java 后端最终覆盖 | 用户成长、积分、连续训练天数属于业务数据 |
+| `tab` / `status` / `level` | Java 后端最终覆盖 | 上级下发、自主任务、完成状态属于任务业务流 |
+
+`GET /dialog/profiles` 也会保留原始 `expected_intents`，并额外返回 `tags` / `intentLabels` 中文展示字段。前端展示标签时优先用 `tags`，不要直接展示 `expected_intents`。
+
 ## 3. 三个核心接口
 
 请求体均为 JSON，响应体均为 `application/json; charset=utf-8`。所有字段已对齐《微信小程序接口联调说明》的 camelCase 命名。

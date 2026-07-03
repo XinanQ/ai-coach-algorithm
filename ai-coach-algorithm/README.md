@@ -51,6 +51,8 @@ marketing_chunks.json
 - `POST /rag/marketing/customer-answer-understanding`
 - `POST /marketing-tutor/prompt-context`
 - `GET /dialog/profiles`
+- `GET /practice/tasks`
+- `GET /practice/tasks/{task_id}`
 - `POST /dialog/start`
 - `POST /dialog/reply`
 - `POST /dialog/finish`
@@ -82,6 +84,47 @@ $env:AI_COACH_LLM_TIMEOUT="20"
 未配置 `DEEPSEEK_API_KEY` 时：
 - 评分自动回退到规则评分器（4 维度仍可用），`source` 返回 `RULE_BASED`。
 - 客户追问自动回退到 `CUSTOMER_INTENT_PROBES` 模板（gap 驱动的固定句式）。
+
+## 任务首页数据（算法侧 demo/catalog）
+
+小程序任务页如果要做成“任务等级 + 训练方向 + 推荐场景卡片”的样式，可先接算法侧任务目录接口：
+
+```text
+GET /practice/tasks?tab=self&direction=objection
+GET /practice/tasks/{taskId}
+```
+
+`/practice/tasks` 返回页面可直接消费的展示字段：
+- `levelName` / `points` / `target` / `streakDays` / `weekGain`：成长卡片 demo 字段
+- `tabs`：上级下发 / 自主任务 / 已完成
+- `directions`：客户触达 / 需求识别 / 产品讲解 / 异议处理 / 成交促成 / 合规风险 / 售后维护
+- `list[].tags`：中文展示标签
+- `list[].intentTags`：算法内部英文 intent code，供调试或后端映射使用
+- `list[].sceneId` / `list[].customerId`：启动陪练时传给 `/dialog/start`
+
+示例：
+
+```json
+{
+  "selectedTab": "self",
+  "selectedDirection": "objection",
+  "list": [
+    {
+      "taskId": "TASK_FUND_LOSS_OBJECTION",
+      "sceneId": "FUND_OBJECTION",
+      "customerId": "CUST_SAFETY_FUND",
+      "category": "基金",
+      "title": "基金亏损客户异议处理",
+      "tags": ["存量客户", "怕亏", "中等"],
+      "intentTags": ["safety_concern", "rate_concern"],
+      "durationText": "8分钟",
+      "description": "客户曾亏损，抗拒继续购买"
+    }
+  ]
+}
+```
+
+说明：成长等级、积分、任务完成状态等仍建议最终由 Java 后端业务库接管；算法侧接口用于联调、推荐场景目录和中文标签展示。
 
 ## Docker 开发环境（算法服务 + Redis + PostgreSQL）
 
