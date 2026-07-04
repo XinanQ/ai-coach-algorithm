@@ -1,6 +1,6 @@
 {
-  "run_id": "eval_20260704_134913",
-  "timestamp": "2026-07-04T13:49:13.815826",
+  "run_id": "eval_20260704_185841",
+  "timestamp": "2026-07-04T18:58:41.289809",
   "stages": [
     {
       "stage": "llm_intent_detection",
@@ -153,23 +153,23 @@
     {
       "stage": "e2e_dialogue",
       "primary_metric": "e2e_overall_pass",
-      "value": 0.0,
-      "gold_size": 7,
+      "value": 0.6,
+      "gold_size": 20,
       "details": {
-        "total_cases": 7,
-        "sample_size": 10,
+        "total_cases": 20,
+        "sample_size": null,
         "skip_slow": false,
-        "e2e_overall_pass": 0.0,
+        "e2e_overall_pass": 0.6,
         "contract_pass": 1.0,
         "intent_pass": 1.0,
         "gap_pass": 1.0,
-        "retrieval_hit": 1.0,
+        "retrieval_hit": 0.95,
         "followup_pass": 1.0,
-        "finish_score_pass": 0.0,
-        "weak_tag_pass": 0.0
+        "finish_score_pass": 0.7,
+        "weak_tag_pass": 0.85
       }
     }
   ],
-  "end_to_end_estimate": 0.3385,
-  "bottleneck": "e2e_dialogue"
+  "end_to_end_estimate": 0.2031,
+  "bottleneck": "chunk_retrieval"
 }

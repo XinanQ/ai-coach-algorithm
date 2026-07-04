@@ -9,7 +9,11 @@ router = APIRouter(prefix="/practice", tags=["practice"])
 
 
 @router.get("/tasks")
-def tasks(tab: str = "self", direction: str | None = "objection", limit: int = 20) -> dict[str, object]:
+def tasks(
+    tab: str = "self",
+    direction: str | None = None,
+    limit: int = 50,
+) -> dict[str, object]:
     return list_practice_tasks(tab=tab, direction=direction, limit=limit)
 
 

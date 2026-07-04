@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import Any
 
 from app.core.customer_profile_loader import load_customer_profiles
-from app.utils.file_loader import read_json
 
 
 INTENT_LABELS = {
@@ -59,6 +58,23 @@ DEFAULT_GROWTH = {
     "weekGain": 320,
 }
 
+SCENE_DIRECTION_OVERRIDES = {
+    "INS_PERIODIC": "product",
+    "INS_DIVIDEND": "objection",
+    "INS_GENERAL": "close",
+    "FUND_GENERAL": "close",
+    "FUND_FIXED_INVEST": "product",
+    "FUND_SALE": "product",
+    "FUND_INVITE": "customer_touch",
+    "INS_INVITE": "customer_touch",
+    "FUND_OBJECTION": "objection",
+    "INS_OBJECTION": "objection",
+    "INS_PROCESS": "product",
+    "WM_ASSET": "needs",
+    "WM_GENERAL": "service",
+    "WM_PRODUCT": "product",
+}
+
 
 def localize_intents(intent_tags: list[str] | None) -> list[str]:
     return [INTENT_LABELS.get(tag, tag) for tag in intent_tags or []]
@@ -91,8 +107,16 @@ def _duration_for_difficulty(difficulty: str | None) -> int:
 
 
 def _default_direction(profile: dict[str, Any]) -> str:
+    scene_id = str(profile.get("scene_id") or "")
+    difficulty = str(profile.get("difficulty_level") or "")
     scene_name = str(profile.get("scene_name") or "")
     intents = set(profile.get("expected_intents") or [])
+    if scene_id.endswith("_INVITE"):
+        return "customer_touch"
+    if "compliance_sensitive" in intents and difficulty in {"高", "high", "HIGH"}:
+        return "compliance"
+    if scene_id in SCENE_DIRECTION_OVERRIDES:
+        return SCENE_DIRECTION_OVERRIDES[scene_id]
     if "邀约" in scene_name:
         return "customer_touch"
     if "资产配置" in scene_name or "综合" in scene_name:
@@ -141,11 +165,12 @@ def _build_profile_task(profile: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _raw_tasks() -> list[dict[str, Any]]:
-    tasks = read_json("mock_db/mock_tasks.json", default=[]) or []
-    if isinstance(tasks, list) and tasks:
-        return [task for task in tasks if isinstance(task, dict)]
+def _profile_tasks() -> list[dict[str, Any]]:
     return [_build_profile_task(profile) for profile in load_customer_profiles()]
+
+
+def _raw_tasks() -> list[dict[str, Any]]:
+    return _profile_tasks()
 
 
 def _present_task(task: dict[str, Any], profile: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -188,8 +213,8 @@ def _present_task(task: dict[str, Any], profile: dict[str, Any] | None = None) -
 
 def list_practice_tasks(
     tab: str = "self",
-    direction: str | None = "objection",
-    limit: int = 20,
+    direction: str | None = None,
+    limit: int = 50,
 ) -> dict[str, Any]:
     profiles = _profile_by_customer_id()
     selected_direction = normalize_direction(direction)
@@ -203,13 +228,16 @@ def list_practice_tasks(
             continue
         items.append(task)
 
+    returned = items[: max(1, int(limit))]
     return {
         **DEFAULT_GROWTH,
         "tabs": TAB_DEFS,
         "directions": DIRECTION_DEFS,
         "selectedTab": tab,
         "selectedDirection": selected_direction,
-        "list": items[: max(1, int(limit))],
+        "total": len(items),
+        "returned": len(returned),
+        "list": returned,
     }
 
 

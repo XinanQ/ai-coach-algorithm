@@ -66,11 +66,13 @@ Docker Compose 当前定位为**开发/联调环境**，已覆盖算法服务本
 如果小程序任务页需要先做成“训练方向 + 推荐场景卡片”的样式，Java 后端可以临时调用算法侧任务目录接口，再补齐真实业务字段：
 
 ```text
-GET /practice/tasks?tab=self&direction=objection
+GET /practice/tasks
+GET /practice/tasks?direction=objection
 GET /practice/tasks/{taskId}
 ```
 
 `/practice/tasks` 的响应已经按页面展示做了 camelCase 和中文标签适配：
+- 默认从 39 个客户画像动态生成 39 个训练任务卡，并按 7 个训练方向分类
 
 ```json
 {
@@ -94,19 +96,21 @@ GET /practice/tasks/{taskId}
     { "key": "service", "label": "售后维护" }
   ],
   "selectedTab": "self",
-  "selectedDirection": "objection",
+  "selectedDirection": null,
+  "total": 39,
+  "returned": 39,
   "list": [
     {
-      "taskId": "TASK_FUND_LOSS_OBJECTION",
-      "sceneId": "FUND_OBJECTION",
-      "customerId": "CUST_SAFETY_FUND",
-      "category": "基金",
-      "title": "基金亏损客户异议处理",
-      "tags": ["存量客户", "怕亏", "中等"],
-      "intentTags": ["safety_concern", "rate_concern"],
-      "intentLabels": ["本金安全", "收益关注"],
+      "taskId": "TASK_CUST_RATE_DIVIDEND_HIGH",
+      "sceneId": "INS_DIVIDEND",
+      "customerId": "CUST_RATE_DIVIDEND_HIGH",
+      "category": "保险",
+      "title": "分红险异议处理 · 专业质疑型",
+      "tags": ["收益关注", "本金安全", "合规敏感", "高难度"],
+      "intentTags": ["rate_concern", "safety_concern", "compliance_sensitive"],
+      "intentLabels": ["收益关注", "本金安全", "合规敏感"],
       "durationText": "8分钟",
-      "description": "客户曾亏损，抗拒继续购买"
+      "description": "分红演示和实际差距、现金价值过低、封闭期太长。"
     }
   ]
 }
@@ -117,7 +121,7 @@ GET /practice/tasks/{taskId}
 | 字段 | 建议来源 | 说明 |
 |---|---|---|
 | `sceneId` / `customerId` / `intentTags` / `intentLabels` | 算法 | 用于启动陪练和解释算法标签 |
-| `title` / `category` / `tags` / `durationText` / `description` | 算法可先提供 | 页面展示字段，当前来自算法场景目录 |
+| `title` / `category` / `tags` / `durationText` / `description` | 算法可先提供 | 页面展示字段，默认来自 39 个客户画像 |
 | `points` / `target` / `streakDays` / `weekGain` | Java 后端最终覆盖 | 用户成长、积分、连续训练天数属于业务数据 |
 | `tab` / `status` / `level` | Java 后端最终覆盖 | 上级下发、自主任务、完成状态属于任务业务流 |
 

@@ -90,11 +90,13 @@ $env:AI_COACH_LLM_TIMEOUT="20"
 小程序任务页如果要做成“任务等级 + 训练方向 + 推荐场景卡片”的样式，可先接算法侧任务目录接口：
 
 ```text
-GET /practice/tasks?tab=self&direction=objection
+GET /practice/tasks
+GET /practice/tasks?direction=objection
 GET /practice/tasks/{taskId}
 ```
 
 `/practice/tasks` 返回页面可直接消费的展示字段：
+- 默认从 39 个客户画像动态生成 39 个训练任务卡，并按 7 个训练方向分类
 - `levelName` / `points` / `target` / `streakDays` / `weekGain`：成长卡片 demo 字段
 - `tabs`：上级下发 / 自主任务 / 已完成
 - `directions`：客户触达 / 需求识别 / 产品讲解 / 异议处理 / 成交促成 / 合规风险 / 售后维护
@@ -107,24 +109,26 @@ GET /practice/tasks/{taskId}
 ```json
 {
   "selectedTab": "self",
-  "selectedDirection": "objection",
+  "selectedDirection": null,
+  "total": 39,
+  "returned": 39,
   "list": [
     {
-      "taskId": "TASK_FUND_LOSS_OBJECTION",
-      "sceneId": "FUND_OBJECTION",
-      "customerId": "CUST_SAFETY_FUND",
-      "category": "基金",
-      "title": "基金亏损客户异议处理",
-      "tags": ["存量客户", "怕亏", "中等"],
-      "intentTags": ["safety_concern", "rate_concern"],
+      "taskId": "TASK_CUST_RATE_DIVIDEND_HIGH",
+      "sceneId": "INS_DIVIDEND",
+      "customerId": "CUST_RATE_DIVIDEND_HIGH",
+      "category": "保险",
+      "title": "分红险异议处理 · 专业质疑型",
+      "tags": ["收益关注", "本金安全", "合规敏感", "高难度"],
+      "intentTags": ["rate_concern", "safety_concern", "compliance_sensitive"],
       "durationText": "8分钟",
-      "description": "客户曾亏损，抗拒继续购买"
+      "description": "分红演示和实际差距、现金价值过低、封闭期太长。"
     }
   ]
 }
 ```
 
-说明：成长等级、积分、任务完成状态等仍建议最终由 Java 后端业务库接管；算法侧接口用于联调、推荐场景目录和中文标签展示。
+说明：39 条任务卡来自 `data/customer_profiles.json` 的 39 个客户画像；成长等级、积分、任务完成状态等仍建议最终由 Java 后端业务库接管。算法侧接口用于联调、推荐场景目录和中文标签展示。
 
 ## Docker 开发环境（算法服务 + Redis + PostgreSQL）
 

@@ -73,7 +73,9 @@ def test_practice_task_catalog_returns_display_ready_cards() -> None:
     body = tasks.json()
     assert body["levelName"] == "Lv5 专业进阶"
     assert body["selectedTab"] == "self"
-    assert body["selectedDirection"] == "objection"
+    assert body["selectedDirection"] is None
+    assert body["total"] == 39
+    assert body["returned"] == 39
     assert [item["label"] for item in body["directions"]] == [
         "客户触达",
         "需求识别",
@@ -83,6 +85,16 @@ def test_practice_task_catalog_returns_display_ready_cards() -> None:
         "合规风险",
         "售后维护",
     ]
+    direction_counts = {item["key"]: 0 for item in body["directions"]}
+    for item in body["list"]:
+        direction_counts[item["direction"]] += 1
+    assert all(count > 0 for count in direction_counts.values())
+    for direction in body["directions"]:
+        filtered = client.get("/practice/tasks", params={"direction": direction["key"]})
+        assert filtered.status_code == 200
+        filtered_body = filtered.json()
+        assert filtered_body["total"] == direction_counts[direction["key"]]
+        assert {item["direction"] for item in filtered_body["list"]} == {direction["key"]}
     assert body["list"]
     card = body["list"][0]
     assert {"taskId", "sceneId", "customerId", "title", "category", "durationText", "tags"} <= set(card)

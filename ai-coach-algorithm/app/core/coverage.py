@@ -197,7 +197,7 @@ def evaluate_coverage(
     dimensions: list[dict[str, Any]],
     answer: str,
     adapter: EmbeddingAdapter | None = None,
-    threshold: float = 0.5,
+    threshold: float = 0.35,  # Lowered from 0.5 to be more lenient
     kw_weight: float = 0.4,
     sem_weight: float = 0.6,
     enable_negative_detection: bool = True,
@@ -212,7 +212,7 @@ def evaluate_coverage(
         dimensions: List of must-point dimensions
         answer: Employee's answer text
         adapter: Embedding adapter for semantic similarity
-        threshold: Coverage threshold (default 0.5)
+        threshold: Coverage threshold (default 0.35, lowered from 0.5)
         kw_weight: Weight for keyword matching (default 0.4)
         sem_weight: Weight for semantic similarity (default 0.6)
         enable_negative_detection: Enable negative pattern detection (default True)

@@ -33,6 +33,12 @@ _SCORER_PREFERENCE = os.getenv("AI_COACH_SCORER", "llm").lower()
 # This is the original design — algorithm assists, LLM simulates.
 _CUSTOMER_LLM_PREFERENCE = os.getenv("AI_COACH_CUSTOMER_LLM", "llm").lower()
 
+# Context pack sizes for different routes
+# Controls final_k (top-N chunks) returned to LLM at each stage
+# Higher values provide more context but increase latency and token usage
+_REPLY_CONTEXT_K = int(os.getenv("AI_COACH_REPLY_CONTEXT_K", "5"))
+_FINISH_CONTEXT_K = int(os.getenv("AI_COACH_FINISH_CONTEXT_K", "8"))
+
 
 async def _score_finish(
     answer: str,
@@ -102,6 +108,17 @@ def _merge_llm_intents(
     merged = set(covered_intents)
     merged.update(llm_intents)
     return sorted(merged)
+
+
+# Intent to Chinese keywords mapping for repeat detection
+INTENT_KEYWORDS_ZH = {
+    "rate_concern": ["收益", "利率", "分红", "划算", "利息", "高", "多少"],
+    "liquidity_concern": ["取出", "提前", "用钱", "灵活", "退保", "期限", "随时"],
+    "safety_concern": ["安全", "风险", "亏", "本金", "保本", "保证", "承诺"],
+    "procedure_question": ["怎么办", "流程", "材料", "办理", "手续", "带什么", "网点"],
+    "rejection_or_hesitation": ["犹豫", "考虑", "想想", "家人", "商量", "再看看", "不急"],
+    "compliance_sensitive": ["保证", "承诺", "写进合同", "绝对", "一定", "最高"],
+}
 
 
 CUSTOMER_INTENT_PROBES = {
@@ -203,7 +220,8 @@ async def reply_dialogue(session_id: str, employee_message: str) -> dict[str, An
     covered_intents = prev_covered
     if not finished:
         retrieval = retrieve_marketing_knowledge(
-            employee_message, route="customer", top_k=3, scene_id=scene_id, focus_intents=gap_intents or None
+            employee_message, route="customer", final_k=_REPLY_CONTEXT_K,
+            scene_id=scene_id, focus_intents=gap_intents or None
         )
         retrieval_items = retrieval.get("items", [])
         customer_weakness = (session.get("weakness_profile") or {}).get("customer_prompt", "")
@@ -290,7 +308,8 @@ async def reply_dialogue_stream(session_id: str, employee_message: str):
         return
 
     retrieval = retrieve_marketing_knowledge(
-        employee_message, route="customer", top_k=3, scene_id=scene_id, focus_intents=gap_intents or None
+        employee_message, route="customer", final_k=_REPLY_CONTEXT_K,
+        scene_id=scene_id, focus_intents=gap_intents or None
     )
     retrieval_items = retrieval.get("items", [])
     customer_weakness = (session.get("weakness_profile") or {}).get("customer_prompt", "")
@@ -377,7 +396,7 @@ async def finish_dialogue(session_id: str) -> dict[str, Any]:
     retrieval = retrieve_marketing_knowledge(
         final_answer,
         route="tutor",
-        top_k=3,
+        final_k=_FINISH_CONTEXT_K,
         scene_id=scene_id,
         must_points=criterion.get("must_points") or None,
         answer_goal=criterion.get("answer_goal"),
@@ -509,32 +528,33 @@ def _is_asking_about_same_topic(last_ai_msg: str, intent_label: str) -> bool:
     """Check if the last AI message was already asking about the same intent.
 
     Avoids repetitive追问 on the same topic.
+
+    Args:
+        last_ai_msg: The last AI customer message
+        intent_label: The intent label to check against
+
+    Returns:
+        True if the last message was already asking about this intent
     """
     if not last_ai_msg:
         return False
 
-    # Keyword overlap between last message and intent probe
-    probe = CUSTOMER_INTENT_PROBES.get(intent_label, "")
-    if not probe:
+    # Get keywords for the target intent
+    intent_keywords = INTENT_KEYWORDS_ZH.get(intent_label, [])
+    if not intent_keywords:
         return False
 
-    # Simple check: if last message shares significant keywords with the probe
     last_lower = last_ai_msg.lower()
-    probe_lower = probe.lower()
 
-    # Extract key content words (2+ characters)
-    last_words = {w for w in last_lower if len(w) >= 2}
-    probe_words = {w for w in probe_lower if len(w) >= 2}
+    # Count how many keywords from the intent appear in the last message
+    matched_keywords = [kw for kw in intent_keywords if kw in last_lower]
 
-    if not probe_words:
-        return False
-
-    # If 40%+ overlap, consider it the same topic
-    overlap = last_words & probe_words
-    if overlap and len(overlap) / len(probe_words) >= 0.4:
-        return True
-
-    return False
+    # If multiple keywords match, we're likely asking about the same topic
+    # Threshold: at least 2 keywords for intents with 3+ keywords, 1 for smaller sets
+    if len(intent_keywords) >= 3:
+        return len(matched_keywords) >= 2
+    else:
+        return len(matched_keywords) >= 1
 
 
 def _generate_gap_based_followup(

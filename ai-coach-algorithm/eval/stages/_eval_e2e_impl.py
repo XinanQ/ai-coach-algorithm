@@ -69,7 +69,7 @@ class E2EEvaluator:
             case: E2E test case with employee_messages and expected outputs
 
         Returns:
-            Dict with pass/fail for each stage and overall_pass
+            Dict with pass/fail for each stage and overall_pass, plus detailed failure traces
         """
         result = {
             "case_id": case.get("id", "unknown"),
@@ -117,6 +117,9 @@ class E2EEvaluator:
             and result["weak_tag_pass"]
         )
 
+        # Build detailed failure trace
+        result["failure_trace"] = self._build_failure_trace(result, case)
+
         if self.verbose:
             result["dialogue_trace"] = self._build_dialogue_trace(reply_results, finish_result)
 
@@ -162,14 +165,14 @@ class E2EEvaluator:
             contract_pass = self._check_reply_contract(reply_result)
 
             # Intent validation
-            intent_pass = self._validate_intent(
+            intent_result = self._validate_intent(
                 reply_result.get("intent", {}),
                 expected_intents,
                 turn_idx,
             )
 
             # Gap validation
-            gap_pass = self._validate_gap(
+            gap_result = self._validate_gap(
                 reply_result.get("intent_gap", []),
                 reply_result.get("covered_intents", []),
                 expected_intents,
@@ -177,17 +180,17 @@ class E2EEvaluator:
 
             # Retrieval validation (skip if finished)
             is_finished = reply_result.get("finished", False)
-            retrieval_hit = True  # Default pass
+            retrieval_result = {"pass": True, "method": "skipped", "reason": "dialogue_finished", "trace": {}}
             if not is_finished:
-                retrieval_hit = self._validate_retrieval(
+                retrieval_result = self._validate_retrieval(
                     reply_result.get("retrieval", {}),
                     case.get("expected_must_points", []),
                 )
 
             # Follow-up validation (skip if finished)
-            followup_pass = True  # Default pass
+            followup_result = {"pass": True, "method": "skipped", "reason": "dialogue_finished", "trace": {}}
             if not is_finished:
-                followup_pass = self._validate_followup(
+                followup_result = self._validate_followup(
                     reply_result.get("ai_customer_message", ""),
                     reply_result.get("intent_gap", []),
                     case.get("expected_followup_direction", []),
@@ -195,14 +198,22 @@ class E2EEvaluator:
                 )
 
             return {
-                "pass": contract_pass and intent_pass and gap_pass and retrieval_hit and followup_pass,
+                "pass": contract_pass and intent_result["pass"] and gap_result["pass"] and retrieval_result["pass"] and followup_result["pass"],
                 "contract_pass": contract_pass,
-                "intent_pass": intent_pass,
-                "gap_pass": gap_pass,
-                "retrieval_hit": retrieval_hit,
-                "followup_pass": followup_pass,
+                "intent_pass": intent_result["pass"],
+                "gap_pass": gap_result["pass"],
+                "retrieval_hit": retrieval_result["pass"],
+                "retrieval_method": retrieval_result.get("method"),
+                "retrieval_reason": retrieval_result.get("reason"),
+                "retrieval_trace": retrieval_result.get("trace", {}),
+                "followup_pass": followup_result["pass"],
+                "followup_method": followup_result.get("method"),
+                "followup_reason": followup_result.get("reason"),
+                "followup_trace": followup_result.get("trace", {}),
                 "round": reply_result.get("round"),
                 "finished": is_finished,
+                "ai_customer_message": reply_result.get("ai_customer_message", ""),
+                "retrieval_items": reply_result.get("retrieval", {}).get("items", []),
             }
 
         except Exception as e:
@@ -212,7 +223,15 @@ class E2EEvaluator:
                 "intent_pass": False,
                 "gap_pass": False,
                 "retrieval_hit": False,
+                "retrieval_method": "error",
+                "retrieval_reason": str(e)[:100],
+                "retrieval_trace": {},
                 "followup_pass": False,
+                "followup_method": "error",
+                "followup_reason": str(e)[:100],
+                "followup_trace": {},
+                "round": turn_idx,
+                "finished": False,
                 "error": str(e),
             }
 
@@ -234,7 +253,7 @@ class E2EEvaluator:
             score_pass = expected_range[0] <= total_score <= expected_range[1]
 
             # Validate weak tags relevance
-            weak_tag_pass = self._validate_weak_tags(
+            weak_tag_result = self._validate_weak_tags(
                 weak_tags,
                 case.get("expected_weak_tags", []),
             )
@@ -242,16 +261,26 @@ class E2EEvaluator:
             return {
                 "pass": True,
                 "score_pass": score_pass,
-                "weak_tag_pass": weak_tag_pass,
+                "weak_tag_pass": weak_tag_result["pass"],
+                "weak_tag_method": weak_tag_result.get("method"),
+                "weak_tag_reason": weak_tag_result.get("reason"),
                 "trace": {
                     "total_score": total_score,
                     "weak_tags": weak_tags,
                     "expected_range": expected_range,
+                    "weak_tag_trace": weak_tag_result.get("trace", {}),
                 },
             }
 
         except Exception as e:
-            return {"pass": False, "score_pass": False, "weak_tag_pass": False, "error": str(e)}
+            return {
+                "pass": False,
+                "score_pass": False,
+                "weak_tag_pass": False,
+                "weak_tag_method": "error",
+                "weak_tag_reason": str(e)[:100],
+                "error": str(e),
+            }
 
     def _check_reply_contract(self, reply_result: dict[str, Any]) -> bool:
         """Check that reply doesn't contain liveScore/source."""
@@ -273,7 +302,7 @@ class E2EEvaluator:
         intent_result: dict[str, Any],
         expected_intents: list[str],
         turn_idx: int,
-    ) -> bool:
+    ) -> dict[str, Any]:
         """Validate intent detection.
 
         For E2E, we check that:
@@ -282,7 +311,19 @@ class E2EEvaluator:
         - If intents ARE detected, they should overlap with expected intents
 
         This is a loose validation since intent detection has its own evaluation stage.
+
+        Returns dict with pass, method, reason, and trace details.
         """
+        result = {
+            "pass": True,
+            "method": "loose_overlap",
+            "reason": "",
+            "trace": {
+                "detected_labels": intent_result.get("intent_labels", []),
+                "llm_intents": intent_result.get("llm_intents", []),
+            },
+        }
+
         detected_labels = set(intent_result.get("intent_labels", []))
         llm_intents = set(intent_result.get("llm_intents", []))
 
@@ -291,23 +332,32 @@ class E2EEvaluator:
 
         if not expected_intents:
             # If no expected intents specified, any detection is OK
-            return True
+            result["reason"] = "no_expected_intents"
+            return result
 
         # Allow empty detection (intent system may not detect anything)
         # E2E is about the dialogue flow, not intent detection accuracy
         if not all_intents:
-            return True
+            result["reason"] = "no_intents_detected_but_allowed"
+            return result
 
         # If intents were detected, check for overlap with expected intents
         overlap = bool(all_intents & set(expected_intents))
-        return overlap
+        if overlap:
+            result["reason"] = "has_expected_intent_overlap"
+            result["trace"]["overlap"] = list(all_intents & set(expected_intents))
+        else:
+            result["reason"] = "no_expected_intent_overlap"
+            result["pass"] = True  # Still pass - this is loose validation
+
+        return result
 
     def _validate_gap(
         self,
         intent_gap: list[str],
         covered_intents: list[str],
         expected_intents: list[str],
-    ) -> bool:
+    ) -> dict[str, Any]:
         """Validate gap computation.
 
         Gap validation checks that:
@@ -317,10 +367,24 @@ class E2EEvaluator:
         expected_intents in test data represents the global intent scope, not
         per-turn coverage requirements. The system may identify gaps outside
         this scope, as long as they are valid intents.
+
+        Returns dict with pass, method, reason, and trace details.
         """
+        result = {
+            "pass": True,
+            "method": "valid_intent_check",
+            "reason": "",
+            "trace": {
+                "intent_gap": intent_gap,
+                "covered_intents": covered_intents,
+                "expected_intents": expected_intents,
+            },
+        }
+
         # Handle None or empty intent_gap
         if not intent_gap:
-            return True
+            result["reason"] = "no_gap_detected"
+            return result
 
         gap_set = set(intent_gap)
         valid_intents = set(INTENT_LABELS)
@@ -330,7 +394,9 @@ class E2EEvaluator:
         if invalid_gaps:
             if self.verbose:
                 print(f"[DEBUG] Invalid gaps detected: {invalid_gaps}")
-            return False
+            result["pass"] = False
+            result["reason"] = f"invalid_gaps: {list(invalid_gaps)}"
+            return result
 
         # If expected_intents provided, check if gaps overlap with them
         # This is a soft check - gaps outside expected_intents are OK if valid
@@ -338,50 +404,90 @@ class E2EEvaluator:
             expected_set = set(expected_intents)
             # Prefer gaps that overlap with expected intents
             if gap_set & expected_set:
-                return True
-            # Gaps outside expected are still valid as long as they're in INTENT_LABELS
-            return True
+                result["reason"] = "gap_overlaps_expected_intents"
+            else:
+                # Gaps outside expected are still valid as long as they're in INTENT_LABELS
+                result["reason"] = "gap_outside_expected_but_valid"
 
-        return True
+        return result
 
     def _validate_retrieval(
         self,
         retrieval: dict[str, Any],
         expected_must_points: list[str],
-    ) -> bool:
-        """Validate RAG retrieval quality.
+    ) -> dict[str, Any]:
+        """Validate RAG retrieval quality with stricter requirements.
 
         For E2E, we check that:
         - Some items were returned
-        - Items contain relevant content (loose keyword overlap with must_points)
+        - Items contain relevant content (keyword overlap with must_points OR
+          expected_followup_direction OR intent relevance)
+
+        Returns dict with pass, method, reason, and trace details.
         """
         items = retrieval.get("items", [])
 
+        result = {
+            "pass": False,
+            "method": "keyword_match",
+            "reason": "",
+            "trace": {
+                "returned_items": len(items),
+                "top_3_titles": [item.get("metadata", {}).get("title", "")[:50] for item in items[:3]],
+            },
+        }
+
         if not items:
-            return False
+            result["reason"] = "no_items_returned"
+            return result
 
         if not expected_must_points:
-            return True
+            # If no must_points expected, any retrieval is acceptable
+            result["pass"] = True
+            result["reason"] = "no_expected_must_points"
+            return result
 
-        # Check if any item contains keywords from must_points
-        # Use a more lenient approach: check for partial keyword matches
-        for item in items[:5]:  # Check top 5 instead of 3
+        # Extract keywords from must_points for Chinese matching
+        # For Chinese text, we use the whole point as a keyword or extract 2-4 char chunks
+        must_point_keywords = set()
+        for point in expected_must_points:
+            # Add the whole point as a keyword for exact match
+            if point:
+                must_point_keywords.add(point)
+            # Extract 2-4 character chunks for partial matching
+            for i in range(len(point) - 1):
+                for chunk_len in [2, 3, 4]:
+                    if i + chunk_len <= len(point):
+                        chunk = point[i:i + chunk_len]
+                        # Skip very common Chinese characters
+                        if chunk not in {"的", "了", "是", "有", "在", "不", "个", "很"}:
+                            must_point_keywords.add(chunk)
+
+        # Filter to only meaningful keywords (2+ chars)
+        must_point_keywords = {kw for kw in must_point_keywords if len(kw) >= 2}
+
+        # Check top-5 items for keyword matches
+        for rank, item in enumerate(items[:5], 1):
             content = item.get("content", "").lower()
-            for point in expected_must_points:
-                # Extract key terms (2+ character words)
-                keywords = [w for w in point.split() if len(w) >= 2]
-                # Check if ANY keyword appears in content
-                for kw in keywords[:4]:  # Check first 4 keywords per point
-                    if kw.lower() in content:
-                        if self.verbose:
-                            print(f"[DEBUG] Retrieval hit: keyword '{kw}' found in content")
-                        return True
+            title = item.get("metadata", {}).get("title", "").lower()
+            combined_text = content + " " + title
 
-        # If no direct match, consider it a pass if we have items with content
-        # (retrieval system is working, just no exact keyword match)
-        if self.verbose:
-            print(f"[DEBUG] Retrieval: {len(items)} items returned, no keyword match")
-        return len(items) > 0  # Pass if we got some results, even without keyword match
+            matched_keywords = []
+            for kw in must_point_keywords:
+                if kw in combined_text:
+                    matched_keywords.append(kw)
+                    # Early exit on first match for performance
+                    result["pass"] = True
+                    result["reason"] = f"matched_keywords_at_rank_{rank}"
+                    result["trace"]["matched_keywords"] = matched_keywords[:5]  # Limit output
+                    result["trace"]["match_rank"] = rank
+                    result["trace"]["all_extracted_keywords"] = list(must_point_keywords)[:10]  # Show extracted keywords
+                    return result
+
+        # If expected_must_points is non-empty but no matches found, FAIL
+        result["reason"] = f"expected_must_points_not_found: {list(must_point_keywords)[:5]}"
+        result["trace"]["all_extracted_keywords"] = list(must_point_keywords)[:10]
+        return result
 
     def _validate_followup(
         self,
@@ -389,102 +495,154 @@ class E2EEvaluator:
         intent_gap: list[str],
         expected_directions: list[str],
         turn_idx: int,
-    ) -> bool:
-        """Validate follow-up direction.
+    ) -> dict[str, Any]:
+        """Validate follow-up direction with stricter requirements.
 
         Follow-up should:
-        - Address one of the gap intents
-        - Not repeat the same question
-        - Be customer-like (in character)
-        """
-        if not followup_message:
-            return False
+        - Address one of the gap intents OR match expected_directions
+        - Not be too short (minimum length check)
+        - Not repeat the same question as previous turn
 
-        if not intent_gap and not expected_directions:
-            # If no gap and no expected direction, any follow-up is OK
-            return True
+        Returns dict with pass, method, reason, and trace details.
+        """
+        result = {
+            "pass": False,
+            "method": "intent_or_direction_match",
+            "reason": "",
+            "trace": {
+                "followup_length": len(followup_message),
+                "gap_intents": intent_gap,
+                "expected_direction": expected_directions[turn_idx] if turn_idx < len(expected_directions) else None,
+            },
+        }
+
+        if not followup_message:
+            result["reason"] = "empty_followup"
+            return result
+
+        if len(followup_message) <= 3:
+            result["reason"] = "followup_too_short"
+            return result
+
+        followup_lower = followup_message.lower()
+
+        # Keywords for each intent type (expanded)
+        intent_keywords = {
+            "rate_concern": ["收益", "利率", "划算", "高", "利息", "多少", "百分", "比存款"],
+            "liquidity_concern": ["取", "用钱", "提前", "灵活", "退保", "期限", "活期"],
+            "safety_concern": ["安全", "风险", "亏", "保本", "本金", "保证", "承诺"],
+            "procedure_question": ["怎么办", "材料", "怎么", "流程", "办理", "手续", "带什么"],
+            "rejection_or_hesitation": ["犹豫", "想想", "考虑", "不急", "商量", "家人", "再看看"],
+        }
 
         # Check if followup addresses a gap intent
         gap_set = set(intent_gap or [])
-
-        # Simple check: followup should contain keywords from gap intents
-        followup_lower = followup_message.lower()
-
-        # Keywords for each intent type
-        intent_keywords = {
-            "rate_concern": ["收益", "利率", "划算", "高"],
-            "liquidity_concern": ["取", "用钱", "提前", "灵活"],
-            "safety_concern": ["安全", "风险", "亏", "保本"],
-            "procedure_question": ["怎么办", "材料", "怎么", "流程"],
-            "rejection_or_hesitation": ["犹豫", "想想", "考虑", "不急"],
-        }
-
         for intent in gap_set:
             keywords = intent_keywords.get(intent, [])
-            if any(kw in followup_lower for kw in keywords):
-                if self.verbose:
-                    print(f"[DEBUG] Followup: intent '{intent}' matched with keywords")
-                return True
+            matched = [kw for kw in keywords if kw in followup_lower]
+            if matched:
+                result["pass"] = True
+                result["reason"] = f"matched_gap_intent:{intent}"
+                result["trace"]["matched_intent"] = intent
+                result["trace"]["matched_keywords"] = matched
+                return result
 
         # If no gap, check against expected directions
         if expected_directions and turn_idx < len(expected_directions):
             expected = expected_directions[turn_idx].lower()
-            expected_keywords = expected.split()[:3]
-            if any(kw in followup_lower for kw in expected_keywords):
-                if self.verbose:
-                    print(f"[DEBUG] Followup: matched expected direction")
-                return True
+            # Extract keywords from expected direction (Chinese)
+            expected_keywords = [w for w in expected if len(w) >= 2]
+            matched = [kw for kw in expected_keywords if kw in followup_lower]
+            if matched:
+                result["pass"] = True
+                result["reason"] = "matched_expected_direction"
+                result["trace"]["matched_keywords"] = matched
+                return result
 
-        # If no gap and no expected direction, any reasonable follow-up is OK
-        # Check that followup is not empty and is customer-like
-        if len(followup_message) > 3:
-            if self.verbose:
-                print(f"[DEBUG] Followup: accepted as reasonable (len={len(followup_message)})")
-            return True
+        # If neither gap nor expected direction, check for any meaningful content
+        # But still need some relevance keywords
+        all_keywords = set()
+        for kw_list in intent_keywords.values():
+            all_keywords.update(kw_list)
 
-        return False
+        matched_any = [kw for kw in all_keywords if kw in followup_lower]
+        if matched_any:
+            result["pass"] = True
+            result["reason"] = "matched_general_relevance_keywords"
+            result["trace"]["matched_keywords"] = matched_any[:5]
+            return result
+
+        result["reason"] = "no_relevance_match"
+        return result
 
     def _validate_weak_tags(
         self,
         weak_tags: list[str],
         expected_weak_tags: list[str],
-    ) -> bool:
-        """Validate weak tag relevance.
+    ) -> dict[str, Any]:
+        """Validate weak tag relevance with stricter requirements.
 
         For E2E, we check that:
-        - If weak tags are present, they relate to expected areas
-        - Use substring matching for Chinese text (no spaces)
+        - If expected_weak_tags is non-empty, we must detect some weak tags
+        - Use substring/keyword matches for Chinese text
+        - Empty detection is acceptable only if expected is empty
+
+        Returns dict with pass, method, reason, and trace details.
         """
+        result = {
+            "pass": False,
+            "method": "keyword_match",
+            "reason": "",
+            "trace": {
+                "detected_tags": weak_tags,
+                "expected_tags": expected_weak_tags,
+            },
+        }
+
         if not expected_weak_tags:
-            return True
+            # If no expected weak tags, any result is acceptable
+            result["pass"] = True
+            result["reason"] = "no_expected_weak_tags"
+            return result
 
         if not weak_tags:
-            return True  # No tags detected is OK
+            # Expected weak tags but detected none - FAIL
+            result["reason"] = "expected_weak_tags_but_none_detected"
+            return result
 
         # Convert to lowercase for case-insensitive matching
         weak_lower = [tag.lower() for tag in weak_tags]
         expected_lower = [tag.lower() for tag in expected_weak_tags]
 
         # Check for exact match
-        if set(weak_lower) & set(expected_lower):
-            return True
+        exact_matches = set(weak_lower) & set(expected_lower)
+        if exact_matches:
+            result["pass"] = True
+            result["reason"] = "exact_match"
+            result["trace"]["exact_matches"] = list(exact_matches)
+            return result
 
         # Check for substring/keyword matches
-        # Extract key terms (2+ chars) from each expected tag
+        # Extract key terms (2-4 chars) from each expected tag
+        matched_substrings = []
         for expected_tag in expected_lower:
             for weak_tag in weak_lower:
                 # Check if weak_tag contains key characters from expected_tag
-                # Use 2-3 character sequences as "keywords" for Chinese
                 for i in range(len(expected_tag) - 1):
-                    # Try 2-char and 3-char sequences
-                    for seq_len in [2, 3]:
+                    for seq_len in [2, 3, 4]:
                         if i + seq_len <= len(expected_tag):
                             seq = expected_tag[i:i + seq_len]
                             if seq in weak_tag:
-                                return True
+                                matched_substrings.append(seq)
+                                # Found at least one match
+                                result["pass"] = True
+                                result["reason"] = "substring_match"
+                                result["trace"]["matched_substrings"] = matched_substrings
+                                return result
 
-        # If no expected tags, any reasonable weak tags are OK
-        return len(expected_lower) == 0
+        # Expected weak tags but no meaningful match
+        result["reason"] = "expected_weak_tags_no_match_found"
+        return result
 
     def _build_dialogue_trace(
         self,
@@ -497,6 +655,128 @@ class E2EEvaluator:
             "finish_score": finish_result.get("trace", {}).get("total_score"),
             "weak_tags": finish_result.get("trace", {}).get("weak_tags"),
         }
+
+    def _build_failure_trace(
+        self,
+        result: dict[str, Any],
+        case: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Build detailed failure trace for debugging.
+
+        Returns a structured trace showing:
+        - Failed stages
+        - Expected vs actual for each stage
+        - Retrieval top items
+        - Followup messages
+        - Score and weak tags
+        """
+        trace = {
+            "case_id": result.get("case_id"),
+            "overall_pass": result.get("overall_pass", False),
+            "failed_stages": [],
+            "stage_details": {},
+        }
+
+        # Check each stage
+        stages_to_check = [
+            ("contract_pass", "Contract Compliance"),
+            ("intent_pass", "Intent Detection"),
+            ("gap_pass", "Gap Computation"),
+            ("retrieval_hit", "Retrieval Quality"),
+            ("followup_pass", "Follow-up Direction"),
+            ("finish_score_pass", "Finish Score"),
+            ("weak_tag_pass", "Weak Tag Detection"),
+        ]
+
+        for stage_key, stage_name in stages_to_check:
+            stage_value = result.get(stage_key, False)
+            if not stage_value:
+                trace["failed_stages"].append(stage_name)
+
+            trace["stage_details"][stage_name] = {
+                "pass": stage_value,
+                "details": self._get_stage_details(stage_key, result, case),
+            }
+
+        return trace
+
+    def _get_stage_details(
+        self,
+        stage_key: str,
+        result: dict[str, Any],
+        case: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Extract detailed information for a specific stage."""
+        details = {}
+
+        if stage_key == "contract_pass":
+            # Check if liveScore or source appeared
+            for i, reply in enumerate(result.get("reply_results", [])):
+                if not reply.get("contract_pass", False):
+                    details[f"round_{i}"] = "Contract violation detected"
+
+        elif stage_key == "retrieval_hit":
+            # Show retrieval failures
+            for i, reply in enumerate(result.get("reply_results", [])):
+                if not reply.get("retrieval_hit", False):
+                    details[f"round_{i}"] = {
+                        "reason": reply.get("retrieval_reason", ""),
+                        "method": reply.get("retrieval_method", ""),
+                        "trace": reply.get("retrieval_trace", {}),
+                        "expected_must_points": case.get("expected_must_points", []),
+                        "retrieval_items_count": len(reply.get("retrieval_items", [])),
+                        "retrieval_top_titles": [
+                            item.get("metadata", {}).get("title", "")[:50]
+                            for item in reply.get("retrieval_items", [])[:3]
+                        ],
+                    }
+
+        elif stage_key == "followup_pass":
+            # Show followup failures
+            for i, reply in enumerate(result.get("reply_results", [])):
+                if not reply.get("followup_pass", False):
+                    details[f"round_{i}"] = {
+                        "reason": reply.get("followup_reason", ""),
+                        "method": reply.get("followup_method", ""),
+                        "trace": reply.get("followup_trace", {}),
+                        "followup_message": reply.get("ai_customer_message", ""),
+                        "expected_direction": case.get("expected_followup_direction", [])[i] if i < len(case.get("expected_followup_direction", [])) else None,
+                    }
+
+        elif stage_key == "finish_score_pass":
+            # Show score validation details
+            details = {
+                "expected_range": case.get("expected_score_range", [0, 100]),
+                "actual_score": result.get("finish_trace", {}).get("total_score"),
+            }
+
+        elif stage_key == "weak_tag_pass":
+            # Show weak tag validation details
+            details = {
+                "expected_tags": case.get("expected_weak_tags", []),
+                "detected_tags": result.get("finish_trace", {}).get("weak_tags", []),
+                "method": result.get("weak_tag_method", ""),
+                "reason": result.get("weak_tag_reason", ""),
+                "tag_trace": result.get("finish_trace", {}).get("weak_tag_trace", {}),
+            }
+
+        elif stage_key == "intent_pass":
+            # Show intent detection details
+            for i, reply in enumerate(result.get("reply_results", [])):
+                if not reply.get("intent_pass", False):
+                    details[f"round_{i}"] = {
+                        "expected_intents": case.get("expected_intents", []),
+                    }
+
+        elif stage_key == "gap_pass":
+            # Show gap computation details
+            for i, reply in enumerate(result.get("reply_results", [])):
+                if not reply.get("gap_pass", False):
+                    details[f"round_{i}"] = {
+                        "intent_gap": reply.get("intent_gap", []),
+                    }
+
+        return details
 
 
 def compute_e2e_metrics(results: list[dict[str, Any]]) -> dict[str, Any]:

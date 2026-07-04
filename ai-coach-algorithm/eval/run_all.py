@@ -60,7 +60,8 @@ def _run_must_point(verbose: bool = False) -> StageResult:
 
 def _run_e2e(verbose: bool = False) -> StageResult:
     from eval.stages.eval_e2e import evaluate
-    return evaluate(sample_size=10, verbose=verbose, skip_slow=False)
+    # Use all available gold cases (no sample_size limit) for comprehensive evaluation
+    return evaluate(sample_size=None, verbose=verbose, skip_slow=False)
 
 
 RUNNERS = {
