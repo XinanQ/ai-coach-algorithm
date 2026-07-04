@@ -1,6 +1,6 @@
 {
-  "run_id": "eval_20260703_215154",
-  "timestamp": "2026-07-03T21:51:54.092318",
+  "run_id": "eval_20260704_134913",
+  "timestamp": "2026-07-04T13:49:13.815826",
   "stages": [
     {
       "stage": "llm_intent_detection",
@@ -63,8 +63,13 @@
         "candidate_recall@20": 0.902,
         "reranked_recall@3": 0.5679,
         "reranked_recall@5": 0.6849,
+        "reranked_recall@8": 0.7693,
+        "reranked_recall@10": 0.8166,
+        "context_hit@5": 1.0,
+        "context_hit@8": 1.0,
         "precision@3": 0.919,
         "precision@5": 0.8771,
+        "precision@8": 0.8286,
         "mrr": 0.9929,
         "ceiling@3": 0.5869,
         "ceiling@10": 0.8558,
@@ -73,14 +78,21 @@
         "normalized_candidate_recall@20": 0.9448,
         "normalized_reranked_recall@3": 0.9762,
         "normalized_reranked_recall@5": 0.9714,
+        "normalized_reranked_recall@8": 0.9626,
+        "normalized_context_hit@5": 1.0,
+        "normalized_context_hit@8": 1.0,
         "by_route": {
           "tutor": {
             "candidate_recall@10": 0.8197,
             "candidate_recall@20": 0.8753,
             "reranked_recall@3": 0.6666,
             "reranked_recall@5": 0.7785,
+            "reranked_recall@8": 0.8308,
+            "context_hit@5": 1.0,
+            "context_hit@8": 1.0,
             "precision@3": 0.8172,
             "precision@5": 0.7226,
+            "precision@8": 0.6129,
             "mrr": 0.9839,
             "ceiling@3": 0.7096,
             "ceiling@10": 0.9447,
@@ -89,6 +101,9 @@
             "normalized_candidate_recall@20": 0.8753,
             "normalized_reranked_recall@3": 0.9462,
             "normalized_reranked_recall@5": 0.9355,
+            "normalized_reranked_recall@8": 0.9155,
+            "normalized_context_hit@5": 1.0,
+            "normalized_context_hit@8": 1.0,
             "count": 31
           },
           "customer": {
@@ -96,8 +111,12 @@
             "candidate_recall@20": 0.9233,
             "reranked_recall@3": 0.4894,
             "reranked_recall@5": 0.6105,
+            "reranked_recall@8": 0.7204,
+            "context_hit@5": 1.0,
+            "context_hit@8": 1.0,
             "precision@3": 1.0,
             "precision@5": 1.0,
+            "precision@8": 1.0,
             "mrr": 1.0,
             "ceiling@3": 0.4894,
             "ceiling@10": 0.7852,
@@ -106,6 +125,9 @@
             "normalized_candidate_recall@20": 1.0,
             "normalized_reranked_recall@3": 1.0,
             "normalized_reranked_recall@5": 1.0,
+            "normalized_reranked_recall@8": 1.0,
+            "normalized_context_hit@5": 1.0,
+            "normalized_context_hit@8": 1.0,
             "count": 39
           }
         }
@@ -114,7 +136,7 @@
     {
       "stage": "must_point_coverage",
       "primary_metric": "point_f1",
-      "value": 0.7686,
+      "value": 0.8299,
       "gold_size": 45,
       "details": {
         "params": {
@@ -122,13 +144,32 @@
           "kw_weight": 0.25,
           "sem_weight": 0.75
         },
-        "point_precision": 0.7097,
-        "point_recall": 0.8381,
-        "point_f1": 0.7686,
-        "coverage_rate_mae": 0.1048
+        "point_precision": 0.7353,
+        "point_recall": 0.9524,
+        "point_f1": 0.8299,
+        "coverage_rate_mae": 0.0959
+      }
+    },
+    {
+      "stage": "e2e_dialogue",
+      "primary_metric": "e2e_overall_pass",
+      "value": 0.0,
+      "gold_size": 7,
+      "details": {
+        "total_cases": 7,
+        "sample_size": 10,
+        "skip_slow": false,
+        "e2e_overall_pass": 0.0,
+        "contract_pass": 1.0,
+        "intent_pass": 1.0,
+        "gap_pass": 1.0,
+        "retrieval_hit": 1.0,
+        "followup_pass": 1.0,
+        "finish_score_pass": 0.0,
+        "weak_tag_pass": 0.0
       }
     }
   ],
-  "end_to_end_estimate": 0.3135,
-  "bottleneck": "chunk_retrieval"
+  "end_to_end_estimate": 0.3385,
+  "bottleneck": "e2e_dialogue"
 }

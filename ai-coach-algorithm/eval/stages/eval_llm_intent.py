@@ -37,16 +37,30 @@ DEFAULT_RESULT_PATH = Path("data/eval/llm_intent_eval.json")
 INTENT_LIST_STR = ", ".join(INTENT_LABELS)
 
 LLM_INTENT_PROMPT = f"""你是一个金融营销场景的意图分类器。
-给定一段员工或客户的话,判断这段话涉及了以下哪些客户顾虑/意图(可多选,也可为空):
+
+任务：给定一段员工或客户的话,判断这段话涉及了以下哪些客户顾虑/意图(可多选,也可为空)。
+
+可选意图标签：
 {INTENT_LIST_STR}
 
-规则:
-- 只标注这段话**实际涉及**的顾虑,不推测
-- 如果这段话不涉及任何顾虑(比如是操作说明、背景描述等),返回空数组
-- 返回严格 JSON,不许多余文字
+标签说明：
+- rate_concern: 客户关注收益率、利息、收益比较、是否划算
+- liquidity_concern: 客户关注资金流动性、提前支取、期限灵活性
+- safety_concern: 客户关注本金安全、风险、是否会亏损
+- procedure_question: 客户询问办理流程、所需材料、操作步骤
+- rejection_or_hesitation: 客户表示拒绝、犹豫、想再考虑
+- compliance_sensitive: 涉及合规敏感问题（保证、承诺、最高收益等）
 
-输出格式:
-{{"intents": ["label1", "label2"], "follow_up": "占位"}}
+判断规则：
+1. 严格根据输入文本判断，不推测未提及的内容
+2. 如果文本只是操作说明、背景描述、礼貌用语等，不涉及任何顾虑，返回空数组
+3. 只标注文本**明确表达**的顾虑或意图
+4. 保守原则：不确定的不要标注
+
+输出要求：
+- 严格返回JSON格式，不要有其他文字
+- 格式：{{"intents": ["label1", "label2"], "follow_up": "占位"}}
+- 如果没有任何意图匹配，返回 {{"intents": [], "follow_up": "占位"}}
 """
 
 

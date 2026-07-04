@@ -83,8 +83,13 @@ def evaluate(
     candidate_recall_20: list[float] = []
     reranked_recall_3: list[float] = []
     reranked_recall_5: list[float] = []
+    reranked_recall_8: list[float] = []
+    reranked_recall_10: list[float] = []
+    context_hit_5: list[float] = []
+    context_hit_8: list[float] = []
     precision_3: list[float] = []
     precision_5: list[float] = []
+    precision_8: list[float] = []
     mrr_scores: list[float] = []
     ceiling_3: list[float] = []
     ceiling_10: list[float] = []
@@ -93,6 +98,9 @@ def evaluate(
     normalized_candidate_recall_20: list[float] = []
     normalized_reranked_recall_3: list[float] = []
     normalized_reranked_recall_5: list[float] = []
+    normalized_reranked_recall_8: list[float] = []
+    normalized_context_hit_5: list[float] = []
+    normalized_context_hit_8: list[float] = []
 
     errors: list[dict[str, Any]] = []
 
@@ -141,8 +149,14 @@ def evaluate(
         # Stage 2: Reranked/final metrics
         reranked_recall_3.append(recall_at_k(gold_ids, reranked_ids, k=3))
         reranked_recall_5.append(recall_at_k(gold_ids, reranked_ids, k=5))
+        reranked_recall_8.append(recall_at_k(gold_ids, reranked_ids, k=8))
+        reranked_recall_10.append(recall_at_k(gold_ids, reranked_ids, k=10))
+        # Context hit: whether gold appears anywhere in top-k (not just at-k)
+        context_hit_5.append(1.0 if any(g in reranked_ids[:5] for g in gold_set) else 0.0)
+        context_hit_8.append(1.0 if any(g in reranked_ids[:8] for g in gold_set) else 0.0)
         precision_3.append(precision_at_k(gold_ids, reranked_ids, k=3))
         precision_5.append(precision_at_k(gold_ids, reranked_ids, k=5))
+        precision_8.append(precision_at_k(gold_ids, reranked_ids, k=8))
         mrr_scores.append(mrr(gold_ids, reranked_ids))
 
         # Ceiling metrics - what's mathematically possible
@@ -158,6 +172,12 @@ def evaluate(
         normalized_candidate_recall_20.append(normalized_recall_at_k(gold_ids, candidate_ids, k=20))
         normalized_reranked_recall_3.append(normalized_recall_at_k(gold_ids, reranked_ids, k=3))
         normalized_reranked_recall_5.append(normalized_recall_at_k(gold_ids, reranked_ids, k=5))
+        normalized_reranked_recall_8.append(normalized_recall_at_k(gold_ids, reranked_ids, k=8))
+        # Normalized context hit
+        norm_hit_5 = 1.0 if any(g in reranked_ids[:5] for g in gold_set) else 0.0
+        norm_hit_8 = 1.0 if any(g in reranked_ids[:8] for g in gold_set) else 0.0
+        normalized_context_hit_5.append(norm_hit_5)
+        normalized_context_hit_8.append(norm_hit_8)
 
         # Error analysis: compare against the mathematical ceiling. A case with
         # 12 gold chunks and top3 returning 3 gold chunks is not a failure.
@@ -209,8 +229,13 @@ def evaluate(
     avg_candidate_recall_20 = sum(candidate_recall_20) / max(len(candidate_recall_20), 1)
     avg_reranked_recall_3 = sum(reranked_recall_3) / max(len(reranked_recall_3), 1)
     avg_reranked_recall_5 = sum(reranked_recall_5) / max(len(reranked_recall_5), 1)
+    avg_reranked_recall_8 = sum(reranked_recall_8) / max(len(reranked_recall_8), 1)
+    avg_reranked_recall_10 = sum(reranked_recall_10) / max(len(reranked_recall_10), 1)
+    avg_context_hit_5 = sum(context_hit_5) / max(len(context_hit_5), 1)
+    avg_context_hit_8 = sum(context_hit_8) / max(len(context_hit_8), 1)
     avg_precision_3 = sum(precision_3) / max(len(precision_3), 1)
     avg_precision_5 = sum(precision_5) / max(len(precision_5), 1)
+    avg_precision_8 = sum(precision_8) / max(len(precision_8), 1)
     avg_mrr = sum(mrr_scores) / max(len(mrr_scores), 1)
     avg_ceiling_3 = sum(ceiling_3) / max(len(ceiling_3), 1)
     avg_ceiling_10 = sum(ceiling_10) / max(len(ceiling_10), 1)
@@ -219,28 +244,40 @@ def evaluate(
     avg_normalized_candidate_recall_20 = sum(normalized_candidate_recall_20) / max(len(normalized_candidate_recall_20), 1)
     avg_normalized_reranked_recall_3 = sum(normalized_reranked_recall_3) / max(len(normalized_reranked_recall_3), 1)
     avg_normalized_reranked_recall_5 = sum(normalized_reranked_recall_5) / max(len(normalized_reranked_recall_5), 1)
+    avg_normalized_reranked_recall_8 = sum(normalized_reranked_recall_8) / max(len(normalized_reranked_recall_8), 1)
+    avg_normalized_context_hit_5 = sum(normalized_context_hit_5) / max(len(normalized_context_hit_5), 1)
+    avg_normalized_context_hit_8 = sum(normalized_context_hit_8) / max(len(normalized_context_hit_8), 1)
 
     # Per-route metrics
     by_route: dict[str, dict[str, Any]] = {}
-    for row, cr10, cr20, rr3, rr5, p3, p5, mr, c3, c10, c20, ncr10, ncr20, nrr3, nrr5 in zip(
-        rows, candidate_recall_10, candidate_recall_20, reranked_recall_3, reranked_recall_5,
-        precision_3, precision_5, mrr_scores, ceiling_3, ceiling_10, ceiling_20,
+    for row, cr10, cr20, rr3, rr5, rr8, ch5, ch8, p3, p5, p8, mr, c3, c10, c20, ncr10, ncr20, nrr3, nrr5, nrr8, nch5, nch8 in zip(
+        rows, candidate_recall_10, candidate_recall_20, reranked_recall_3, reranked_recall_5, reranked_recall_8,
+        context_hit_5, context_hit_8, precision_3, precision_5, precision_8, mrr_scores, ceiling_3, ceiling_10, ceiling_20,
         normalized_candidate_recall_10, normalized_candidate_recall_20,
-        normalized_reranked_recall_3, normalized_reranked_recall_5,
+        normalized_reranked_recall_3, normalized_reranked_recall_5, normalized_reranked_recall_8,
+        normalized_context_hit_5, normalized_context_hit_8,
     ):
         rt = row["route"]
         if rt not in by_route:
             by_route[rt] = {
-                "cr10_sum": 0, "cr20_sum": 0, "rr3_sum": 0, "rr5_sum": 0,
-                "p3_sum": 0, "p5_sum": 0, "mr_sum": 0, "c3_sum": 0, "c10_sum": 0, "c20_sum": 0,
-                "ncr10_sum": 0, "ncr20_sum": 0, "nrr3_sum": 0, "nrr5_sum": 0, "count": 0,
+                "cr10_sum": 0, "cr20_sum": 0, "rr3_sum": 0, "rr5_sum": 0, "rr8_sum": 0,
+                "ch5_sum": 0, "ch8_sum": 0,
+                "p3_sum": 0, "p5_sum": 0, "p8_sum": 0,
+                "mr_sum": 0, "c3_sum": 0, "c10_sum": 0, "c20_sum": 0,
+                "ncr10_sum": 0, "ncr20_sum": 0, "nrr3_sum": 0, "nrr5_sum": 0, "nrr8_sum": 0,
+                "nch5_sum": 0, "nch8_sum": 0,
+                "count": 0,
             }
         by_route[rt]["cr10_sum"] += cr10
         by_route[rt]["cr20_sum"] += cr20
         by_route[rt]["rr3_sum"] += rr3
         by_route[rt]["rr5_sum"] += rr5
+        by_route[rt]["rr8_sum"] += rr8
+        by_route[rt]["ch5_sum"] += ch5
+        by_route[rt]["ch8_sum"] += ch8
         by_route[rt]["p3_sum"] += p3
         by_route[rt]["p5_sum"] += p5
+        by_route[rt]["p8_sum"] += p8
         by_route[rt]["mr_sum"] += mr
         by_route[rt]["c3_sum"] += c3
         by_route[rt]["c10_sum"] += c10
@@ -249,6 +286,9 @@ def evaluate(
         by_route[rt]["ncr20_sum"] += ncr20
         by_route[rt]["nrr3_sum"] += nrr3
         by_route[rt]["nrr5_sum"] += nrr5
+        by_route[rt]["nrr8_sum"] += nrr8
+        by_route[rt]["nch5_sum"] += nch5
+        by_route[rt]["nch8_sum"] += nch8
         by_route[rt]["count"] += 1
 
     route_metrics = {}
@@ -259,8 +299,12 @@ def evaluate(
             "candidate_recall@20": round(d["cr20_sum"] / n, 4),
             "reranked_recall@3": round(d["rr3_sum"] / n, 4),
             "reranked_recall@5": round(d["rr5_sum"] / n, 4),
+            "reranked_recall@8": round(d["rr8_sum"] / n, 4),
+            "context_hit@5": round(d["ch5_sum"] / n, 4),
+            "context_hit@8": round(d["ch8_sum"] / n, 4),
             "precision@3": round(d["p3_sum"] / n, 4),
             "precision@5": round(d["p5_sum"] / n, 4),
+            "precision@8": round(d["p8_sum"] / n, 4),
             "mrr": round(d["mr_sum"] / n, 4),
             "ceiling@3": round(d["c3_sum"] / n, 4),
             "ceiling@10": round(d["c10_sum"] / n, 4),
@@ -269,6 +313,9 @@ def evaluate(
             "normalized_candidate_recall@20": round(d["ncr20_sum"] / n, 4),
             "normalized_reranked_recall@3": round(d["nrr3_sum"] / n, 4),
             "normalized_reranked_recall@5": round(d["nrr5_sum"] / n, 4),
+            "normalized_reranked_recall@8": round(d["nrr8_sum"] / n, 4),
+            "normalized_context_hit@5": round(d["nch5_sum"] / n, 4),
+            "normalized_context_hit@8": round(d["nch8_sum"] / n, 4),
             "count": d["count"],
         }
 
@@ -331,8 +378,13 @@ def evaluate(
         "candidate_recall@20": round(avg_candidate_recall_20, 4),
         "reranked_recall@3": round(avg_reranked_recall_3, 4),
         "reranked_recall@5": round(avg_reranked_recall_5, 4),
+        "reranked_recall@8": round(avg_reranked_recall_8, 4),
+        "reranked_recall@10": round(avg_reranked_recall_10, 4),
+        "context_hit@5": round(avg_context_hit_5, 4),
+        "context_hit@8": round(avg_context_hit_8, 4),
         "precision@3": round(avg_precision_3, 4),
         "precision@5": round(avg_precision_5, 4),
+        "precision@8": round(avg_precision_8, 4),
         "mrr": round(avg_mrr, 4),
         "ceiling@3": round(avg_ceiling_3, 4),
         "ceiling@10": round(avg_ceiling_10, 4),
@@ -341,6 +393,9 @@ def evaluate(
         "normalized_candidate_recall@20": round(avg_normalized_candidate_recall_20, 4),
         "normalized_reranked_recall@3": round(avg_normalized_reranked_recall_3, 4),
         "normalized_reranked_recall@5": round(avg_normalized_reranked_recall_5, 4),
+        "normalized_reranked_recall@8": round(avg_normalized_reranked_recall_8, 4),
+        "normalized_context_hit@5": round(avg_normalized_context_hit_5, 4),
+        "normalized_context_hit@8": round(avg_normalized_context_hit_8, 4),
         "by_route": route_metrics,
     }
     if verbose:

@@ -459,15 +459,136 @@ async def _next_customer_question(
                 "llm_intents": llm_result.get("intents") or [],
             }
 
-    # Template fallback (also used when AI_COACH_CUSTOMER_LLM=template).
-    if "compliance_sensitive" in set(intent.get("intent_labels", [])):
+    # Enhanced template fallback with gap-based selection
+    # Priority: compliance_sensitive > gap intents > retrieval-based > general
+    detected_labels = set(intent.get("intent_labels", []))
+
+    # 1. Compliance-sensitive gets highest priority
+    if "compliance_sensitive" in detected_labels:
         return {"follow_up": CUSTOMER_INTENT_PROBES["compliance_sensitive"], "llm_intents": None}
-    for label in gap_intents:
-        if label in CUSTOMER_INTENT_PROBES:
-            return {"follow_up": CUSTOMER_INTENT_PROBES[label], "llm_intents": None}
+
+    # 2. Use gap-based intelligent selection (not just first match)
+    # Prioritize gap intents that haven't been covered yet
+    if gap_intents:
+        # Try to find a gap intent with a specific probe
+        for label in gap_intents:
+            if label in CUSTOMER_INTENT_PROBES:
+                # Check if we just asked about this (avoid immediate repetition)
+                last_ai_msg = _get_last_ai_message(session.get("messages", []))
+                if not _is_asking_about_same_topic(last_ai_msg, label):
+                    return {"follow_up": CUSTOMER_INTENT_PROBES[label], "llm_intents": None}
+
+    # 3. Gap-based followup even without explicit probe templates
+    if gap_intents:
+        followup = _generate_gap_based_followup(gap_intents, covered_intents, employee_message)
+        if followup:
+            return {"follow_up": followup, "llm_intents": None}
+
+    # 4. Retrieval-aware fallback
     if retrieval_items:
-        return {"follow_up": "你说的这些我大概明白了，那我现在适合办吗？需要怎么弄？", "llm_intents": None}
+        # Try to extract a relevant question from retrieved content
+        for item in retrieval_items[:2]:
+            content = item.get("content", "")
+            if "怎么办" in content or "如何" in content:
+                return {"follow_up": "你说的这些我大概明白了，那我现在适合办吗？需要怎么弄？", "llm_intents": None}
+        return {"follow_up": "嗯，那具体怎么操作、需要什么材料？", "llm_intents": None}
+
+    # 5. General fallback
     return {"follow_up": "我明白了，那你建议我下一步怎么做？", "llm_intents": None}
+
+
+def _get_last_ai_message(messages: list[dict[str, Any]]) -> str:
+    """Get the last AI customer message from the message history."""
+    for msg in reversed(messages):
+        if msg.get("role") == "ai_customer":
+            return msg.get("content", "")
+    return ""
+
+
+def _is_asking_about_same_topic(last_ai_msg: str, intent_label: str) -> bool:
+    """Check if the last AI message was already asking about the same intent.
+
+    Avoids repetitive追问 on the same topic.
+    """
+    if not last_ai_msg:
+        return False
+
+    # Keyword overlap between last message and intent probe
+    probe = CUSTOMER_INTENT_PROBES.get(intent_label, "")
+    if not probe:
+        return False
+
+    # Simple check: if last message shares significant keywords with the probe
+    last_lower = last_ai_msg.lower()
+    probe_lower = probe.lower()
+
+    # Extract key content words (2+ characters)
+    last_words = {w for w in last_lower if len(w) >= 2}
+    probe_words = {w for w in probe_lower if len(w) >= 2}
+
+    if not probe_words:
+        return False
+
+    # If 40%+ overlap, consider it the same topic
+    overlap = last_words & probe_words
+    if overlap and len(overlap) / len(probe_words) >= 0.4:
+        return True
+
+    return False
+
+
+def _generate_gap_based_followup(
+    gap_intents: list[str],
+    covered_intents: list[str],
+    employee_message: str,
+) -> str:
+    """Generate an intelligent follow-up based on gap intents.
+
+    Creates contextual follow-ups even when no template exists.
+    """
+    if not gap_intents:
+        return ""
+
+    # Map gap intents to contextual follow-up patterns
+    gap_patterns = {
+        "rate_concern": [
+            "收益具体有多少呢？跟别的产品比怎么样？",
+            "那我到底能拿多少收益，能说清楚点吗？",
+        ],
+        "liquidity_concern": [
+            "那我中途要用钱怎么办？能随时取出来吗？",
+            "这个灵活性怎么样？急用钱的话会不会亏？",
+        ],
+        "safety_concern": [
+            "本金安全吗？有没有风险？",
+            "这产品会不会亏？风险大不大？",
+        ],
+        "procedure_question": [
+            "那怎么办、要带什么材料？",
+            "具体什么流程、怎么操作？",
+        ],
+        "rejection_or_hesitation": [
+            "我还是有点犹豫，为什么现在就要办？",
+            "能不能再想想、和家人商量一下？",
+        ],
+        "compliance_sensitive": [
+            "你刚才说的能不能写进合同、保证给我？",
+            "那能不能给我保证、达不到怎么办？",
+        ],
+    }
+
+    # Select follow-up for the first gap intent
+    for label in gap_intents:
+        if label in gap_patterns:
+            patterns = gap_patterns[label]
+            # Alternate between patterns for variety
+            import hashlib
+            hash_val = int(hashlib.md5(employee_message.encode()).hexdigest()[:8], 16)
+            idx = hash_val % len(patterns)
+            return patterns[idx]
+
+    # Generic gap-based fallback
+    return f"关于{'、'.join(gap_intents[:2])}这方面，能不能再说详细点？"
 
 
 def _feedback(score: dict[str, Any]) -> str:

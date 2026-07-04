@@ -392,3 +392,49 @@ print(build_marketing_vector_index(force=True, embedding_backend="hash", dimensi
 训练后模型放在 `models/bert_mini_intent/`，意图推理会自动从 keyword fallback 切到 BERT-mini（`analyze_customer_answer` 的 `bert_mini_available` 字段会变 `true`）。
 
 > 注意：标定脚本给出的最优阈值，需要手动回填到代码——意图覆盖阈值在 `app/core/coverage.py` 的 `update_covered_intents`，must_point 覆盖阈值在 `app/core/marketing_rag.py` 的 `TUTOR_MUST_POINT_THRESHOLD`。
+
+## 评测体系
+
+### E2E (端到端) 评测
+
+E2E 评测模拟完整的陪练对话流程，验证从 `start_dialogue` → 多轮 `reply_dialogue` → `finish_dialogue` 的整个链路。
+
+**运行方式：**
+
+```powershell
+# 完整评测（包括 E2E）
+.\.venv\Scripts\python.exe -m eval.run_all --stages all
+
+# 仅 E2E 评测
+.\.venv\Scripts\python.exe -m eval.stages.eval_e2e --sample-size 10 --verbose
+```
+
+**评测维度：**
+
+| 指标 | 说明 | 目标 |
+|------|------|------|
+| `contract_pass` | 接口契约符合性（reply 不返回 liveScore/source） | 100% |
+| `intent_pass` | 意图识别合理性 | > 80% |
+| `gap_pass` | 漏答项计算准确性 | > 90% |
+| `retrieval_hit` | RAG 上下文包含关键知识 | > 70% |
+| `followup_pass` | AI 客户追问方向符合预期 | > 75% |
+| `finish_score_pass` | 最终分数落在合理区间 | > 80% |
+| `weak_tag_pass` | 弱点标签命中相关性 | > 70% |
+| `e2e_overall_pass` | 综合通过率 | > 60% |
+
+详细文档：[docs/algorithms/08_e2e_evaluation.md](docs/algorithms/08_e2e_evaluation.md)
+
+### 单阶段评测
+
+```powershell
+# RAG 检索评测（含 recall@3/5/8, context_hit@5/8）
+.\.venv\Scripts\python.exe -m eval.stages.eval_retrieval --verbose
+
+# Must point 覆盖度评测（含 negative pattern 检测）
+.\.venv\Scripts\python.exe -m eval.stages.eval_must_point --verbose
+
+# LLM intent 检测评测
+.\.venv\Scripts\python.exe -m eval.stages.eval_llm_intent --sample 50
+```
+
+详细文档：[docs/algorithms/07_rag_evaluation.md](docs/algorithms/07_rag_evaluation.md)

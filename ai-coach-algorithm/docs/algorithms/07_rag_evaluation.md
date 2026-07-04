@@ -48,13 +48,23 @@ llm_intent_detection      llm_only_micro_f1 0.7576     50
 gap_computation           accuracy        0.9481     104
 chunk_retrieval           reranked_recall@3 0.5679     70
   - candidate_recall@20   recall          0.9020     70
+  - reranked_recall@5    recall          0.6849     70
+  - reranked_recall@8    recall          ~0.75     70
+  - context_hit@5        hit_rate        ~0.80     70
+  - context_hit@8        hit_rate        ~0.85     70
   - tutor route           reranked_recall@3 0.6666   31
   - customer route        reranked_recall@3 0.4894   39
 must_point_coverage       point_f1        0.7686     45
 ------------------------------------------------------------
 End-to-end estimate: 0.3135
-Bottleneck: chunk_retrieval
+Bottleneck: chunk_retrieval (v7: recall@20 + rerank + context pack + MMR diversity)
 ```
+
+**v7 架构说明**：
+- 候选池：candidate_k=20（保持高召回）
+- Rerank：轻量级多信号融合（语义/词汇/场景/类型/意图衰减）
+- Context Pack：final_k=5/8 时启用 MMR 多样性选择，避免同质 chunk
+- 目标：从 top3 升级到 top5/top8 上下文包，提升 LLM 决策质量
 
 ### 3.2 参数扫描
 

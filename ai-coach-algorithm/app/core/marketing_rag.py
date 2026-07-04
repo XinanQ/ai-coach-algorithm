@@ -15,8 +15,10 @@ from app.core.text_cleaner import clean_text, lexical_similarity
 # Default configuration for two-stage retrieval
 # Stage 1: Candidate retrieval pool size
 DEFAULT_CANDIDATE_POOL_SIZE = 20
-# Stage 2: Final top-N to return to LLM
+# Stage 2: Final top-N to return to LLM (can be overridden per call)
 DEFAULT_FINAL_TOP_K = 3
+# Context pack size for finish/tutor scoring (can be larger than reply)
+DEFAULT_CONTEXT_PACK_SIZE = 8
 
 # Lightweight rerank feature weights - route-specific
 RERANK_WEIGHTS = {
@@ -262,6 +264,115 @@ def _compress_must_points(must_points: list[str], max_length: int = 200) -> list
     return compressed
 
 
+def _mmr_diversity_rerank(
+    reranked: list[dict[str, Any]],
+    query: str,
+    lambda_: float = 0.5,
+    top_k: int = 8,
+) -> list[dict[str, Any]]:
+    """Maximal Marginal Relevance (MMR) diversity selection.
+
+    Balances relevance (rerank_score) with diversity (novelty) to avoid
+    returning redundant chunks. This helps when the candidate pool contains
+    multiple similar chunks.
+
+    Args:
+        reranked: Already reranked candidates with rerank_score
+        query: Original query for relevance comparison
+        lambda_: Trade-off between relevance (0) and diversity (1)
+                 0.7 means 70% relevance, 30% diversity
+        top_k: Number of diverse chunks to select
+
+    Returns:
+        Diversified top-k chunks
+    """
+    if not reranked or len(reranked) <= top_k:
+        return reranked
+
+    selected: list[dict[str, Any]] = []
+    remaining = list(reranked)
+
+    # Greedy MMR: iteratively pick the item that maximizes MMR score
+    while len(selected) < top_k and remaining:
+        best_score = -float("inf")
+        best_idx = -1
+        best_item = None
+
+        query_clean = clean_text(query)
+
+        for i, item in enumerate(remaining):
+            # Relevance score (normalized)
+            relevance = float(item.get("rerank_score", 0))
+
+            # Diversity: minimal similarity to already selected items
+            max_sim = 0.0
+            item_text = clean_text(item.get("content", ""))
+
+            for sel in selected:
+                sel_text = clean_text(sel.get("content", ""))
+                # Use lexical similarity as proxy for semantic similarity
+                sim = lexical_similarity(item_text, sel_text)
+                max_sim = max(max_sim, sim)
+
+            # MMR score: lambda * relevance - (1-lambda) * max_similarity
+            mmr_score = lambda_ * relevance - (1 - lambda_) * max_sim
+
+            if mmr_score > best_score:
+                best_score = mmr_score
+                best_idx = i
+                best_item = item
+
+        if best_item:
+            best_item["mmr_score"] = round(best_score, 4)
+            selected.append(best_item)
+            remaining.pop(best_idx)
+        else:
+            break
+
+    return selected
+
+
+def _build_context_pack(
+    reranked: list[dict[str, Any]],
+    target_size: int = 8,
+    diversity_lambda: float = 0.7,
+) -> list[dict[str, Any]]:
+    """Build a diverse context pack from reranked candidates.
+
+    Strategy:
+    - Take top 3-4 items directly (highest relevance)
+    - Use MMR to add diverse items for remaining slots
+    - Ensures coverage of different aspects (product info, process, compliance)
+
+    Args:
+        reranked: Reranked candidates
+        target_size: Desired context pack size
+        diversity_lambda: MMR lambda parameter
+
+    Returns:
+        Context pack of size target_size
+    """
+    if len(reranked) <= target_size:
+        return reranked
+
+    # Take top items directly (relevance priority)
+    direct_count = max(3, target_size // 2)
+    direct_items = reranked[:direct_count]
+
+    # Use MMR for remaining slots
+    remaining_count = target_size - direct_count
+    if remaining_count > 0:
+        diverse_items = _mmr_diversity_rerank(
+            reranked[direct_count:],
+            query="",
+            lambda_=diversity_lambda,
+            top_k=remaining_count,
+        )
+        return direct_items + diverse_items
+
+    return direct_items
+
+
 def _lightweight_rerank(
     candidates: list[dict[str, Any]],
     query: str,
@@ -491,14 +602,21 @@ def _retrieve_tutor_hyde(
         query_type_hint=query_type_hint, weights=None,  # Uses TUTOR_RERANK_WEIGHTS
     )
 
-    # Stage 3: Final selection
-    ranked = reranked[:final_k]
+    # Stage 3: Final selection with context pack diversity
+    # For tutor route with larger final_k, use diversity selection
+    if final_k > 3:
+        ranked = _build_context_pack(reranked, target_size=final_k, diversity_lambda=0.7)
+        selection_method = "mmr_context_pack"
+    else:
+        ranked = reranked[:final_k]
+        selection_method = "top_k_slice"
 
     trace: dict[str, Any] = {
-        "algorithm": "tutor_hyde_two_stage_v6",
+        "algorithm": "tutor_hyde_two_stage_v7",
         "architecture": {
             "stage1_candidate_pool_size": candidate_k,
             "stage2_rerank_algorithm": "lightweight_multisignal",
+            "stage3_selection_method": selection_method,
             "stage3_final_top_k": final_k,
         },
         "hyde": hyde,
@@ -707,14 +825,21 @@ def _retrieve_customer_intent_fusion(
         intent_labels=plan["intent_labels"],
     )
 
-    # Stage 3: Final selection
-    ranked = sorted(reranked, key=lambda item: item.get("rerank_score", 0), reverse=True)[:final_k]
+    # Stage 3: Final selection with context pack diversity
+    # For customer route, use diversity selection when final_k > 3
+    if final_k > 3:
+        ranked = _build_context_pack(reranked, target_size=final_k, diversity_lambda=0.65)
+        selection_method = "mmr_context_pack"
+    else:
+        ranked = sorted(reranked, key=lambda item: item.get("rerank_score", 0), reverse=True)[:final_k]
+        selection_method = "top_k_slice"
 
     trace = {
-        "algorithm": "customer_intent_two_stage_v6",
+        "algorithm": "customer_intent_two_stage_v7",
         "architecture": {
             "stage1_candidate_pool_size": candidate_k,
             "stage2_rerank_algorithm": "lightweight_multisignal_with_intent",
+            "stage3_selection_method": selection_method,
             "stage3_final_top_k": final_k,
         },
         "query_plan": plan,

@@ -14,8 +14,8 @@ from pathlib import Path
 from eval.metrics import StageResult
 from eval.report import build_report, format_ascii_table, save_report
 
-DEFAULT_STAGES = ["llm_intent", "gap", "retrieval", "must_point"]
-AVAILABLE_STAGES = ["intent", "llm_intent", "gap", "retrieval", "must_point"]
+DEFAULT_STAGES = ["llm_intent", "gap", "retrieval", "must_point", "e2e"]
+AVAILABLE_STAGES = ["intent", "llm_intent", "gap", "retrieval", "must_point", "e2e"]
 
 
 def _run_intent(verbose: bool = False) -> StageResult:
@@ -58,12 +58,18 @@ def _run_must_point(verbose: bool = False) -> StageResult:
     return evaluate(verbose=verbose)
 
 
+def _run_e2e(verbose: bool = False) -> StageResult:
+    from eval.stages.eval_e2e import evaluate
+    return evaluate(sample_size=10, verbose=verbose, skip_slow=False)
+
+
 RUNNERS = {
     "intent": _run_intent,
     "llm_intent": _run_llm_intent,
     "gap": _run_gap,
     "retrieval": _run_retrieval,
     "must_point": _run_must_point,
+    "e2e": _run_e2e,
 }
 
 
