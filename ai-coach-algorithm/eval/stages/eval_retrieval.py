@@ -14,6 +14,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from app.core.chroma_vector_store import MAX_QUERY_RESULTS
 from app.core.marketing_rag import retrieve_marketing_knowledge
 from eval.metrics import (
     StageResult,
@@ -90,6 +91,9 @@ def evaluate(
     precision_3: list[float] = []
     precision_5: list[float] = []
     precision_8: list[float] = []
+    final_context_recall: list[float] = []
+    final_context_precision: list[float] = []
+    final_context_hit: list[float] = []
     mrr_scores: list[float] = []
     ceiling_3: list[float] = []
     ceiling_10: list[float] = []
@@ -157,6 +161,9 @@ def evaluate(
         precision_3.append(precision_at_k(gold_ids, reranked_ids, k=3))
         precision_5.append(precision_at_k(gold_ids, reranked_ids, k=5))
         precision_8.append(precision_at_k(gold_ids, reranked_ids, k=8))
+        final_context_recall.append(recall_at_k(gold_ids, final_ids, k=final_k))
+        final_context_precision.append(precision_at_k(gold_ids, final_ids, k=final_k))
+        final_context_hit.append(1.0 if any(g in final_ids[:final_k] for g in gold_set) else 0.0)
         mrr_scores.append(mrr(gold_ids, reranked_ids))
 
         # Ceiling metrics - what's mathematically possible
@@ -208,7 +215,7 @@ def evaluate(
                     "candidate_top_10": candidate_ids[:10],
                     "candidate_top_20": candidate_ids[:20],
                     "reranked_top_10": reranked_ids[:10],
-                    "final_top_3": final_ids,
+                    "final_top_k": final_ids[:final_k],
                     "gold_in_candidate_10": gold_in_candidate_10,
                     "gold_in_candidate_20": gold_in_candidate_20,
                     "gold_in_final": gold_in_final,
@@ -236,6 +243,9 @@ def evaluate(
     avg_precision_3 = sum(precision_3) / max(len(precision_3), 1)
     avg_precision_5 = sum(precision_5) / max(len(precision_5), 1)
     avg_precision_8 = sum(precision_8) / max(len(precision_8), 1)
+    avg_final_context_recall = sum(final_context_recall) / max(len(final_context_recall), 1)
+    avg_final_context_precision = sum(final_context_precision) / max(len(final_context_precision), 1)
+    avg_final_context_hit = sum(final_context_hit) / max(len(final_context_hit), 1)
     avg_mrr = sum(mrr_scores) / max(len(mrr_scores), 1)
     avg_ceiling_3 = sum(ceiling_3) / max(len(ceiling_3), 1)
     avg_ceiling_10 = sum(ceiling_10) / max(len(ceiling_10), 1)
@@ -373,6 +383,7 @@ def evaluate(
             "candidate_k": candidate_k,
             "final_k": final_k,
             "fusion_weights": fusion_weights,
+            "max_query_results": MAX_QUERY_RESULTS,
         },
         "candidate_recall@10": round(avg_candidate_recall_10, 4),
         "candidate_recall@20": round(avg_candidate_recall_20, 4),
@@ -385,6 +396,9 @@ def evaluate(
         "precision@3": round(avg_precision_3, 4),
         "precision@5": round(avg_precision_5, 4),
         "precision@8": round(avg_precision_8, 4),
+        f"final_context_recall@{final_k}": round(avg_final_context_recall, 4),
+        f"final_context_precision@{final_k}": round(avg_final_context_precision, 4),
+        f"final_context_hit@{final_k}": round(avg_final_context_hit, 4),
         "mrr": round(avg_mrr, 4),
         "ceiling@3": round(avg_ceiling_3, 4),
         "ceiling@10": round(avg_ceiling_10, 4),

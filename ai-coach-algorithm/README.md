@@ -67,6 +67,7 @@ marketing_chunks.json
 ```powershell
 $env:AI_COACH_EMBEDDING_BACKEND="sentence_transformers"
 $env:AI_COACH_EMBEDDING_MODEL="BAAI/bge-small-zh-v1.5"
+$env:AI_COACH_CHROMA_MAX_QUERY_RESULTS="80"   # Chroma 单次召回上限；调低可换取更低延迟
 $env:AI_COACH_REDIS_URL="redis://localhost:6379/0"
 $env:AI_COACH_POSTGRES_DSN="postgresql://user:password@localhost:5432/ai_coach"
 $env:AI_COACH_SHORT_MEMORY_BACKEND="auto"

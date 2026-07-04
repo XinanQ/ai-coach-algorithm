@@ -203,8 +203,9 @@ return [label for label, score in ranked if score >= cutoff][:INTENT_MAX_LABELS]
 |---|---|
 | 导师侧融合权重(v5) | `marketing_rag.py:248` `_retrieve_tutor_hyde` (hyde=0.50, orig=0.25, kw=0.10, type=0.15) |
 | 客户侧融合权重(v3) | `marketing_rag.py:403` `_retrieve_customer_intent_fusion` (intent=0.55, orig=0.25, kw=0.10, overlap=0.05) |
-| 导师候选池大小 | `marketing_rag.py:254` `top_k * 10` (上限50) |
-| 客户候选池大小 | `marketing_rag.py:418` `top_k * 12` (上限60) |
+| 导师候选池大小 | `retrieve_marketing_knowledge(candidate_k=...)`；finish/eval 建议 40 |
+| 客户候选池大小 | `retrieve_marketing_knowledge(candidate_k=...)`；reply 默认 20 保持轻量 |
+| Chroma 单次查询上限 | `AI_COACH_CHROMA_MAX_QUERY_RESULTS`，默认 80 |
 | 场景优先加分 | `marketing_rag.py:284` `SCENE_PRIORITY_BOOST = 0.12`(tutor) / `0.10`(customer) |
 | HyDE 假设答案模板(无 must_points 时的兜底) | `marketing_rag.TUTOR_HYDE_PATTERNS` |
 | 客户意图扩展话术(用于 query 改写) | `marketing_rag.CUSTOMER_INTENT_EXPANSIONS` |
@@ -214,7 +215,7 @@ return [label for label, score in ranked if score >= cutoff][:INTENT_MAX_LABELS]
 | 意图选择的双阈值 | `marketing_rag.INTENT_ABS_FLOOR(0.08) / INTENT_REL_RATIO(0.50) / INTENT_MAX_LABELS(4)` |
 | 逐级评测 | `python -m eval.run_all --stages all` |
 | 参数扫描 | `python -m eval.sweep --stage intent --param abs_floor --min 0.05 --max 0.3` |
-| 检索 top_k | `retrieve_marketing_knowledge(top_k=3)` |
+| 检索返回数 | `retrieve_marketing_knowledge(final_k=...)`；`top_k` 仅作为旧兼容别名 |
 
 ## 7. 已知限制与待办
 
@@ -224,7 +225,7 @@ return [label for label, score in ranked if score >= cutoff][:INTENT_MAX_LABELS]
 | 中文 embedding 基线高(~0.3-0.4) | 已知 | 长期可考虑换 BGE-large-zh 或 m3e-large |
 | 客户侧关键词意图识别不灵敏 | 已知 | 当前 LLM 客户已直接读上下文,gap 仅作辅助,问题被绕开 |
 | Chroma PersistentClient 缓存致测试偶发 flaky | 已知 | 测试间清缓存,生产无影响 |
-| Gold标注过于宽泛导致理论天花板受限 | 已知 | 当前recall@3理论天花板0.5869,需重新标注 |
+| Gold标注过于宽泛导致理论天花板受限 | 已知 | 当前recall@3已达到理论天花板0.5869；后续需细化gold粒度 |
 | Customer route gold过多导致召回困难 | 已知 | 平均13个gold,需压缩标注范围 |
 
 ## 8. 失败回退

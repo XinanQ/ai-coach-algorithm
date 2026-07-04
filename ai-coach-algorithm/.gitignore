@@ -75,6 +75,7 @@ postgres_data/
 mock_db/mock_records.json
 mock_db/mock_dialog_sessions.json
 mock_db/longterm_memory.json
+mock_db/*.tmp
 mock_db/auto_filter_results.json
 mock_db/auto_update_history.json
 
@@ -95,3 +96,4 @@ mock_db/auto_update_history.json
 
 # Evaluation verbose output (temporary diagnostic files)
 data/eval/*_verbose_*.json
+eval_result.json

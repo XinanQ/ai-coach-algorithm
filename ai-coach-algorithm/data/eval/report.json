@@ -1,6 +1,6 @@
 {
-  "run_id": "eval_20260704_185841",
-  "timestamp": "2026-07-04T18:58:41.289809",
+  "run_id": "eval_20260705_012513",
+  "timestamp": "2026-07-05T01:25:13.434215",
   "stages": [
     {
       "stage": "llm_intent_detection",
@@ -51,57 +51,61 @@
     {
       "stage": "chunk_retrieval",
       "primary_metric": "reranked_recall@3",
-      "value": 0.5679,
+      "value": 0.5869,
       "gold_size": 70,
       "details": {
         "params": {
-          "candidate_k": 20,
-          "final_k": 3,
-          "fusion_weights": null
+          "candidate_k": 40,
+          "final_k": 8,
+          "fusion_weights": null,
+          "max_query_results": 80
         },
-        "candidate_recall@10": 0.8004,
-        "candidate_recall@20": 0.902,
-        "reranked_recall@3": 0.5679,
-        "reranked_recall@5": 0.6849,
-        "reranked_recall@8": 0.7693,
-        "reranked_recall@10": 0.8166,
+        "candidate_recall@10": 0.8558,
+        "candidate_recall@20": 0.9573,
+        "reranked_recall@3": 0.5869,
+        "reranked_recall@5": 0.7103,
+        "reranked_recall@8": 0.8059,
+        "reranked_recall@10": 0.8558,
         "context_hit@5": 1.0,
         "context_hit@8": 1.0,
-        "precision@3": 0.919,
-        "precision@5": 0.8771,
-        "precision@8": 0.8286,
-        "mrr": 0.9929,
+        "precision@3": 0.9429,
+        "precision@5": 0.9,
+        "precision@8": 0.8536,
+        "final_context_recall@8": 0.8059,
+        "final_context_precision@8": 0.8536,
+        "final_context_hit@8": 1.0,
+        "mrr": 1.0,
         "ceiling@3": 0.5869,
         "ceiling@10": 0.8558,
         "ceiling@20": 0.9573,
-        "normalized_candidate_recall@10": 0.9432,
-        "normalized_candidate_recall@20": 0.9448,
-        "normalized_reranked_recall@3": 0.9762,
-        "normalized_reranked_recall@5": 0.9714,
-        "normalized_reranked_recall@8": 0.9626,
+        "normalized_candidate_recall@10": 1.0,
+        "normalized_candidate_recall@20": 1.0,
+        "normalized_reranked_recall@3": 1.0,
+        "normalized_reranked_recall@5": 1.0,
+        "normalized_reranked_recall@8": 1.0,
         "normalized_context_hit@5": 1.0,
         "normalized_context_hit@8": 1.0,
         "by_route": {
           "tutor": {
-            "candidate_recall@10": 0.8197,
-            "candidate_recall@20": 0.8753,
-            "reranked_recall@3": 0.6666,
-            "reranked_recall@5": 0.7785,
-            "reranked_recall@8": 0.8308,
+            "candidate_recall@10": 0.9447,
+            "candidate_recall@20": 1.0,
+            "reranked_recall@3": 0.7096,
+            "reranked_recall@5": 0.8359,
+            "reranked_recall@8": 0.9135,
             "context_hit@5": 1.0,
             "context_hit@8": 1.0,
-            "precision@3": 0.8172,
-            "precision@5": 0.7226,
-            "precision@8": 0.6129,
-            "mrr": 0.9839,
+            "precision@3": 0.871,
+            "precision@5": 0.7742,
+            "precision@8": 0.6694,
+            "mrr": 1.0,
             "ceiling@3": 0.7096,
             "ceiling@10": 0.9447,
             "ceiling@20": 1.0,
-            "normalized_candidate_recall@10": 0.8718,
-            "normalized_candidate_recall@20": 0.8753,
-            "normalized_reranked_recall@3": 0.9462,
-            "normalized_reranked_recall@5": 0.9355,
-            "normalized_reranked_recall@8": 0.9155,
+            "normalized_candidate_recall@10": 1.0,
+            "normalized_candidate_recall@20": 1.0,
+            "normalized_reranked_recall@3": 1.0,
+            "normalized_reranked_recall@5": 1.0,
+            "normalized_reranked_recall@8": 1.0,
             "normalized_context_hit@5": 1.0,
             "normalized_context_hit@8": 1.0,
             "count": 31
@@ -142,34 +146,81 @@
         "params": {
           "threshold": 0.6,
           "kw_weight": 0.25,
-          "sem_weight": 0.75
+          "sem_weight": 0.75,
+          "calibration": "sentence_transformers_calibrated"
         },
         "point_precision": 0.7353,
         "point_recall": 0.9524,
         "point_f1": 0.8299,
-        "coverage_rate_mae": 0.0959
+        "coverage_rate_mae": 0.0959,
+        "quality_stats": {
+          "good": {
+            "count": 15,
+            "avg_case_f1": 0.838,
+            "point_precision": 0.7527,
+            "point_recall": 0.9333,
+            "point_f1": 0.8333
+          },
+          "partial": {
+            "count": 15,
+            "avg_case_f1": 0.8722,
+            "point_precision": 0.6977,
+            "point_recall": 1.0,
+            "point_f1": 0.8219
+          },
+          "poor": {
+            "count": 15,
+            "avg_case_f1": 0.0,
+            "point_precision": 0.0,
+            "point_recall": 0.0,
+            "point_f1": 0.0
+          }
+        },
+        "runtime_info": {
+          "embedding": {
+            "requested_backend": "sentence_transformers",
+            "requested_model": "BAAI/bge-small-zh-v1.5",
+            "active_backend": "sentence_transformers",
+            "active_model": "BAAI/bge-small-zh-v1.5",
+            "dimensions": 512,
+            "is_fallback": false,
+            "fallback_reason": null
+          }
+        }
       }
     },
     {
       "stage": "e2e_dialogue",
       "primary_metric": "e2e_overall_pass",
-      "value": 0.6,
+      "value": 0.7,
       "gold_size": 20,
       "details": {
         "total_cases": 20,
         "sample_size": null,
         "skip_slow": false,
-        "e2e_overall_pass": 0.6,
+        "e2e_overall_pass": 0.7,
+        "start_pass": 1.0,
         "contract_pass": 1.0,
         "intent_pass": 1.0,
         "gap_pass": 1.0,
         "retrieval_hit": 0.95,
         "followup_pass": 1.0,
-        "finish_score_pass": 0.7,
-        "weak_tag_pass": 0.85
+        "finish_score_pass": 0.8,
+        "weak_tag_pass": 0.9
       }
     }
   ],
-  "end_to_end_estimate": 0.2031,
-  "bottleneck": "chunk_retrieval"
+  "end_to_end_estimate": 0.2449,
+  "bottleneck": "chunk_retrieval",
+  "runtime_info": {
+    "embedding": {
+      "requested_backend": "sentence_transformers",
+      "requested_model": "BAAI/bge-small-zh-v1.5",
+      "active_backend": "sentence_transformers",
+      "active_model": "BAAI/bge-small-zh-v1.5",
+      "dimensions": 512,
+      "is_fallback": false,
+      "fallback_reason": null
+    }
+  }
 }

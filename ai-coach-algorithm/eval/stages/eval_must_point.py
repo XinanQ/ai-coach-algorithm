@@ -29,18 +29,34 @@ def load_gold(path: Path = GOLD_PATH) -> list[dict[str, Any]]:
 
 def evaluate(
     *,
-    threshold: float = 0.60,
-    kw_weight: float = 0.25,
-    sem_weight: float = 0.75,
+    threshold: float | None = None,
+    kw_weight: float | None = None,
+    sem_weight: float | None = None,
     gold_path: Path = GOLD_PATH,
     verbose: bool = False,
 ) -> StageResult:
     rows = load_gold(gold_path)
     adapter = get_embedding_adapter()
+    runtime_info = {"embedding": adapter.describe()}
+    active_backend = str(runtime_info["embedding"].get("active_backend"))
+    requested_backend = str(runtime_info["embedding"].get("requested_backend"))
+    using_hash = active_backend == "local_hash" or requested_backend in {"hash", "local_hash"}
+
+    if using_hash:
+        effective_threshold = 0.35 if threshold is None else threshold
+        effective_kw_weight = 0.40 if kw_weight is None else kw_weight
+        effective_sem_weight = 0.60 if sem_weight is None else sem_weight
+        calibration = "local_hash_calibrated"
+    else:
+        effective_threshold = 0.60 if threshold is None else threshold
+        effective_kw_weight = 0.25 if kw_weight is None else kw_weight
+        effective_sem_weight = 0.75 if sem_weight is None else sem_weight
+        calibration = "sentence_transformers_calibrated"
 
     all_tp = all_fp = all_fn = 0
     coverage_ae: list[float] = []
     errors: list[dict[str, Any]] = []
+    quality_totals: dict[str, dict[str, float]] = {}
 
     for row in rows:
         must_points = row["must_points"]
@@ -52,7 +68,9 @@ def evaluate(
 
         result = evaluate_coverage(
             dimensions, row["employee_answer"], adapter,
-            threshold=threshold, kw_weight=kw_weight, sem_weight=sem_weight,
+            threshold=effective_threshold,
+            kw_weight=effective_kw_weight,
+            sem_weight=effective_sem_weight,
         )
 
         pred_covered_idx = set(result["covered"])
@@ -72,6 +90,16 @@ def evaluate(
         all_tp += len(gold_covered_idx & pred_covered_idx)
         all_fp += len(pred_covered_idx - gold_covered_idx)
         all_fn += len(gold_covered_idx - pred_covered_idx)
+        quality = row.get("quality", "unknown")
+        stats = quality_totals.setdefault(
+            quality,
+            {"count": 0, "f1_sum": 0.0, "tp": 0, "fp": 0, "fn": 0},
+        )
+        stats["count"] += 1
+        stats["f1_sum"] += prf1["f1"]
+        stats["tp"] += len(gold_covered_idx & pred_covered_idx)
+        stats["fp"] += len(pred_covered_idx - gold_covered_idx)
+        stats["fn"] += len(gold_covered_idx - pred_covered_idx)
 
         gold_rate = len(gold_covered_idx) / max(len(must_points), 1)
         pred_rate = result["coverage_rate"]
@@ -91,27 +119,32 @@ def evaluate(
     f1 = 2 * precision * recall / max(precision + recall, 1e-8)
     mae = sum(coverage_ae) / max(len(coverage_ae), 1)
 
-    # Enhanced error analysis by quality
     quality_stats = {}
-    if verbose:
-        by_quality: dict[str, list[dict]] = {"good": [], "partial": [], "poor": []}
-        for err in errors:
-            quality = err.get("quality", "unknown")
-            if quality in by_quality:
-                by_quality[quality].append(err)
-
-        for qual, errs in by_quality.items():
-            if errs:
-                avg_f1 = sum(e["point_f1"] for e in errs) / len(errs)
-                quality_stats[f"{qual}_count"] = len(errs)
-                quality_stats[f"{qual}_avg_f1"] = round(avg_f1, 4)
+    for qual, stats in sorted(quality_totals.items()):
+        precision_q = stats["tp"] / max(stats["tp"] + stats["fp"], 1)
+        recall_q = stats["tp"] / max(stats["tp"] + stats["fn"], 1)
+        f1_q = 2 * precision_q * recall_q / max(precision_q + recall_q, 1e-8)
+        quality_stats[qual] = {
+            "count": int(stats["count"]),
+            "avg_case_f1": round(stats["f1_sum"] / max(stats["count"], 1), 4),
+            "point_precision": round(precision_q, 4),
+            "point_recall": round(recall_q, 4),
+            "point_f1": round(f1_q, 4),
+        }
 
     details: dict[str, Any] = {
-        "params": {"threshold": threshold, "kw_weight": kw_weight, "sem_weight": sem_weight},
+        "params": {
+            "threshold": effective_threshold,
+            "kw_weight": effective_kw_weight,
+            "sem_weight": effective_sem_weight,
+            "calibration": calibration,
+        },
         "point_precision": round(precision, 4),
         "point_recall": round(recall, 4),
         "point_f1": round(f1, 4),
         "coverage_rate_mae": round(mae, 4),
+        "quality_stats": quality_stats,
+        "runtime_info": runtime_info,
     }
     if verbose:
         details["errors"] = errors[:30]
@@ -130,9 +163,9 @@ def main() -> None:
     import argparse
 
     parser = argparse.ArgumentParser(description="Evaluate must-point coverage stage.")
-    parser.add_argument("--threshold", type=float, default=0.60)
-    parser.add_argument("--kw-weight", type=float, default=0.25)
-    parser.add_argument("--sem-weight", type=float, default=0.75)
+    parser.add_argument("--threshold", type=float)
+    parser.add_argument("--kw-weight", type=float)
+    parser.add_argument("--sem-weight", type=float)
     parser.add_argument("--verbose", action="store_true")
     parser.add_argument("--save-verbose", action="store_true", help="Save verbose errors to file")
     args = parser.parse_args()

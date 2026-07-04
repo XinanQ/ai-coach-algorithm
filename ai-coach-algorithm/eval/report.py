@@ -19,14 +19,22 @@ def build_report(results: list[StageResult], run_id: str | None = None) -> dict[
         e2e *= v
 
     bottleneck = min(results, key=lambda r: r.value).stage if results else "none"
+    runtime_info: dict[str, Any] = {}
+    for result in results:
+        stage_runtime = result.details.get("runtime_info")
+        if isinstance(stage_runtime, dict):
+            runtime_info.update(stage_runtime)
 
-    return {
+    report = {
         "run_id": run_id,
         "timestamp": datetime.now().isoformat(),
         "stages": stages,
         "end_to_end_estimate": round(e2e, 4) if values else None,
         "bottleneck": bottleneck,
     }
+    if runtime_info:
+        report["runtime_info"] = runtime_info
+    return report
 
 
 def format_ascii_table(report: dict[str, Any]) -> str:

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -15,6 +16,16 @@ VECTOR_ROOT = Path("data/vector_store")
 CHROMA_DIR = VECTOR_ROOT / "chroma"
 MANIFEST_PATH = VECTOR_ROOT / "marketing_vector_manifest.json"
 JSON_MIRROR_PATH = Path("data/marketing_vector_index.json")
+
+
+def _max_query_results() -> int:
+    try:
+        return max(20, int(os.getenv("AI_COACH_CHROMA_MAX_QUERY_RESULTS", "80")))
+    except ValueError:
+        return 80
+
+
+MAX_QUERY_RESULTS = _max_query_results()
 
 
 @dataclass(frozen=True)
@@ -201,9 +212,10 @@ class ChromaMarketingVectorStore:
         where: dict[str, Any] | None = None,
     ) -> list[dict[str, Any]]:
         collection = self.client.get_collection(name=collection_name)
+        collection_count = max(1, int(collection.count()))
         kwargs: dict[str, Any] = {
             "query_embeddings": [adapter.embed_query(query_text)],
-            "n_results": max(1, min(top_k, 20)),
+            "n_results": max(1, min(int(top_k), MAX_QUERY_RESULTS, collection_count)),
             "include": ["documents", "metadatas", "distances"],
         }
         if where:

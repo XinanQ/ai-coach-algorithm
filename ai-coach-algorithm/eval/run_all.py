@@ -45,7 +45,9 @@ def _run_retrieval(verbose: bool = False) -> StageResult:
         print("Retrieval gold not found. Generating...")
         from eval.gold_builder.build_retrieval_gold import save
         save()
-    return evaluate(verbose=verbose)
+    # Match the production finish path: recall a wider pool, rerank locally,
+    # and pass a compact context pack to the scorer LLM.
+    return evaluate(candidate_k=40, final_k=8, verbose=verbose)
 
 
 def _run_must_point(verbose: bool = False) -> StageResult:

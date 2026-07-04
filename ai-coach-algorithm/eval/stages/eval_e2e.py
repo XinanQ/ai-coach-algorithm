@@ -132,6 +132,7 @@ def evaluate(
 def _analyze_failures_by_stage(failures: list[dict[str, Any]]) -> dict[str, int]:
     """Count which stages failed most often."""
     stage_failures = {
+        "start_pass": 0,
         "contract_pass": 0,
         "intent_pass": 0,
         "gap_pass": 0,

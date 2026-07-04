@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import tempfile
 import uuid
 from datetime import datetime
 from pathlib import Path
@@ -61,6 +62,25 @@ class E2EEvaluator:
         self.skip_slow = skip_slow
         self.verbose = verbose
         self.session_id: str | None = None
+        self.run_id = f"e2e_{uuid.uuid4().hex[:8]}"
+        self._tempdir = tempfile.TemporaryDirectory(prefix=f"ai_coach_{self.run_id}_")
+        self._install_isolated_memory()
+
+    def _install_isolated_memory(self) -> None:
+        """Use per-run JSON memory so E2E cannot corrupt local dev state."""
+        from app.core import memory_manager as memory_manager_module
+        from app.core.memory_manager import MemoryManager
+        from app.core.memory_store import BackendState, JsonLongTermMemoryStore, JsonShortTermMemoryStore
+
+        temp_root = Path(self._tempdir.name)
+        short_store = JsonShortTermMemoryStore(str(temp_root / "sessions.json"))
+        long_store = JsonLongTermMemoryStore(str(temp_root / "longterm.json"))
+        short_store.state = BackendState(requested_backend="json", active_backend="json", available=True)  # type: ignore[attr-defined]
+        long_store.state = BackendState(requested_backend="json", active_backend="json", available=True)  # type: ignore[attr-defined]
+        memory_manager_module._MEMORY_MANAGER = MemoryManager(
+            short_store=short_store,
+            long_store=long_store,
+        )
 
     def evaluate_case(self, case: dict[str, Any]) -> dict[str, Any]:
         """Evaluate a single E2E case.
@@ -81,6 +101,8 @@ class E2EEvaluator:
         start_result = self._evaluate_start(case)
         result["start_pass"] = start_result["pass"]
         result["start_trace"] = start_result.get("trace", {})
+        if "error" in start_result:
+            result["start_trace"]["error"] = start_result["error"]
 
         # Stage 2: Multi-round reply with intent/gap/retrieval validation
         reply_results = []
@@ -108,7 +130,8 @@ class E2EEvaluator:
 
         # Overall pass: all stages must pass
         result["overall_pass"] = (
-            result["contract_pass"]
+            result["start_pass"]
+            and result["contract_pass"]
             and result["intent_pass"]
             and result["gap_pass"]
             and result["retrieval_hit"]
@@ -142,6 +165,7 @@ class E2EEvaluator:
                 "trace": {
                     "session_id": self.session_id,
                     "opening": start_result.get("ai_customer_message", "")[:100],
+                    "run_id": self.run_id,
                 },
             }
         except Exception as e:
@@ -423,6 +447,8 @@ class E2EEvaluator:
         - Items contain relevant content (keyword overlap with must_points OR
           expected_followup_direction OR intent relevance)
 
+        Enhanced: Add synonym mapping for common business terms.
+
         Returns dict with pass, method, reason, and trace details.
         """
         items = retrieval.get("items", [])
@@ -447,46 +473,78 @@ class E2EEvaluator:
             result["reason"] = "no_expected_must_points"
             return result
 
-        # Extract keywords from must_points for Chinese matching
-        # For Chinese text, we use the whole point as a keyword or extract 2-4 char chunks
-        must_point_keywords = set()
+        # Synonym mapping for common business terms. Core terms are strong
+        # evidence; expanded terms are useful but should not pass alone when
+        # they are too generic.
+        synonym_map = {
+            "合规": ["合规", "监管", "规定", "规范", "边界", "红线"],
+            "风险": ["风险", "亏损", "波动", "不确定", "本金"],
+            "流动性": ["流动性", "退保", "现金价值", "犹豫期", "可取", "支取"],
+            "费用": ["费用", "缴费", "保费", "费率", "交费"],
+            "收益": ["收益", "回报", "分红", "利率", "利息"],
+            "共情": ["共情", "理解", "顾虑", "担心", "认可", "尊重"],
+            "理解": ["理解", "明白", "认可", "认同", "顾虑"],
+            "需求": ["需求", "风险承受", "期限", "偏好", "确认", "了解"],
+            "办理": ["办理", "流程", "手续", "材料", "操作", "下一步"],
+            "引导": ["引导", "建议", "指导", "方案", "邀约"],
+            "异议": ["异议", "拒绝", "犹豫", "顾虑", "解决方案"],
+            "产品": ["产品", "保障", "功能", "条款", "介绍"],
+        }
+        generic_terms = {
+            "客户", "您", "可能", "说明", "介绍", "解释", "告知", "确认",
+            "相关", "具体", "问题", "情况", "进行", "可以", "需要",
+        }
+
+        # Expand keywords with synonyms.
+        core_keywords = set()
+        expanded_keywords = set()
         for point in expected_must_points:
-            # Add the whole point as a keyword for exact match
             if point:
-                must_point_keywords.add(point)
-            # Extract 2-4 character chunks for partial matching
-            for i in range(len(point) - 1):
-                for chunk_len in [2, 3, 4]:
-                    if i + chunk_len <= len(point):
-                        chunk = point[i:i + chunk_len]
-                        # Skip very common Chinese characters
-                        if chunk not in {"的", "了", "是", "有", "在", "不", "个", "很"}:
-                            must_point_keywords.add(chunk)
+                expanded_keywords.add(point)
+                # Extract 2-4 char chunks
+                for i in range(len(point) - 1):
+                    for chunk_len in [2, 3, 4]:
+                        if i + chunk_len <= len(point):
+                            chunk = point[i:i + chunk_len]
+                            # Skip very common characters
+                            if chunk not in {"的", "了", "是", "有", "在", "不", "个", "很"}:
+                                expanded_keywords.add(chunk)
+                                # Add synonyms
+                                for base_term, synonyms in synonym_map.items():
+                                    if base_term in point or base_term in chunk:
+                                        core_keywords.update(synonyms)
+                                        expanded_keywords.update(synonyms)
 
         # Filter to only meaningful keywords (2+ chars)
-        must_point_keywords = {kw for kw in must_point_keywords if len(kw) >= 2}
+        expanded_keywords = {kw for kw in expanded_keywords if len(kw) >= 2 and kw not in generic_terms}
+        core_keywords = {kw for kw in core_keywords if len(kw) >= 2 and kw not in generic_terms}
+        if not core_keywords:
+            core_keywords = {kw for kw in expanded_keywords if len(kw) >= 3}
 
-        # Check top-5 items for keyword matches
+        # Check top-5 items. A pass needs either one core hit or at least two
+        # expanded hits, avoiding overly broad single-token matches.
         for rank, item in enumerate(items[:5], 1):
             content = item.get("content", "").lower()
             title = item.get("metadata", {}).get("title", "").lower()
             combined_text = content + " " + title
 
-            matched_keywords = []
-            for kw in must_point_keywords:
-                if kw in combined_text:
-                    matched_keywords.append(kw)
-                    # Early exit on first match for performance
-                    result["pass"] = True
-                    result["reason"] = f"matched_keywords_at_rank_{rank}"
-                    result["trace"]["matched_keywords"] = matched_keywords[:5]  # Limit output
-                    result["trace"]["match_rank"] = rank
-                    result["trace"]["all_extracted_keywords"] = list(must_point_keywords)[:10]  # Show extracted keywords
-                    return result
+            matched_core = sorted(kw for kw in core_keywords if kw in combined_text)
+            matched_expanded = sorted(kw for kw in expanded_keywords if kw in combined_text)
+
+            if matched_core or len(matched_expanded) >= 2:
+                result["pass"] = True
+                result["reason"] = f"matched_keywords_at_rank_{rank}"
+                result["trace"]["matched_core_keywords"] = matched_core[:5]
+                result["trace"]["matched_expanded_keywords"] = matched_expanded[:8]
+                result["trace"]["match_rank"] = rank
+                result["trace"]["core_keywords"] = list(core_keywords)[:10]
+                result["trace"]["all_extracted_keywords"] = list(expanded_keywords)[:10]
+                return result
 
         # If expected_must_points is non-empty but no matches found, FAIL
-        result["reason"] = f"expected_must_points_not_found: {list(must_point_keywords)[:5]}"
-        result["trace"]["all_extracted_keywords"] = list(must_point_keywords)[:10]
+        result["reason"] = f"expected_must_points_not_found: {list(expanded_keywords)[:5]}"
+        result["trace"]["missing_core_keywords"] = list(core_keywords)[:10]
+        result["trace"]["all_extracted_keywords"] = list(expanded_keywords)[:10]
         return result
 
     def _validate_followup(
@@ -679,6 +737,7 @@ class E2EEvaluator:
 
         # Check each stage
         stages_to_check = [
+            ("start_pass", "Dialogue Start"),
             ("contract_pass", "Contract Compliance"),
             ("intent_pass", "Intent Detection"),
             ("gap_pass", "Gap Computation"),
@@ -712,8 +771,11 @@ class E2EEvaluator:
         if stage_key == "contract_pass":
             # Check if liveScore or source appeared
             for i, reply in enumerate(result.get("reply_results", [])):
-                if not reply.get("contract_pass", False):
+                if "contract_pass" in reply and not reply.get("contract_pass", False):
                     details[f"round_{i}"] = "Contract violation detected"
+
+        elif stage_key == "start_pass":
+            details = result.get("start_trace", {})
 
         elif stage_key == "retrieval_hit":
             # Show retrieval failures
@@ -784,6 +846,7 @@ def compute_e2e_metrics(results: list[dict[str, Any]]) -> dict[str, Any]:
     if not results:
         return {
             "e2e_overall_pass": 0.0,
+            "start_pass": 0.0,
             "contract_pass": 0.0,
             "intent_pass": 0.0,
             "gap_pass": 0.0,
@@ -800,6 +863,7 @@ def compute_e2e_metrics(results: list[dict[str, Any]]) -> dict[str, Any]:
 
     return {
         "e2e_overall_pass": round(pass_rate("overall_pass"), 4),
+        "start_pass": round(pass_rate("start_pass"), 4),
         "contract_pass": round(pass_rate("contract_pass"), 4),
         "intent_pass": round(pass_rate("intent_pass"), 4),
         "gap_pass": round(pass_rate("gap_pass"), 4),

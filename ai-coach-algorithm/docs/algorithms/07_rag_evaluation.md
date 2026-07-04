@@ -21,8 +21,8 @@ RAG 链路上每个环节的误差会级联放大。即使每步准确率 90%,�
 |---|------|------|----------|---------|--------|
 | 1 | 意图检测 | 客户路 | 193 行(人工标注) | micro_f1 | **0.7576** |
 | 2 | Gap 计算 | 客户路 | 104 行(半自动) | accuracy | **0.9481** |
-| 3 | Chunk 检索 | 双路 | 70 行(自动生成) | reranked_recall@3 | **0.5679**(candidate_recall@20=0.9020) |
-| 4 | Must-Point 覆盖 | 导师路 | 45 行(半自动) | point_f1 | **0.7686** |
+| 3 | Chunk 检索 | 双路 | 70 行(自动生成) | reranked_recall@3 | **0.5869**(candidate_recall@20=0.9573) |
+| 4 | Must-Point 覆盖 | 导师路 | 45 行(半自动) | point_f1 | **0.8299** |
 
 ## 3. 使用方法
 
@@ -46,22 +46,21 @@ Stage                     Metric          Value      Gold Size
 ------------------------------------------------------------
 llm_intent_detection      llm_only_micro_f1 0.7576     50
 gap_computation           accuracy        0.9481     104
-chunk_retrieval           reranked_recall@3 0.5679     70
-  - candidate_recall@20   recall          0.9020     70
-  - reranked_recall@5    recall          0.6849     70
-  - reranked_recall@8    recall          ~0.75     70
-  - context_hit@5        hit_rate        ~0.80     70
-  - context_hit@8        hit_rate        ~0.85     70
-  - tutor route           reranked_recall@3 0.6666   31
+chunk_retrieval           reranked_recall@3 0.5869     70
+  - candidate_recall@20   recall          0.9573     70
+  - reranked_recall@5    recall          0.7103     70
+  - reranked_recall@8    recall          0.8059     70
+  - final_context_hit@8  hit_rate        1.0000     70
+  - tutor route           reranked_recall@3 0.7096   31
   - customer route        reranked_recall@3 0.4894   39
-must_point_coverage       point_f1        0.7686     45
+must_point_coverage       point_f1        0.8299     45
 ------------------------------------------------------------
 End-to-end estimate: 0.3135
 Bottleneck: chunk_retrieval (v7: recall@20 + rerank + context pack + MMR diversity)
 ```
 
 **v7 架构说明**：
-- 候选池：candidate_k=20（保持高召回）
+- 候选池：candidate_k=20/40（reply 保持轻量,finish/eval 使用更宽候选池）
 - Rerank：轻量级多信号融合（语义/词汇/场景/类型/意图衰减）
 - Context Pack：final_k=5/8 时启用 MMR 多样性选择，避免同质 chunk
 - 目标：从 top3 升级到 top5/top8 上下文包，提升 LLM 决策质量
@@ -181,30 +180,32 @@ query
 | 参数 | 导师侧 | 客户侧 |
 |------|--------|--------|
 | Fusion Weights | hyde_semantic=0.50, original_semantic=0.25, keyword_overlap=0.10, type_boost=0.15 | intent_semantic=0.55, original_semantic=0.25, keyword_recall=0.10, keyword_overlap=0.05, intent_match=0.05 |
-| **final_k** | **3** (返回给LLM的数量) | **3** |
-| **candidate_k** | **20** (内部候选池,可自适应调整) | **20** |
+| **final_k** | reply=5 / finish=8 / eval=8 | reply=5 / eval=8 |
+| **candidate_k** | 20-40 (内部候选池,可自适应调整) | 20-40 |
 | Tutor Rerank Weights | semantic=0.35, lexical=0.15, scene=0.25, type=0.15, rank=0.10 | - |
 | Customer Rerank Weights | - | semantic=0.45, lexical=0.15, scene=0.15, type=0.05, intent=0.10, rank=0.10 |
 | eval_mode | False (生产) / True (评估) | False (生产) / True (评估) |
 
 **参数语义说明(v7)**:
-- `final_k`: 最终返回给LLM的chunk数量,默认3。生产调用时只返回final_k条,不增加LLM token成本。
-- `candidate_k`: 内部候选池大小,默认20。用于第一阶段召回,影响reranker输入质量。
+- `final_k`: 最终返回给LLM的chunk数量。reply 默认 5,finish 默认 8,避免模拟客户回复被过多上下文拖慢。
+- `candidate_k`: 内部候选池大小,默认20,finish/eval 可提升到40。用于第一阶段召回,影响reranker输入质量,不会直接增加 LLM token。
+- `AI_COACH_CHROMA_MAX_QUERY_RESULTS`: 底层 Chroma 单次查询上限,默认80,用于让 recall20/40 候选池真正生效。
 - `eval_mode`: 评估模式下设为True,返回完整候选池和reranked结果用于分析。
 
 **当前瓶颈分析(v7评估结果)**:
 - **总体**:
-  - candidate_recall@20: **0.9020** (候选池找到 90%)
-  - reranked_recall@3: **0.5679** (最终 top3 召回 57%)
+  - candidate_recall@20: **0.9573** (候选池找到 95.7%)
+  - reranked_recall@3: **0.5869** (最终 top3 召回达到数学上限)
+  - final_context_hit@8: **1.0000** (给 LLM 的 top8 context pack 至少命中一个 gold chunk)
   - ceiling@3: 0.5869 (数学天花板)
-  - normalized_reranked_recall@3: **0.9762** (达到天花板的 97.6%)
+  - normalized_reranked_recall@3: **1.0000** (达到天花板的 100%)
 
 - **Tutor route**:
-  - candidate_recall@20: **0.8753** (候选池找到 88%)
-  - reranked_recall@3: **0.6666** (最终 top3 召回 67%)
+  - candidate_recall@20: **1.0000** (候选池找到 100%)
+  - reranked_recall@3: **0.7096** (最终 top3 达到数学上限)
   - ceiling@3: 0.7096 (数学天花板)
-  - normalized_reranked_recall@3: **0.9462** (达到天花板的 94.6%)
-  - **Reranker 损失约 24%** (0.8753 → 0.6666)
+  - normalized_reranked_recall@3: **1.0000** (达到天花板的 100%)
+  - **Reranker 损失已清零** (top3 达到当前 gold 标注下的数学上限)
 
 - **Customer route**:
   - candidate_recall@20: **0.9233** (候选池找到 92%)
@@ -308,11 +309,11 @@ query
    - 候选池计算不影响最终返回大小
 
 **当前评估结果(v7)**:
-- **总体**: candidate_recall@20=0.9020, reranked_recall@3=0.5679, normalized_reranked_recall@3=0.9762
-- **Tutor**: candidate_recall@20=0.8753, reranked_recall@3=0.6666, normalized_reranked_recall@3=0.9462
+- **总体**: candidate_recall@20=0.9573, reranked_recall@3=0.5869, normalized_reranked_recall@3=1.0000, final_context_hit@8=1.0000
+- **Tutor**: candidate_recall@20=1.0000, reranked_recall@3=0.7096, normalized_reranked_recall@3=1.0000
 - **Customer**: candidate_recall@20=0.9233, reranked_recall@3=0.4894, normalized_reranked_recall@3=1.0
 - **瓶颈分析**:
-  - Tutor route: reranker损失约24% (0.8753 → 0.6666)
+  - Tutor route: 已达到当前 gold 标注下的 top3 理论天花板
   - Customer route: 已达数学天花板,recall@3=0.4894即为理论上限
 
 ### v8评估口径修正与Must-Point校准(2026-07-03)
@@ -327,9 +328,9 @@ query
 **当前主报告**:
 - llm_intent_detection: llm_only_micro_f1=0.7576
 - gap_computation: accuracy=0.9481
-- chunk_retrieval: reranked_recall@3=0.5679, candidate_recall@20=0.9020
-- must_point_coverage: point_f1=0.7686, precision=0.7097, recall=0.8381
-- end_to_end_estimate=0.3135, bottleneck=chunk_retrieval
+- chunk_retrieval: reranked_recall@3=0.5869, candidate_recall@20=0.9573, final_context_hit@8=1.0000
+- must_point_coverage: point_f1=0.8299, precision=0.7353, recall=0.9524
+- end_to_end_estimate=0.2449, bottleneck=chunk_retrieval（raw recall@3 受理论天花板限制）
 
 ## 6. 文件结构
 
@@ -417,8 +418,8 @@ data/eval/
 
 ### 方向2: 优化候选召回 (中优先级)
 
-**当前状态**: candidate_recall@20=0.9020 (总体),仍有优化空间
-- Tutor: candidate_recall@20=0.8753 (87.5%)
+**当前状态**: candidate_recall@20=0.9573 (总体),top3 已达到当前 gold 标注下的理论天花板
+- Tutor: candidate_recall@20=1.0000 (100%)
 - Customer: candidate_recall@20=0.9233 (92.3%)
 
 **优化策略**:
@@ -427,7 +428,7 @@ data/eval/
 3. **添加更多召回源**: 如BM25、混合检索
 4. **场景特化**: 高gold场景使用更大候选池
 
-**预期收益**: candidate_recall@20提升至0.95+,可能带来reranked_recall@3提升1-3%
+**预期收益**: 当前已达到 candidate_recall@20=0.95+；后续更适合优化 gold 标注粒度、E2E 评分稳定性和真实业务 case 覆盖。
 
 ### 方向3: 动态调整候选池大小 (中优先级)
 

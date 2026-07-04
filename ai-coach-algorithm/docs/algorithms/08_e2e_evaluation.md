@@ -52,6 +52,24 @@ E2E 评测分为多个可解释的子指标：
 | `weak_tag_pass` | 弱点标签命中相关性（expected_weak_tags 非空时必须检测到标签） | > 70% |
 | `e2e_overall_pass` | 综合通过（所有子指标通过） | 目标 > 60% |
 
+### 当前基线（2026-07-05）
+
+当前完整评估通过 `python -m eval.run_all --stages all` 生成，E2E 阶段结果如下：
+
+| 指标 | 当前值 |
+|------|--------|
+| `e2e_overall_pass` | 0.70 |
+| `start_pass` | 1.00 |
+| `contract_pass` | 1.00 |
+| `intent_pass` | 1.00 |
+| `gap_pass` | 1.00 |
+| `retrieval_hit` | 0.95 |
+| `followup_pass` | 1.00 |
+| `finish_score_pass` | 0.80 |
+| `weak_tag_pass` | 0.90 |
+
+E2E evaluator 使用每次运行独立的临时 JSON memory，避免读写 `mock_db/mock_dialog_sessions.json` 等本地开发状态，降低历史 session 或并发运行造成的评估波动。`start_pass` 已纳入 overall 计算，确保 start 阶段失败不会被隐藏为后续 finish 失败。
+
 ### 评测规则更新（2026-07-04）
 
 #### retrieval_hit 收紧规则
