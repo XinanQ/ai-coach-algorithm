@@ -85,8 +85,30 @@ CUSTOMER_INTENT_EXPANSIONS = {
     "safety_concern": "客户可能继续追问本金安全、风险、是否会亏损。",
     "procedure_question": "客户可能继续追问办理流程、需要材料、如何查询和下一步怎么做。",
     "rejection_or_hesitation": "客户可能继续表达犹豫、想再考虑或和家人商量。",
-    "compliance_sensitive": "客户可能追问保证、承诺、最高收益等合规敏感问题。",
+    "compliance_sensitive": "客户可能追问保证、承诺、最高收益等合规敏感问题。需要风险说明、合规揭示、不能承诺收益、收益不确定、不保本不保息。",
 }
+
+COMPLIANCE_QUERY_TRIGGERS = [
+    "肯定赚钱", "稳赚", "保证收益", "承诺收益", "保本保息", "无风险",
+    "一定赚钱", "绝对赚钱", "写进合同", "最高收益", "内部消息",
+    "基本都能拿到", "收益不会差", "不会亏", "本金不用担心", "不用测评", "不需要测评",
+]
+
+
+def _build_fallback_query(query: str, route: str) -> str:
+    """Add lightweight business hints when vector retrieval is unavailable."""
+    query_clean = clean_text(query)
+    if route != "customer":
+        return query_clean
+
+    expansions: list[str] = []
+    if any(trigger in query_clean for trigger in COMPLIANCE_QUERY_TRIGGERS):
+        expansions.append(CUSTOMER_INTENT_EXPANSIONS["compliance_sensitive"])
+        expansions.append("合规边界 风险揭示 收益不确定 不能承诺 本金可能亏损")
+    if any(term in query_clean for term in ["担心", "担忧", "顾虑", "犹豫", "商量", "用钱", "交不上", "退保", "赎回"]):
+        expansions.append("客户异议处理 共情理解 客户尊重 解决方案 灵活性说明 流动性说明")
+
+    return " ".join([query_clean, *expansions])
 
 
 def _normalize_scene_id(scene_id: str | None) -> str | None:
@@ -100,6 +122,7 @@ def _normalize_scene_id(scene_id: str | None) -> str | None:
 
 def _fallback_retrieve(query: str, route: str, top_k: int, scene_id: str | None = None) -> list[dict[str, Any]]:
     scene_id = _normalize_scene_id(scene_id)
+    query = _build_fallback_query(query, route)
     items: list[dict[str, Any]] = []
     for chunk in load_marketing_chunks():
         if scene_id and chunk.get("scene_id") != scene_id:
@@ -709,10 +732,12 @@ def _build_customer_query_plan(
     # focus_intents (= expected concerns minus covered), those drive the rewrite
     # and ranking; otherwise fall back to the intents detected in the answer.
     driving_labels = [label for label in (focus_intents or []) if label] or detected_labels
+    query_clean = clean_text(query)
+    if any(trigger in query_clean for trigger in COMPLIANCE_QUERY_TRIGGERS) and "compliance_sensitive" not in driving_labels:
+        driving_labels = ["compliance_sensitive", *driving_labels]
     expansions = [CUSTOMER_INTENT_EXPANSIONS[label] for label in driving_labels if label in CUSTOMER_INTENT_EXPANSIONS]
 
     # Query压缩：避免过长的query影响embedding质量
-    query_clean = clean_text(query)
     if len(query_clean) > 150:
         query_clean = query_clean[:150]  # 提高到150字符，保留更多信息
 

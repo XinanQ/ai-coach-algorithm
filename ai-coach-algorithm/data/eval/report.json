@@ -1,6 +1,6 @@
 {
-  "run_id": "eval_20260705_012513",
-  "timestamp": "2026-07-05T01:25:13.434215",
+  "run_id": "eval_20260705_111054",
+  "timestamp": "2026-07-05T11:10:54.620058",
   "stages": [
     {
       "stage": "llm_intent_detection",
@@ -192,25 +192,25 @@
     {
       "stage": "e2e_dialogue",
       "primary_metric": "e2e_overall_pass",
-      "value": 0.7,
+      "value": 1.0,
       "gold_size": 20,
       "details": {
         "total_cases": 20,
         "sample_size": null,
         "skip_slow": false,
-        "e2e_overall_pass": 0.7,
+        "e2e_overall_pass": 1.0,
         "start_pass": 1.0,
         "contract_pass": 1.0,
         "intent_pass": 1.0,
         "gap_pass": 1.0,
-        "retrieval_hit": 0.95,
+        "retrieval_hit": 1.0,
         "followup_pass": 1.0,
-        "finish_score_pass": 0.8,
-        "weak_tag_pass": 0.9
+        "finish_score_pass": 1.0,
+        "weak_tag_pass": 1.0
       }
     }
   ],
-  "end_to_end_estimate": 0.2449,
+  "end_to_end_estimate": 0.3499,
   "bottleneck": "chunk_retrieval",
   "runtime_info": {
     "embedding": {

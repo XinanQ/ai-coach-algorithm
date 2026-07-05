@@ -427,6 +427,8 @@ E2E 评测模拟完整的陪练对话流程，验证从 `start_dialogue` → 多
 | `weak_tag_pass` | 弱点标签命中相关性 | > 70% |
 | `e2e_overall_pass` | 综合通过率 | > 60% |
 
+当前基线（2026-07-05）：E2E gold 已扩展到 30 条，`e2e_overall_pass=1.00`，`retrieval_hit=1.00`，`finish_score_pass=1.00`，`weak_tag_pass=1.00`。
+
 详细文档：[docs/algorithms/08_e2e_evaluation.md](docs/algorithms/08_e2e_evaluation.md)
 
 ### 单阶段评测

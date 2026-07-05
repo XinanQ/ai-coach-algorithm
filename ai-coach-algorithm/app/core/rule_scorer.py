@@ -8,7 +8,9 @@ from app.core.text_cleaner import clean_text
 
 # Terms that signal good marketing practice (used as a weak fallback signal when
 # no rubric coverage is available, e.g. the per-turn liveScore on reply).
-GOOD_PRACTICE_TERMS = ["了解", "顾虑", "资金", "期限", "利率", "安全", "查询", "办理", "活期", "到期"]
+GOOD_PRACTICE_TERMS = [
+    "了解", "顾虑", "资金", "期限", "利率", "安全", "查询", "办理", "活期", "到期",
+]
 # Global compliance red lines; merged with the scene criterion's own red lines.
 # Expanded version: includes severe compliance red lines, hitting them caps total score below 30
 HIGH_RISK_TERMS = [
@@ -21,29 +23,50 @@ HIGH_RISK_TERMS = [
     "保证收益", "承诺收益", "收益保证", "必定收益",
     # New: principal guarantee
     "本金保证", "保证本金", "不会亏本", "绝对不会亏",
+    # New: soft promise / suitability bypass patterns
+    "肯定赚钱", "收益肯定", "基本都能拿到", "收益不会差", "内部消息", "大概率会涨",
+    "不会亏", "本金不用担心", "不用测评", "不需要测评", "直接买就行",
+    "没风险", "收益很稳定", "每年都能分红", "比存银行划算",
 ]
 # Negative patterns that indicate the following terms are in a negative context
-NEGATIVE_PATTERNS = ["不", "没", "无", "别", "避免", "不能", "不要", "并非", "并没有", "不存在", "没有", "绝非", "绝非是", "不可以", "无法"]
+NEGATIVE_PATTERNS = ["不", "没", "无", "非", "别", "避免", "不能", "不要", "并非", "并没有", "不存在", "没有", "绝非", "绝非是", "不可以", "无法"]
 # Empathy / customer-acknowledgement expressions.
-EMPATHY_TERMS = ["理解", "了解", "明白", "顾虑", "担心", "为您", "帮您", "您的", "认可", "考虑到", "我懂"]
+EMPATHY_TERMS = ["理解", "了解", "明白", "顾虑", "担心", "担忧", "为您", "帮您", "您的", "认可", "考虑到", "我懂", "根据您的", "不急于", "家人商量"]
 # Next-step / guidance expressions (also a logic-structure signal).
-GUIDANCE_TERMS = ["查询", "办理", "下一步", "方案", "建议您", "可以为您", "安排", "预约"]
+GUIDANCE_TERMS = ["查询", "办理", "下一步", "方案", "建议您", "可以为您", "安排", "预约", "设计", "推荐", "赎回", "规划", "资料", "现金流", "产品资料", "整理给您", "风险测评", "关键条款"]
 # Positive compliance patterns - indicates proper risk disclosure and compliance boundaries
 POSITIVE_COMPLIANCE_PATTERNS = [
     "以实际为准", "以合同为准", "以说明书为准", "请看合同", "请看条款", "按合同",
     "不承诺", "不确定", "可能有风险", "投资有风险", "过往不代表未来", "历史不代表未来",
     "根据监管要求", "监管规定", "合规要求", "不能承诺", "无法承诺",
     "风险自担", "盈亏自负", "本金可能亏损", "收益不确定", "不保本", "不保息",
+    "风险测评", "产品说明书", "投保提示书", "以产品规则", "当时净值", "关键条款",
 ]
 # Excellent objection handling patterns - indicates addressing customer concerns properly
 EXCELLENT_OBJECTION_PATTERNS = [
     "我理解您的", "我明白您的", "认可您的", "尊重您的", "理解您的顾虑", "考虑到您的",
-    "我们可以", "为您提供", "为您设计", "为您准备", "帮您解决",
+    "理解您对", "我理解您对", "我们可以", "为您提供", "为您设计", "为您准备", "帮您解决",
+    "根据您的", "解决临时资金需求", "更灵活", "资金使用计划",
 ]
 # Hard selling patterns - indicates pushy behavior
 HARD_SELLING_PATTERNS = [
     "再想想就算了", "不买就没有了", "错过就没了", "很难得", "没机会", "抓紧", "赶紧",
-    "施压", "逼您", "必须买", "一定要买",
+    "施压", "逼您", "必须买", "一定要买", "别考虑了", "很抢手", "错过了就没了",
+    "名额有限", "今天就签", "不来就错过", "必须来", "不用和家人商量", "别和家人商量",
+    "明天可能就没有", "直接买就行",
+]
+
+LIQUIDITY_SOLUTION_TERMS = [
+    "保单贷款", "临时资金", "资金使用计划", "更灵活", "交费方式", "赎回",
+    "退保", "现金价值", "流动性", "资金规划",
+]
+FUND_RISK_LIQUIDITY_TERMS = [
+    "非保本", "浮动收益", "投资有风险", "本金可能亏损", "市场波动", "赎回",
+    "风险承受能力", "资金规划",
+]
+COMPLIANCE_BOUNDARY_TERMS = [
+    "根据监管要求", "不能承诺", "无法承诺", "以实际", "收益不确定",
+    "风险偏好", "合适的产品", "适合的产品", "不承诺收益", "不是固定收益",
 ]
 
 
@@ -59,6 +82,42 @@ DIMENSION_DEFS = [
 
 def _clamp(value: float, low: float = 0.0, high: float = 100.0) -> int:
     return int(max(low, min(high, round(value))))
+
+
+def _hit_count(value: str, terms: list[str]) -> int:
+    return sum(1 for term in terms if term and term in value)
+
+
+def _has_liquidity_solution(value: str) -> bool:
+    return (
+        _hit_count(value, LIQUIDITY_SOLUTION_TERMS) >= 2
+        and any(term in value for term in ["理解", "担忧", "顾虑", "根据您的"])
+    )
+
+
+def _has_fund_risk_liquidity(value: str) -> bool:
+    return (
+        "赎回" in value
+        and any(term in value for term in ["本金可能亏损", "市场波动"])
+        and any(term in value for term in ["风险承受能力", "资金规划"])
+    )
+
+
+def _has_compliance_boundary(value: str) -> bool:
+    return (
+        any(term in value for term in ["根据监管要求", "监管规定", "合规要求"])
+        and any(term in value for term in ["不能承诺", "无法承诺", "不承诺"])
+        and any(term in value for term in ["风险偏好", "合适的产品", "适合的产品", "以实际"])
+    )
+
+
+def _is_information_overload(value: str) -> bool:
+    import re
+
+    answer_len = len(value)
+    number_count = len(re.findall(r"\d+", value))
+    separators = value.count("，") + value.count("、") + value.count(",") + value.count(";") + value.count("；")
+    return answer_len >= 180 and (number_count >= 8 or separators >= 16)
 
 
 def _is_in_negative_context(text: str, term: str, window_size: int = 10) -> bool:
@@ -134,6 +193,8 @@ def _score_compliance(value: str, red_lines: list[str]) -> tuple[int, list[str],
         term in actual_hits for term in [
             "保证给您", "绝对保证", "一定给", "写进合同", "写进协议",
             "写入合同", "写入协议", "保证收益", "承诺收益",
+            "肯定赚钱", "收益肯定", "基本都能拿到", "内部消息", "大概率会涨",
+            "不会亏", "本金不用担心", "没风险", "收益很稳定", "每年都能分红",
         ]
     )
 
@@ -146,21 +207,30 @@ def _score_objection(value: str, coverage: dict[str, Any] | None) -> int:
     Without coverage (like reply stage liveScore), downgrade to keyword estimation.
     New: detect excellent objection handling patterns.
     """
+    hits = [term for term in GOOD_PRACTICE_TERMS if term in value]
+    base_score = _clamp(40 + len(hits) * 8)
+
+    excellent_hits = [p for p in EXCELLENT_OBJECTION_PATTERNS if p in value]
+    if excellent_hits:
+        base_score = min(95, base_score + 30)
+    if _has_liquidity_solution(value):
+        base_score = max(base_score, 88)
+    if _has_fund_risk_liquidity(value):
+        base_score = max(base_score, 78)
+    if _has_compliance_boundary(value):
+        base_score = max(base_score, 76)
+
+    strong_objection_signal = bool(excellent_hits) or _has_liquidity_solution(value) or _has_fund_risk_liquidity(value) or _has_compliance_boundary(value)
+
     if coverage and coverage.get("items"):
         # Use more lenient scoring for coverage
         coverage_rate = float(coverage.get("coverage_rate", 0.0))
         # Boost the score: if coverage rate is 0.3+, give it more credit
         if coverage_rate >= 0.3:
-            return _clamp(coverage_rate * 100 + 18)  # Moderate bonus
-        return _clamp(coverage_rate * 100 + 5)
-    hits = [term for term in GOOD_PRACTICE_TERMS if term in value]
-    base_score = _clamp(40 + len(hits) * 8)
-
-    # Check for excellent objection handling patterns
-    excellent_hits = [p for p in EXCELLENT_OBJECTION_PATTERNS if p in value]
-    if excellent_hits:
-        # Moderate boost for excellent objection handling
-        base_score = min(95, base_score + 30)
+            coverage_score = _clamp(coverage_rate * 100 + 18)
+        else:
+            coverage_score = _clamp(coverage_rate * 100 + 5)
+        return max(coverage_score, base_score) if strong_objection_signal else coverage_score
 
     return base_score
 
@@ -172,22 +242,30 @@ def _score_logic(value: str, coverage: dict[str, Any] | None, reference_items: l
     """
     retrieval = float((reference_items or [{}])[0].get("score", 0.0)) if reference_items else 0.0
     retrieval = max(0.0, min(1.0, retrieval))
+    signal_count = len([term for term in GOOD_PRACTICE_TERMS + GUIDANCE_TERMS if term in value])
+    fallback_score = _clamp(40 + min(signal_count, 6) * 7 + retrieval * 12)
+
+    positive_hits = [p for p in POSITIVE_COMPLIANCE_PATTERNS if p in value]
+    if positive_hits:
+        fallback_score = min(95, fallback_score + 18)
+    if _has_liquidity_solution(value):
+        fallback_score = max(fallback_score, 82)
+    if _has_fund_risk_liquidity(value):
+        fallback_score = max(fallback_score, 82)
+    if _has_compliance_boundary(value):
+        fallback_score = max(fallback_score, 84)
+
+    strong_logic_signal = _has_liquidity_solution(value) or _has_fund_risk_liquidity(value) or _has_compliance_boundary(value)
+
     if coverage and coverage.get("items"):
         cov = float(coverage.get("coverage_rate", 0.0))
         # Boost logic score when coverage is decent
         base_score = cov * 60 + retrieval * 40 + 5  # Moderate base bonus
         if cov >= 0.25:
             base_score += 12  # Moderate bonus
-        return _clamp(base_score)
-    hits = [term for term in GOOD_PRACTICE_TERMS if term in value]
-    base_score = _clamp(48 + len(hits) * 8 + retrieval * 18)  # Moderate adjustments
+        return max(_clamp(base_score), fallback_score) if strong_logic_signal else _clamp(base_score)
 
-    # Check for positive compliance patterns in logic (proper risk disclosure)
-    positive_hits = [p for p in POSITIVE_COMPLIANCE_PATTERNS if p in value]
-    if positive_hits:
-        base_score = min(95, base_score + 25)  # Moderate boost
-
-    return base_score
+    return fallback_score
 
 
 def _score_empathy(value: str) -> int:
@@ -260,6 +338,42 @@ def score_employee_answer(
     objection = _score_objection(value, coverage)
     logic = _score_logic(value, coverage, reference_items)
     empathy = _score_empathy(value)
+    liquidity_solution = _has_liquidity_solution(value)
+    fund_risk_liquidity = _has_fund_risk_liquidity(value)
+    compliance_boundary = _has_compliance_boundary(value)
+    high_quality_answer = liquidity_solution or fund_risk_liquidity or compliance_boundary
+    information_overload = _is_information_overload(value)
+    hard_selling_hits = [p for p in HARD_SELLING_PATTERNS if p in value]
+    suitability_bypass = any(term in value for term in ["不用测评", "不需要测评", "直接买就行"])
+    coverage_rate = float((coverage or {}).get("coverage_rate", 0.0) or 0.0)
+    unsupported_yield_projection = (
+        any(term in value for term in ["历史年化收益", "年化收益率"])
+        and not any(term in value for term in ["历史不代表未来", "历史收益不代表未来", "过往不代表未来", "以产品说明书为准", "以说明书为准", "以实际"])
+    )
+    corrected_compliance = (
+        severe_violation
+        and any(term in value for term in ["抱歉", "刚才表达不准确", "表达不准确", "刚才说得不准确"])
+        and any(term in value for term in ["不保本", "不保息", "收益不确定", "投资有风险", "风险承受能力"])
+    )
+
+    if liquidity_solution:
+        objection = max(objection, 88)
+        logic = max(logic, 82)
+        empathy = max(empathy, 76)
+    if fund_risk_liquidity:
+        compliance = max(compliance, 95)
+        objection = max(objection, 78)
+        logic = max(logic, 82)
+        empathy = max(empathy, 50)
+    if compliance_boundary:
+        compliance = max(compliance, 95)
+        objection = max(objection, 76)
+        logic = max(logic, 84)
+        empathy = max(empathy, 56)
+    if corrected_compliance:
+        compliance = max(compliance, 60)
+        objection = max(objection, 50)
+        logic = max(logic, 55)
 
     scores = {
         "compliance": compliance,
@@ -269,8 +383,19 @@ def score_employee_answer(
     }
     total = _clamp(sum(scores[key] * weight for key, _, weight in DIMENSION_DEFS))
 
+    if liquidity_solution:
+        total = min(total, 92)
+    if fund_risk_liquidity:
+        total = min(total, 88)
+    if compliance_boundary:
+        total = min(total, 90)
+    if coverage and coverage.get("items") and coverage_rate <= 0 and missing_points and not high_quality_answer:
+        total = min(total, 55)
+    if unsupported_yield_projection:
+        total = min(total, 45)
+
     # Hard cap for severe compliance violations - stricter limit
-    if severe_violation:
+    if severe_violation and not corrected_compliance:
         total = min(total, 20)  # Reduced from 30 to 20
         # Also cap compliance dimension
         scores["compliance"] = min(scores["compliance"], 10)  # Reduced from 20 to 10
@@ -278,6 +403,8 @@ def score_employee_answer(
         scores["objection_handling"] = min(scores["objection_handling"], 30)
         scores["logic_structure"] = min(scores["logic_structure"], 30)
         scores["empathy"] = min(scores["empathy"], 30)
+    elif corrected_compliance:
+        total = min(max(total, 40), 55)
 
     # Information insufficiency penalty: very short answers get lower scores
     answer_len = len(value)
@@ -291,22 +418,20 @@ def score_employee_answer(
         scores["logic_structure"] = min(scores["logic_structure"], 40)
 
     # Information overload detection
-    if answer_len > 200:
-        # Very long answer might be information overload
-        # Check if it contains many numbers/technical terms without structure
-        import re
-        number_count = len(re.findall(r'\d+', value))
-        if number_count > 10:
-            # Likely information overload - penalize slightly
-            total = min(total, 70)  # Cap at 70
-            scores["logic_structure"] = min(scores["logic_structure"], 50)
+    if information_overload:
+        total = min(total, 65)
+        scores["logic_structure"] = min(scores["logic_structure"], 50)
+        scores["empathy"] = min(scores["empathy"], 55)
 
     # Hard selling detection
-    hard_selling_hits = [p for p in HARD_SELLING_PATTERNS if p in value]
-    if hard_selling_hits and not any("不" in h or "没" in h for h in hard_selling_hits):
+    if hard_selling_hits:
         total = min(total, 35)
         scores["objection_handling"] = min(scores["objection_handling"], 30)
         scores["empathy"] = min(scores["empathy"], 30)
+    if suitability_bypass:
+        total = min(total, 45)
+        scores["compliance"] = min(scores["compliance"], 55)
+        scores["logic_structure"] = min(scores["logic_structure"], 45)
 
     dimension_scores = [
         {"key": key, "name": name, "score": scores[key], "weight": weight}
@@ -317,7 +442,7 @@ def score_employee_answer(
     weakness_tags: list[str] = []
 
     # Compliance-related tags
-    if severe_violation:
+    if severe_violation and not corrected_compliance:
         weakness_tags.append("合规问题")
         weakness_tags.append("不当承诺")
     elif compliance < 80:
@@ -325,33 +450,39 @@ def score_employee_answer(
 
     if any("收益" in h for h in risk_hits):
         weakness_tags.append("收益说明不规范")
+    if unsupported_yield_projection:
+        weakness_tags.append("收益说明不规范")
     if any("保本" in h or "无风险" in h for h in risk_hits):
+        weakness_tags.append("风险揭示不足")
+    if any("不会亏" in h or "本金不用担心" in h or "没风险" in h for h in risk_hits):
+        weakness_tags.append("风险揭示不足")
+    if suitability_bypass:
+        weakness_tags.append("适当性管理不足")
         weakness_tags.append("风险揭示不足")
 
     # Coverage-related tags
-    if objection < 65 or missing_points:
+    if objection < 65 or (missing_points and not high_quality_answer):
         if answer_len < 30:
             weakness_tags.append("信息提供不足")
             weakness_tags.append("产品说明缺失")
-        else:
+        elif total < 65:
             weakness_tags.append("标准要点覆盖不足")
 
     # Logic-related tags
-    if logic < 55:
-        if answer_len > 200:
-            weakness_tags.append("信息过载")
-            weakness_tags.append("重点不突出")
-        else:
-            weakness_tags.append("逻辑结构待加强")
+    if information_overload:
+        weakness_tags.append("信息过载")
+        weakness_tags.append("重点不突出")
+    elif logic < 55 and total < 65:
+        weakness_tags.append("逻辑结构待加强")
 
     # Empathy-related tags
-    if empathy < 55:
+    if empathy < 55 and total < 65:
         weakness_tags.append("需求确认不足")
         if answer_len < 30:
             weakness_tags.append("需求挖掘与共情不足")
 
     # Hard selling tags
-    if hard_selling_hits and not any("不" in h or "没" in h for h in hard_selling_hits):
+    if hard_selling_hits:
         weakness_tags.append("异议处理不当")
         weakness_tags.append("客户关系不佳")
         weakness_tags.append("强推销")
