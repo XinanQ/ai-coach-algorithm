@@ -111,8 +111,11 @@ def evaluate(
     if verbose and results:
         # Include failure breakdown
         failures = [r for r in results if not r.get("overall_pass", False)]
+        strict_failures = [r for r in results if not r.get("strict_overall_pass", False)]
         details["failure_count"] = len(failures)
         details["failures_by_stage"] = _analyze_failures_by_stage(failures)
+        details["strict_failure_count"] = len(strict_failures)
+        details["strict_failures_by_stage"] = _analyze_failures_by_stage(strict_failures)
 
         # Include first few failure traces
         details["failure_samples"] = [
@@ -139,6 +142,7 @@ def _analyze_failures_by_stage(failures: list[dict[str, Any]]) -> dict[str, int]
         "retrieval_hit": 0,
         "followup_pass": 0,
         "finish_score_pass": 0,
+        "strict_score_pass": 0,
         "weak_tag_pass": 0,
     }
     for f in failures:

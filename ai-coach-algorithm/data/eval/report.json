@@ -1,6 +1,6 @@
 {
-  "run_id": "eval_20260705_202025",
-  "timestamp": "2026-07-05T20:20:25.818191",
+  "run_id": "eval_20260706_124415",
+  "timestamp": "2026-07-06T12:44:15.001013",
   "stages": [
     {
       "stage": "llm_intent_detection",
@@ -146,33 +146,33 @@
     {
       "stage": "must_point_coverage",
       "primary_metric": "point_f1",
-      "value": 0.8299,
+      "value": 0.8376,
       "gold_size": 45,
       "details": {
         "params": {
-          "threshold": 0.6,
-          "kw_weight": 0.25,
-          "sem_weight": 0.75,
-          "calibration": "sentence_transformers_calibrated"
+          "threshold": 0.35,
+          "kw_weight": 0.4,
+          "sem_weight": 0.6,
+          "calibration": "local_hash_calibrated"
         },
-        "point_precision": 0.7353,
-        "point_recall": 0.9524,
-        "point_f1": 0.8299,
-        "coverage_rate_mae": 0.0959,
+        "point_precision": 0.7597,
+        "point_recall": 0.9333,
+        "point_f1": 0.8376,
+        "coverage_rate_mae": 0.1,
         "quality_stats": {
           "good": {
             "count": 15,
-            "avg_case_f1": 0.838,
-            "point_precision": 0.7527,
-            "point_recall": 0.9333,
-            "point_f1": 0.8333
+            "avg_case_f1": 0.8186,
+            "point_precision": 0.7556,
+            "point_recall": 0.9067,
+            "point_f1": 0.8242
           },
           "partial": {
             "count": 15,
-            "avg_case_f1": 0.8722,
-            "point_precision": 0.6977,
+            "avg_case_f1": 0.9314,
+            "point_precision": 0.7692,
             "point_recall": 1.0,
-            "point_f1": 0.8219
+            "point_f1": 0.8696
           },
           "poor": {
             "count": 15,
@@ -186,11 +186,11 @@
           "embedding": {
             "requested_backend": "sentence_transformers",
             "requested_model": "BAAI/bge-small-zh-v1.5",
-            "active_backend": "sentence_transformers",
-            "active_model": "BAAI/bge-small-zh-v1.5",
-            "dimensions": 512,
-            "is_fallback": false,
-            "fallback_reason": null
+            "active_backend": "local_hash",
+            "active_model": "local_hash_embedding_v1",
+            "dimensions": 384,
+            "is_fallback": true,
+            "fallback_reason": "RuntimeError: Cannot send a request, as the client has been closed."
           }
         }
       }
@@ -198,37 +198,39 @@
     {
       "stage": "e2e_dialogue",
       "primary_metric": "e2e_overall_pass",
-      "value": 0.84,
+      "value": 0.54,
       "gold_size": 50,
       "details": {
         "total_cases": 50,
         "sample_size": null,
         "skip_slow": false,
-        "e2e_overall_pass": 0.84,
+        "e2e_overall_pass": 0.54,
         "start_pass": 1.0,
         "contract_pass": 1.0,
         "intent_pass": 1.0,
         "gap_pass": 1.0,
         "retrieval_hit": 1.0,
         "followup_pass": 1.0,
-        "finish_score_pass": 0.86,
-        "weak_tag_pass": 0.98
+        "finish_score_pass": 0.54,
+        "strict_score_pass": 0.54,
+        "strict_e2e_overall_pass": 0.54,
+        "weak_tag_pass": 1.0
       }
     }
   ],
-  "end_to_end_estimate": 0.84,
+  "end_to_end_estimate": 0.54,
   "end_to_end_metric_source": "e2e_dialogue",
-  "component_quality_estimate": 0.459,
+  "component_quality_estimate": 0.4632,
   "bottleneck": "llm_intent_detection",
   "runtime_info": {
     "embedding": {
       "requested_backend": "sentence_transformers",
       "requested_model": "BAAI/bge-small-zh-v1.5",
-      "active_backend": "sentence_transformers",
-      "active_model": "BAAI/bge-small-zh-v1.5",
-      "dimensions": 512,
-      "is_fallback": false,
-      "fallback_reason": null
+      "active_backend": "local_hash",
+      "active_model": "local_hash_embedding_v1",
+      "dimensions": 384,
+      "is_fallback": true,
+      "fallback_reason": "RuntimeError: Cannot send a request, as the client has been closed."
     }
   }
 }

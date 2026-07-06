@@ -69,6 +69,8 @@ Docker Compose 当前定位为**开发/联调环境**，已覆盖算法服务本
 GET /practice/tasks
 GET /practice/tasks?direction=objection
 GET /practice/tasks/{taskId}
+GET /practice/tasks/{taskId}/scripts
+GET /practice/scripts/{scriptId}?taskId={taskId}
 ```
 
 `/practice/tasks` 的响应已经按页面展示做了 camelCase 和中文标签适配：
@@ -124,6 +126,17 @@ GET /practice/tasks/{taskId}
 | `title` / `category` / `tags` / `durationText` / `description` | 算法可先提供 | 页面展示字段，默认来自 39 个客户画像 |
 | `points` / `target` / `streakDays` / `weekGain` | Java 后端最终覆盖 | 用户成长、积分、连续训练天数属于业务数据 |
 | `tab` / `status` / `level` | Java 后端最终覆盖 | 上级下发、自主任务、完成状态属于任务业务流 |
+
+标准话术资料卡片：
+
+| 字段 | 来源 | 说明 |
+|---|---|---|
+| `scriptEntry` | `GET /practice/tasks/{taskId}` | 场景简介页“查看标准话术”按钮入口，含 `label` / `endpoint` / `count` |
+| `scriptCards` | `GET /practice/tasks/{taskId}` | 任务详情内联返回的前 6 张话术卡片 |
+| `GET /practice/tasks/{taskId}/scripts` | 算法 | 返回该任务对应的话术卡片列表 |
+| `GET /practice/scripts/{scriptId}?taskId={taskId}` | 算法 | 返回单张话术详情，用于“话术详情 / 复制标准话术”页 |
+
+话术卡片核心字段：`scriptId`、`title`、`subtitle`、`tags`、`standardSpeech`、`copyText`、`sourceFile`、`sourceChunkId`。前端展示文本用 `standardSpeech`，复制按钮用 `copyText`。
 
 `GET /dialog/profiles` 也会保留原始 `expected_intents`，并额外返回 `tags` / `intentLabels` 中文展示字段。前端展示标签时优先用 `tags`，不要直接展示 `expected_intents`。
 

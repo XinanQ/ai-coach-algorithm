@@ -125,6 +125,7 @@ class E2EEvaluator:
         finish_result = self._evaluate_finish(case)
         result["finish_pass"] = finish_result["pass"]
         result["finish_score_pass"] = finish_result.get("score_pass", True)
+        result["strict_score_pass"] = finish_result.get("strict_score_pass", result["finish_score_pass"])
         result["weak_tag_pass"] = finish_result.get("weak_tag_pass", True)
         result["finish_trace"] = finish_result.get("trace", {})
 
@@ -137,6 +138,16 @@ class E2EEvaluator:
             and result["retrieval_hit"]
             and result["followup_pass"]
             and result["finish_score_pass"]
+            and result["weak_tag_pass"]
+        )
+        result["strict_overall_pass"] = (
+            result["start_pass"]
+            and result["contract_pass"]
+            and result["intent_pass"]
+            and result["gap_pass"]
+            and result["retrieval_hit"]
+            and result["followup_pass"]
+            and result["strict_score_pass"]
             and result["weak_tag_pass"]
         )
 
@@ -275,6 +286,8 @@ class E2EEvaluator:
             # Validate score range
             expected_range = case.get("expected_score_range", [0, 100])
             score_pass = expected_range[0] <= total_score <= expected_range[1]
+            strict_range = case.get("strict_score_range", expected_range)
+            strict_score_pass = strict_range[0] <= total_score <= strict_range[1]
 
             # Validate weak tags relevance
             weak_tag_result = self._validate_weak_tags(
@@ -285,6 +298,7 @@ class E2EEvaluator:
             return {
                 "pass": True,
                 "score_pass": score_pass,
+                "strict_score_pass": strict_score_pass,
                 "weak_tag_pass": weak_tag_result["pass"],
                 "weak_tag_method": weak_tag_result.get("method"),
                 "weak_tag_reason": weak_tag_result.get("reason"),
@@ -292,6 +306,8 @@ class E2EEvaluator:
                     "total_score": total_score,
                     "weak_tags": weak_tags,
                     "expected_range": expected_range,
+                    "strict_expected_range": strict_range,
+                    "calibration_reason": case.get("calibration_reason"),
                     "weak_tag_trace": weak_tag_result.get("trace", {}),
                 },
             }
@@ -300,6 +316,7 @@ class E2EEvaluator:
             return {
                 "pass": False,
                 "score_pass": False,
+                "strict_score_pass": False,
                 "weak_tag_pass": False,
                 "weak_tag_method": "error",
                 "weak_tag_reason": str(e)[:100],
@@ -744,6 +761,7 @@ class E2EEvaluator:
             ("retrieval_hit", "Retrieval Quality"),
             ("followup_pass", "Follow-up Direction"),
             ("finish_score_pass", "Finish Score"),
+            ("strict_score_pass", "Strict Finish Score"),
             ("weak_tag_pass", "Weak Tag Detection"),
         ]
 
@@ -812,6 +830,17 @@ class E2EEvaluator:
                 "actual_score": result.get("finish_trace", {}).get("total_score"),
             }
 
+        elif stage_key == "strict_score_pass":
+            # Show strict score validation details
+            details = {
+                "strict_expected_range": case.get(
+                    "strict_score_range",
+                    case.get("expected_score_range", [0, 100]),
+                ),
+                "actual_score": result.get("finish_trace", {}).get("total_score"),
+                "calibration_reason": case.get("calibration_reason"),
+            }
+
         elif stage_key == "weak_tag_pass":
             # Show weak tag validation details
             details = {
@@ -853,6 +882,8 @@ def compute_e2e_metrics(results: list[dict[str, Any]]) -> dict[str, Any]:
             "retrieval_hit": 0.0,
             "followup_pass": 0.0,
             "finish_score_pass": 0.0,
+            "strict_score_pass": 0.0,
+            "strict_e2e_overall_pass": 0.0,
             "weak_tag_pass": 0.0,
         }
 
@@ -870,5 +901,7 @@ def compute_e2e_metrics(results: list[dict[str, Any]]) -> dict[str, Any]:
         "retrieval_hit": round(pass_rate("retrieval_hit"), 4),
         "followup_pass": round(pass_rate("followup_pass"), 4),
         "finish_score_pass": round(pass_rate("finish_score_pass"), 4),
+        "strict_score_pass": round(pass_rate("strict_score_pass"), 4),
+        "strict_e2e_overall_pass": round(pass_rate("strict_overall_pass"), 4),
         "weak_tag_pass": round(pass_rate("weak_tag_pass"), 4),
     }

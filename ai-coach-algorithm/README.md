@@ -94,6 +94,8 @@ $env:AI_COACH_LLM_TIMEOUT="20"
 GET /practice/tasks
 GET /practice/tasks?direction=objection
 GET /practice/tasks/{taskId}
+GET /practice/tasks/{taskId}/scripts
+GET /practice/scripts/{scriptId}?taskId={taskId}
 ```
 
 `/practice/tasks` 返回页面可直接消费的展示字段：
@@ -130,6 +132,8 @@ GET /practice/tasks/{taskId}
 ```
 
 说明：39 条任务卡来自 `data/customer_profiles.json` 的 39 个客户画像；成长等级、积分、任务完成状态等仍建议最终由 Java 后端业务库接管。算法侧接口用于联调、推荐场景目录和中文标签展示。
+
+任务详情页可直接使用 `scriptEntry` 渲染“查看标准话术”按钮，点击后调用 `/practice/tasks/{taskId}/scripts`。话术卡片返回 `scriptId`、`title`、`subtitle`、`tags`、`standardSpeech`、`copyText`、`sourceFile` 等字段；详情页可调用 `/practice/scripts/{scriptId}?taskId={taskId}`，用于实现“话术详情 / 复制标准话术”的页面。
 
 ## Docker 开发环境（算法服务 + Redis + PostgreSQL）
 
@@ -424,10 +428,12 @@ E2E 评测模拟完整的陪练对话流程，验证从 `start_dialogue` → 多
 | `retrieval_hit` | RAG 上下文包含关键知识 | > 70% |
 | `followup_pass` | AI 客户追问方向符合预期 | > 75% |
 | `finish_score_pass` | 最终分数落在合理区间 | > 80% |
+| `strict_score_pass` | 最终分数落在更窄业务校准区间 | > 80% |
 | `weak_tag_pass` | 弱点标签命中相关性 | > 70% |
 | `e2e_overall_pass` | 综合通过率 | > 60% |
+| `strict_e2e_overall_pass` | 严格综合通过率，用于防止 gold 区间过宽 | > 60% |
 
-当前基线（2026-07-05 完整 run_all）：E2E gold 已扩展到 50 条，`e2e_overall_pass=0.84`，`retrieval_hit=1.00`，`finish_score_pass=0.86`，`weak_tag_pass=0.98`。当前主链路短板主要在 finish 最终评分校准。
+当前基线（2026-07-06）：E2E gold 已扩展到 50 条，并为部分容易过宽的评分 case 增加 `strict_score_range`。主报告仍看标准 `e2e_overall_pass`，同时用 `strict_e2e_overall_pass` 观察真实业务校准压力。当前主链路短板主要在 finish 最终评分校准。
 
 详细文档：[docs/algorithms/08_e2e_evaluation.md](docs/algorithms/08_e2e_evaluation.md)
 

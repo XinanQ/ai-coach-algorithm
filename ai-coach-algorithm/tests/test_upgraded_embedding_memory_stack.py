@@ -103,7 +103,36 @@ def test_practice_task_catalog_returns_display_ready_cards() -> None:
 
     detail = client.get(f"/practice/tasks/{card['taskId']}")
     assert detail.status_code == 200
-    assert detail.json()["openingQuestion"]
+    detail_body = detail.json()
+    assert detail_body["openingQuestion"]
+    assert detail_body["scriptEntry"]["label"] == "查看标准话术"
+    assert detail_body["scriptEntry"]["count"] > 0
+    assert detail_body["scriptCards"]
+
+    scripts = client.get(f"/practice/tasks/{card['taskId']}/scripts")
+    assert scripts.status_code == 200
+    scripts_body = scripts.json()
+    assert scripts_body["taskId"] == card["taskId"]
+    assert scripts_body["total"] > 0
+    script_card = scripts_body["list"][0]
+    assert {
+        "scriptId",
+        "title",
+        "subtitle",
+        "tags",
+        "standardSpeech",
+        "copyText",
+        "sourceFile",
+    } <= set(script_card)
+    assert script_card["standardSpeech"]
+    assert script_card["tags"]
+
+    script_detail = client.get(
+        f"/practice/scripts/{script_card['scriptId']}",
+        params={"taskId": card["taskId"]},
+    )
+    assert script_detail.status_code == 200
+    assert script_detail.json()["standardSpeech"] == script_card["standardSpeech"]
 
     profiles = client.get("/dialog/profiles")
     assert profiles.status_code == 200

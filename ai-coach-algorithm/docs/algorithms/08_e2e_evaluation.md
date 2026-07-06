@@ -49,28 +49,39 @@ E2E 评测分为多个可解释的子指标：
 | `retrieval_hit` | RAG 上下文包含关键知识（必须命中 expected_must_points 或相关关键词） | > 70% |
 | `followup_pass` | AI 客户追问方向符合预期（必须匹配 gap intent 或 expected_followup_direction） | > 75% |
 | `finish_score_pass` | 最终分数落在合理区间（校准后：合规红线 0-40，好回答 80-95） | > 80% |
+| `strict_score_pass` | 最终分数落在更窄业务区间，只有配置 `strict_score_range` 的 case 会比标准口径更严格 | > 80% |
 | `weak_tag_pass` | 弱点标签命中相关性（expected_weak_tags 非空时必须检测到标签） | > 70% |
 | `e2e_overall_pass` | 综合通过（所有子指标通过） | 目标 > 60% |
+| `strict_e2e_overall_pass` | 严格综合通过，防止 gold 区间过宽导致指标虚高 | 目标 > 60% |
 
-### 当前基线（2026-07-05）
+### 当前基线（2026-07-06）
 
 当前 E2E 基线通过 `python -m eval.stages.eval_e2e` 生成，E2E 阶段结果如下：
 
 | 指标 | 当前值 |
 |------|--------|
-| `e2e_overall_pass` | 1.00 |
+| `e2e_overall_pass` | 以当前 `data/eval/report.json` 为准 |
 | `start_pass` | 1.00 |
 | `contract_pass` | 1.00 |
 | `intent_pass` | 1.00 |
 | `gap_pass` | 1.00 |
 | `retrieval_hit` | 1.00 |
 | `followup_pass` | 1.00 |
-| `finish_score_pass` | 1.00 |
-| `weak_tag_pass` | 1.00 |
+| `finish_score_pass` | 以当前 `data/eval/report.json` 为准 |
+| `strict_score_pass` | 以当前 `data/eval/report.json` 为准 |
+| `strict_e2e_overall_pass` | 以当前 `data/eval/report.json` 为准 |
+| `weak_tag_pass` | 以当前 `data/eval/report.json` 为准 |
 
 E2E evaluator 使用每次运行独立的临时 JSON memory，避免读写 `mock_db/mock_dialog_sessions.json` 等本地开发状态，降低历史 session 或并发运行造成的评估波动。`start_pass` 已纳入 overall 计算，确保 start 阶段失败不会被隐藏为后续 finish 失败。
 
 注意：`data/eval/report.json` 应在带 `sentence_transformers` / Docker 项目环境中通过 `python -m eval.run_all --stages all` 刷新，避免用轻量 fallback 环境覆盖正式 embedding 指标。
+
+### Gold 校准原则（2026-07-06）
+
+- `expected_score_range` 表示业务可接受区间，不能为了贴合当前 scorer 输出而任意放宽。
+- `strict_score_range` 表示更窄的业务验收区间，用来识别“标准口径通过但评分仍偏松/偏低”的 case。
+- 修改 gold 时需要写入 `calibration_reason`，说明该区间来自业务判断，而不是为了追求 E2E 100%。
+- 合同阅读、风险提示、资料提供等动作不自动等同于成交引导；如果缺少下一步动作，仍应保留相应弱点标签。
 
 ### Case-Driven 优化（2026-07-05）
 
