@@ -120,6 +120,100 @@ def _is_information_overload(value: str) -> bool:
     return answer_len >= 180 and (number_count >= 8 or separators >= 16)
 
 
+def _is_technical_jargon_overload(value: str) -> bool:
+    """Detect if answer uses too many technical terms without proper explanation.
+
+    This catches cases where employee uses specialized financial terminology
+    that average customers may not understand, even if the answer is not very long.
+    """
+    # Common financial jargon terms that are hard for average customers to understand
+    JARGON_TERMS = [
+        "公允价值", "摊余成本法", "估值", "夏普比率", "最大回撤", "波动率",
+        "久期", "凸性", "利差", "信用利差", "流动性溢价", "风险溢价",
+        "贝塔", "阿尔法", "波动率", "标准差", "协方差", "相关系数",
+        "久期匹配", "免疫策略", "套利", "对冲", "衍生品", "期权",
+        "期货", "掉期", "远期", "信用违约互换", "资产支持证券",
+        "抵押贷款支持证券", "担保债务凭证", "杠杆率", "保证金",
+    ]
+
+    jargon_count = sum(1 for term in JARGON_TERMS if term in value)
+    # If 3+ jargon terms appear in a relatively short answer (< 150 chars), it's jargon overload
+    answer_len = len(value)
+    return jargon_count >= 3 and answer_len < 150
+
+
+def _has_missing_yield_explanation(value: str) -> bool:
+    """Detect if answer misses yield/return explanation when it should have it.
+
+    For marketing conversations, if the answer is relatively long and合规-compliant,
+    but doesn't mention anything about yield/return, it's a weakness.
+    """
+    # Yield/return related terms
+    YIELD_TERMS = [
+        "收益", "利率", "回报", "分红", "年化", "收益率", "业绩",
+        "利息", "赚", "增长", "波动", "净值", "表现",
+    ]
+    answer_len = len(value)
+    has_yield = any(term in value for term in YIELD_TERMS)
+    if answer_len < 40 or has_yield:
+        return False
+
+    product_context_terms = [
+        "保险产品", "理财产品", "基金", "产品", "投保单", "缴费", "保费",
+        "办理", "购买", "定期", "存款",
+    ]
+    exempt_focus_terms = [
+        "邀约", "邀请", "时间安排", "哪天", "家人商量", "和家人",
+        "费用", "退保", "赎回", "到账", "现金流", "产品资料", "风险提示",
+        "合同条款", "关键条款",
+    ]
+    has_product_context = any(term in value for term in product_context_terms)
+    is_non_yield_focus = any(term in value for term in exempt_focus_terms)
+    return has_product_context and not is_non_yield_focus
+
+
+def _has_missing_guidance(value: str, compliance_score: float) -> bool:
+    """Detect if answer is compliant but lacks clear next-step guidance.
+
+    This catches cases where employee explains risks properly but doesn't guide
+    the customer toward any action or next step.
+    """
+    # Guidance terms
+    GUIDANCE_TERMS = [
+        "办理", "下一步", "方案", "建议您", "可以为您", "安排", "预约",
+        "设计", "推荐", "赎回", "规划", "资料", "产品资料", "整理给您",
+        "风险测评", "购买", "联系", "随时联系", "确认", "决定", "邀请",
+        "方便", "时间安排", "来网点", "阅读", "仔细阅读",
+    ]
+    has_guidance = any(term in value for term in GUIDANCE_TERMS)
+    # If answer is compliant (>= 65) but has no guidance and is reasonably long
+    answer_len = len(value)
+    return compliance_score >= 65 and answer_len >= 40 and not has_guidance
+
+
+def _has_empathy_only_without_product(value: str) -> bool:
+    """Detect empathy-only answers that do not provide product/risk content."""
+    empathy_hits = _hit_count(value, EMPATHY_TERMS)
+    product_core_terms = [
+        "产品", "保险", "基金", "理财", "收益", "利率", "分红", "年化",
+        "风险", "不保本", "亏损", "波动", "费用", "退保", "赎回",
+        "合同", "条款", "说明书", "测评", "办理", "购买", "资料",
+    ]
+    has_core_content = any(term in value for term in product_core_terms)
+    return len(value) >= 35 and empathy_hits >= 2 and not has_core_content
+
+
+def _has_procedure_only_without_core(value: str) -> bool:
+    """Detect process-only answers that skip risk and yield explanation."""
+    procedure_terms = ["办理", "身份证", "银行卡", "投保单", "缴费", "流程", "30分钟", "今天方便"]
+    risk_terms = ["不保本", "不保息", "投资有风险", "本金可能亏损", "波动", "退保", "损失", "合同条款", "说明书", "风险提示", "风险揭示"]
+    yield_terms = ["收益", "利率", "回报", "分红", "年化", "净值", "业绩"]
+    procedure_hits = _hit_count(value, procedure_terms)
+    has_risk_or_yield = any(term in value for term in [*risk_terms, *yield_terms])
+    has_suitability_context = any(term in value for term in ["产品说明书", "投保提示书", "关键条款"])
+    return procedure_hits >= 3 and not has_risk_or_yield and not has_suitability_context
+
+
 def _is_in_negative_context(text: str, term: str, window_size: int = 10) -> bool:
     """Check if a term appears in a negative context.
 
@@ -159,6 +253,22 @@ def _is_in_negative_context(text: str, term: str, window_size: int = 10) -> bool
     return False
 
 
+def _is_customer_contract_request_context(text: str, term: str) -> bool:
+    """Avoid treating a customer's contract request as the employee's promise."""
+    contract_terms = {"写进合同", "写进协议", "写入合同", "写入协议", "写进条款"}
+    if term not in contract_terms:
+        return False
+
+    pos = text.find(term)
+    if pos == -1:
+        return False
+    before = text[max(0, pos - 16):pos]
+    after = text[pos:pos + 80]
+    request_markers = ["希望", "要求", "想", "能不能", "客户"]
+    boundary_markers = ["以保险条款为准", "以条款为准", "以合同为准", "收益部分取决", "收益不确定", "产品说明书", "具体条款"]
+    return any(marker in before for marker in request_markers) and any(marker in after for marker in boundary_markers)
+
+
 def _score_compliance(value: str, red_lines: list[str]) -> tuple[int, list[str], bool]:
     """Compliance: hitting any red line gets heavy penalty. No red line hit gets full score.
 
@@ -177,6 +287,8 @@ def _score_compliance(value: str, red_lines: list[str]) -> tuple[int, list[str],
     # Filter out hits that are in negative context
     actual_hits = []
     for term in hits:
+        if _is_customer_contract_request_context(value, term):
+            continue
         if not _is_in_negative_context(value, term):
             actual_hits.append(term)
 
@@ -343,13 +455,22 @@ def score_employee_answer(
     compliance_boundary = _has_compliance_boundary(value)
     high_quality_answer = liquidity_solution or fund_risk_liquidity or compliance_boundary
     information_overload = _is_information_overload(value)
+    jargon_overload = _is_technical_jargon_overload(value)
     hard_selling_hits = [p for p in HARD_SELLING_PATTERNS if p in value]
-    suitability_bypass = any(term in value for term in ["不用测评", "不需要测评", "直接买就行"])
+    # Enhanced suitability bypass detection: includes direct bypass AND low-risk/high-risk mismatch
+    suitability_bypass = (
+        any(term in value for term in ["不用测评", "不需要测评", "直接买就行"]) or
+        # Detect low-risk customer recommended high-risk products
+        (any(term in value for term in ["低风险", "保守型", "稳健型"]) and
+         any(term in value for term in ["风险等级R4", "R4", "R5", "高风险", "风险较高"]))
+    )
     coverage_rate = float((coverage or {}).get("coverage_rate", 0.0) or 0.0)
     unsupported_yield_projection = (
         any(term in value for term in ["历史年化收益", "年化收益率"])
-        and not any(term in value for term in ["历史不代表未来", "历史收益不代表未来", "过往不代表未来", "以产品说明书为准", "以说明书为准", "以实际"])
+        and not any(term in value for term in ["历史不代表未来", "历史收益不代表未来", "过往不代表未来", "以产品说明书为准", "以说明书为准", "以实际", "只是参考", "实际收益", "实际运作", "实际为准"])
     )
+    empathy_only_without_product = _has_empathy_only_without_product(value)
+    procedure_only_without_core = _has_procedure_only_without_core(value)
     corrected_compliance = (
         severe_violation
         and any(term in value for term in ["抱歉", "刚才表达不准确", "表达不准确", "刚才说得不准确"])
@@ -422,6 +543,11 @@ def score_employee_answer(
         total = min(total, 65)
         scores["logic_structure"] = min(scores["logic_structure"], 50)
         scores["empathy"] = min(scores["empathy"], 55)
+    # Technical jargon overload detection (even for shorter answers)
+    elif jargon_overload:
+        total = min(total, 60)
+        scores["logic_structure"] = min(scores["logic_structure"], 45)
+        scores["empathy"] = min(scores["empathy"], 50)
 
     # Hard selling detection
     if hard_selling_hits:
@@ -431,6 +557,12 @@ def score_employee_answer(
     if suitability_bypass:
         total = min(total, 45)
         scores["compliance"] = min(scores["compliance"], 55)
+        scores["logic_structure"] = min(scores["logic_structure"], 45)
+    if empathy_only_without_product:
+        total = min(total, 60)
+        scores["logic_structure"] = min(scores["logic_structure"], 45)
+    if procedure_only_without_core:
+        total = min(total, 60)
         scores["logic_structure"] = min(scores["logic_structure"], 45)
 
     dimension_scores = [
@@ -459,6 +591,7 @@ def score_employee_answer(
     if suitability_bypass:
         weakness_tags.append("适当性管理不足")
         weakness_tags.append("风险揭示不足")
+        weakness_tags.append("合规问题")  # Low-risk/high-risk mismatch is a compliance violation
 
     # Coverage-related tags
     if objection < 65 or (missing_points and not high_quality_answer):
@@ -469,11 +602,26 @@ def score_employee_answer(
             weakness_tags.append("标准要点覆盖不足")
 
     # Logic-related tags
-    if information_overload:
+    if information_overload or jargon_overload:
         weakness_tags.append("信息过载")
         weakness_tags.append("重点不突出")
     elif logic < 55 and total < 65:
         weakness_tags.append("逻辑结构待加强")
+
+    # Yield explanation missing
+    if _has_missing_yield_explanation(value):
+        weakness_tags.append("收益说明缺失")
+
+    if empathy_only_without_product:
+        weakness_tags.append("产品说明缺失")
+        weakness_tags.append("行动引导不足")
+    if procedure_only_without_core:
+        weakness_tags.append("风险揭示不足")
+        weakness_tags.append("收益说明缺失")
+
+    # Guidance missing for compliant answers
+    if _has_missing_guidance(value, compliance):
+        weakness_tags.append("成交引导不足")
 
     # Empathy-related tags
     if empathy < 55 and total < 65:
@@ -506,5 +654,5 @@ def score_employee_answer(
         "weakness_tags": weakness_tags,
         "suggestion": _build_suggestion(scores, missing_points, risk_hits, severe_violation),
         "intent_understanding": analyze_customer_answer(answer),
-        "method": "rule_scorer_v7_multi_dimension_with_severe_violation_detection",
+        "method": "rule_scorer_v8_business_signal_calibrated",
     }

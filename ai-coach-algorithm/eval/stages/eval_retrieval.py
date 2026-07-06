@@ -2,10 +2,13 @@
 
 Runs retrieve_marketing_knowledge with eval_mode=True to get:
 1. Candidate recall@10/20 - whether we can find gold in the candidate pool
-2. Reranked recall@3/top5 - whether reranking can bring gold to the front
+2. Final context recall@N - whether the context pack sent to the LLM covers gold
 3. Ceiling metrics - what's mathematically possible given gold set size
 4. Normalized recall - performance relative to ceiling
-5. Error analysis distinguishing candidate miss from rerank miss
+5. Error analysis distinguishing candidate miss from context-pack miss
+
+reranked_recall@3 is kept as a diagnostic metric, but the primary metric tracks
+the production context pack size (currently top8 in run_all).
 """
 from __future__ import annotations
 
@@ -55,8 +58,8 @@ def _get_ids_from_items(items: list[dict[str, Any]]) -> list[str]:
 
 def evaluate(
     *,
-    candidate_k: int = 20,
-    final_k: int = 3,
+    candidate_k: int = 40,
+    final_k: int = 8,
     fusion_weights: dict[str, float] | None = None,
     gold_path: Path = GOLD_PATH,
     route_filter: str | None = None,
@@ -65,8 +68,8 @@ def evaluate(
     """Evaluate two-stage retrieval: candidate pool → rerank → final topN.
 
     Args:
-        candidate_k: Size of candidate pool (default 20)
-        final_k: Final number of chunks to return to LLM (default 3)
+        candidate_k: Size of candidate pool (default 40)
+        final_k: Final number of chunks to return to LLM (default 8)
         fusion_weights: Override fusion weights for retrieval
         gold_path: Path to gold data
         route_filter: Filter by route ("tutor" or "customer")
@@ -186,8 +189,9 @@ def evaluate(
         normalized_context_hit_5.append(norm_hit_5)
         normalized_context_hit_8.append(norm_hit_8)
 
-        # Error analysis: compare against the mathematical ceiling. A case with
-        # 12 gold chunks and top3 returning 3 gold chunks is not a failure.
+        # Error analysis follows the final context pack, not the diagnostic
+        # top3 metric. A case with many gold chunks should be judged relative
+        # to the mathematical ceiling at the actual final_k.
         if verbose and candidate_ids:
             gold_in_candidate_10 = any(g in candidate_ids[:10] for g in gold_set)
             gold_in_candidate_20 = any(g in candidate_ids[:20] for g in gold_set)
@@ -198,13 +202,14 @@ def evaluate(
             norm_candidate_20 = normalized_recall_at_k(gold_ids, candidate_ids, k=20)
             norm_reranked_3 = normalized_recall_at_k(gold_ids, reranked_ids, k=3)
             norm_reranked_5 = normalized_recall_at_k(gold_ids, reranked_ids, k=5)
-            if norm_reranked_3 < 0.9999:
+            norm_final_context = normalized_recall_at_k(gold_ids, final_ids, k=final_k)
+            if norm_final_context < 0.9999:
                 if norm_candidate_20 < 0.9999:
                     miss_type = "candidate_miss"
                 elif norm_candidate_10 < 0.9999:
                     miss_type = "recall_10_candidate_miss"
                 else:
-                    miss_type = "rerank_miss"
+                    miss_type = "context_pack_miss"
 
                 errors.append({
                     "id": row["id"],
@@ -223,12 +228,15 @@ def evaluate(
                     "recall@3": round(recall_3, 4),
                     "recall@10": round(candidate_recall_10[-1], 4),
                     "recall@20": round(candidate_recall_20[-1], 4),
+                    f"final_context_recall@{final_k}": round(final_context_recall[-1], 4),
+                    f"final_context_hit@{final_k}": round(final_context_hit[-1], 4),
                     "ceiling@3": round(ceil_3, 4),
                     "ceiling@10": round(ceil_10, 4),
                     "normalized_candidate_recall@10": round(norm_candidate_10, 4),
                     "normalized_candidate_recall@20": round(norm_candidate_20, 4),
                     "normalized_reranked_recall@3": round(norm_reranked_3, 4),
                     "normalized_reranked_recall@5": round(norm_reranked_5, 4),
+                    f"normalized_final_context_recall@{final_k}": round(norm_final_context, 4),
                 })
 
     # Compute averages
@@ -260,9 +268,11 @@ def evaluate(
 
     # Per-route metrics
     by_route: dict[str, dict[str, Any]] = {}
-    for row, cr10, cr20, rr3, rr5, rr8, ch5, ch8, p3, p5, p8, mr, c3, c10, c20, ncr10, ncr20, nrr3, nrr5, nrr8, nch5, nch8 in zip(
+    for row, cr10, cr20, rr3, rr5, rr8, ch5, ch8, p3, p5, p8, fcr, fcp, fch, mr, c3, c10, c20, ncr10, ncr20, nrr3, nrr5, nrr8, nch5, nch8 in zip(
         rows, candidate_recall_10, candidate_recall_20, reranked_recall_3, reranked_recall_5, reranked_recall_8,
-        context_hit_5, context_hit_8, precision_3, precision_5, precision_8, mrr_scores, ceiling_3, ceiling_10, ceiling_20,
+        context_hit_5, context_hit_8, precision_3, precision_5, precision_8,
+        final_context_recall, final_context_precision, final_context_hit,
+        mrr_scores, ceiling_3, ceiling_10, ceiling_20,
         normalized_candidate_recall_10, normalized_candidate_recall_20,
         normalized_reranked_recall_3, normalized_reranked_recall_5, normalized_reranked_recall_8,
         normalized_context_hit_5, normalized_context_hit_8,
@@ -273,6 +283,7 @@ def evaluate(
                 "cr10_sum": 0, "cr20_sum": 0, "rr3_sum": 0, "rr5_sum": 0, "rr8_sum": 0,
                 "ch5_sum": 0, "ch8_sum": 0,
                 "p3_sum": 0, "p5_sum": 0, "p8_sum": 0,
+                "fcr_sum": 0, "fcp_sum": 0, "fch_sum": 0,
                 "mr_sum": 0, "c3_sum": 0, "c10_sum": 0, "c20_sum": 0,
                 "ncr10_sum": 0, "ncr20_sum": 0, "nrr3_sum": 0, "nrr5_sum": 0, "nrr8_sum": 0,
                 "nch5_sum": 0, "nch8_sum": 0,
@@ -288,6 +299,9 @@ def evaluate(
         by_route[rt]["p3_sum"] += p3
         by_route[rt]["p5_sum"] += p5
         by_route[rt]["p8_sum"] += p8
+        by_route[rt]["fcr_sum"] += fcr
+        by_route[rt]["fcp_sum"] += fcp
+        by_route[rt]["fch_sum"] += fch
         by_route[rt]["mr_sum"] += mr
         by_route[rt]["c3_sum"] += c3
         by_route[rt]["c10_sum"] += c10
@@ -315,6 +329,9 @@ def evaluate(
             "precision@3": round(d["p3_sum"] / n, 4),
             "precision@5": round(d["p5_sum"] / n, 4),
             "precision@8": round(d["p8_sum"] / n, 4),
+            f"final_context_recall@{final_k}": round(d["fcr_sum"] / n, 4),
+            f"final_context_precision@{final_k}": round(d["fcp_sum"] / n, 4),
+            f"final_context_hit@{final_k}": round(d["fch_sum"] / n, 4),
             "mrr": round(d["mr_sum"] / n, 4),
             "ceiling@3": round(d["c3_sum"] / n, 4),
             "ceiling@10": round(d["c10_sum"] / n, 4),
@@ -333,17 +350,17 @@ def evaluate(
     error_analysis = {}
     if verbose and errors:
         candidate_miss = sum(1 for e in errors if e.get("miss_type") == "candidate_miss")
-        rerank_miss = sum(1 for e in errors if e.get("miss_type") == "rerank_miss")
+        context_pack_miss = sum(1 for e in errors if e.get("miss_type") == "context_pack_miss")
         recall_10_miss = sum(1 for e in errors if e.get("miss_type") == "recall_10_candidate_miss")
         retrieval_error = sum(1 for e in errors if e.get("miss_type") == "retrieval_error")
         error_analysis = {
             "total_errors": len(errors),
             "candidate_miss": candidate_miss,  # Gold not in top20
             "recall_10_candidate_miss": recall_10_miss,  # Gold in top20 but not top10
-            "rerank_miss": rerank_miss,  # Gold in candidate pool but not in final top3
+            "context_pack_miss": context_pack_miss,  # Gold in candidate pool but not sufficiently covered in final context pack
             "retrieval_error": retrieval_error,
             "candidate_miss_rate": round(candidate_miss / len(errors), 4) if errors else 0,
-            "rerank_miss_rate": round(rerank_miss / len(errors), 4) if errors else 0,
+            "context_pack_miss_rate": round(context_pack_miss / len(errors), 4) if errors else 0,
         }
 
         # Analyze by gold count groups
@@ -418,8 +435,8 @@ def evaluate(
 
     return StageResult(
         stage="chunk_retrieval",
-        primary_metric="reranked_recall@3",
-        value=round(avg_reranked_recall_3, 4),
+        primary_metric=f"final_context_recall@{final_k}",
+        value=round(avg_final_context_recall, 4),
         gold_size=len(rows),
         details=details,
     )
@@ -429,8 +446,8 @@ def main() -> None:
     import argparse
 
     parser = argparse.ArgumentParser(description="Evaluate chunk retrieval stage with two-stage metrics.")
-    parser.add_argument("--candidate-k", type=int, default=20, help="Candidate pool size")
-    parser.add_argument("--final-k", type=int, default=3, help="Final top-k returned to LLM")
+    parser.add_argument("--candidate-k", type=int, default=40, help="Candidate pool size")
+    parser.add_argument("--final-k", type=int, default=8, help="Final top-k returned to LLM")
     parser.add_argument("--route", choices=["tutor", "customer"], help="Filter by route")
     parser.add_argument("--verbose", action="store_true", help="Include detailed error analysis")
     parser.add_argument("--save-verbose", action="store_true", help="Save verbose errors to file")

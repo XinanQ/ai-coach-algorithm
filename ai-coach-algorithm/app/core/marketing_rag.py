@@ -74,9 +74,46 @@ TUTOR_HYDE_PATTERNS = {
 
 
 # Calibrated on data/eval/must_point_coverage_gold.jsonl.
-TUTOR_MUST_POINT_THRESHOLD = 0.60
-TUTOR_MUST_POINT_KW_WEIGHT = 0.25
-TUTOR_MUST_POINT_SEM_WEIGHT = 0.75
+# Updated after fixing per-must-point keyword extraction (was using scene-level key_terms).
+# Lowered threshold and increased sem_weight to better handle semantic matches.
+TUTOR_MUST_POINT_THRESHOLD = 0.45
+TUTOR_MUST_POINT_KW_WEIGHT = 0.20
+TUTOR_MUST_POINT_SEM_WEIGHT = 0.80
+
+
+def _extract_keywords_from_must_point(text: str) -> list[str]:
+    """Extract meaningful keywords from must_point text for coverage evaluation.
+
+    Extracts 2-4 character continuous segments, filtering out common particles
+    and stop words. This provides per-dimension keywords instead of using
+    scene-level key_terms which are too generic.
+
+    Args:
+        text: Must point text like "风险说明" or "收益提示"
+
+    Returns:
+        List of meaningful keyword strings
+    """
+    text_clean = clean_text(text)
+    keywords = []
+    # Common stop words to filter out
+    stop_words = {
+        "的", "了", "是", "有", "在", "不", "个", "很", "和", "与", "或",
+        "及", "等", "与", "如", "若", "则", "而", "但", "且", "因", "为",
+        "这", "那", "某", "各", "每", "该", "其", "其", "此", "彼", "之",
+        "可", "应", "需", "会", "能", "要", "将", "已", "未", "曾",
+    }
+    # Extract 2-4 char chunks
+    for i in range(len(text_clean) - 1):
+        for length in [2, 3, 4]:
+            if i + length <= len(text_clean):
+                chunk = text_clean[i:i + length]
+                if chunk and chunk not in stop_words:
+                    keywords.append(chunk)
+    # Return unique keywords, prioritized by length (longer first)
+    unique_keywords = list(set(keywords))
+    unique_keywords.sort(key=len, reverse=True)
+    return unique_keywords
 
 
 CUSTOMER_INTENT_EXPANSIONS = {
@@ -661,7 +698,7 @@ def _retrieve_tutor_hyde(
     }
     if must_points:
         dimensions = [
-            {"id": f"mp_{idx}", "text": point, "keywords": key_terms or []}
+            {"id": f"mp_{idx}", "text": point, "keywords": _extract_keywords_from_must_point(point)}
             for idx, point in enumerate(must_points)
         ]
         trace["must_point_coverage"] = evaluate_coverage(

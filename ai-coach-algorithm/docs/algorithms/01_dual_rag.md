@@ -225,7 +225,7 @@ return [label for label, score in ranked if score >= cutoff][:INTENT_MAX_LABELS]
 | 中文 embedding 基线高(~0.3-0.4) | 已知 | 长期可考虑换 BGE-large-zh 或 m3e-large |
 | 客户侧关键词意图识别不灵敏 | 已知 | 当前 LLM 客户已直接读上下文,gap 仅作辅助,问题被绕开 |
 | Chroma PersistentClient 缓存致测试偶发 flaky | 已知 | 测试间清缓存,生产无影响 |
-| Gold标注过于宽泛导致理论天花板受限 | 已知 | 当前recall@3已达到理论天花板0.5869；后续需细化gold粒度 |
+| Gold标注过于宽泛导致 top3 理论天花板受限 | 已知 | recall@3 已降级为诊断项；主链路以 final_context_recall@8 / final_context_hit@8 判断最终上下文质量 |
 | Customer route gold过多导致召回困难 | 已知 | 平均13个gold,需压缩标注范围 |
 
 ## 8. 失败回退

@@ -427,14 +427,14 @@ E2E 评测模拟完整的陪练对话流程，验证从 `start_dialogue` → 多
 | `weak_tag_pass` | 弱点标签命中相关性 | > 70% |
 | `e2e_overall_pass` | 综合通过率 | > 60% |
 
-当前基线（2026-07-05）：E2E gold 已扩展到 30 条，`e2e_overall_pass=1.00`，`retrieval_hit=1.00`，`finish_score_pass=1.00`，`weak_tag_pass=1.00`。
+当前基线（2026-07-05 完整 run_all）：E2E gold 已扩展到 50 条，`e2e_overall_pass=0.84`，`retrieval_hit=1.00`，`finish_score_pass=0.86`，`weak_tag_pass=0.98`。当前主链路短板主要在 finish 最终评分校准。
 
 详细文档：[docs/algorithms/08_e2e_evaluation.md](docs/algorithms/08_e2e_evaluation.md)
 
 ### 单阶段评测
 
 ```powershell
-# RAG 检索评测（含 recall@3/5/8, context_hit@5/8）
+# RAG 检索评测（主指标 final_context_recall@8，保留 recall@3/5/8 诊断项）
 .\.venv\Scripts\python.exe -m eval.stages.eval_retrieval --verbose
 
 # Must point 覆盖度评测（含 negative pattern 检测）

@@ -21,7 +21,7 @@ RAG 链路上每个环节的误差会级联放大。即使每步准确率 90%,�
 |---|------|------|----------|---------|--------|
 | 1 | 意图检测 | 客户路 | 193 行(人工标注) | micro_f1 | **0.7576** |
 | 2 | Gap 计算 | 客户路 | 104 行(半自动) | accuracy | **0.9481** |
-| 3 | Chunk 检索 | 双路 | 70 行(自动生成) | reranked_recall@3 | **0.5869**(candidate_recall@20=0.9573) |
+| 3 | Chunk 检索 | 双路 | 70 行(自动生成) | final_context_recall@8 | **0.8059**(candidate_recall@20=0.9573, recall@3保留为诊断项) |
 | 4 | Must-Point 覆盖 | 导师路 | 45 行(半自动) | point_f1 | **0.8299** |
 
 ## 3. 使用方法
@@ -46,17 +46,19 @@ Stage                     Metric          Value      Gold Size
 ------------------------------------------------------------
 llm_intent_detection      llm_only_micro_f1 0.7576     50
 gap_computation           accuracy        0.9481     104
-chunk_retrieval           reranked_recall@3 0.5869     70
+chunk_retrieval           final_context_recall@8 0.8059     70
   - candidate_recall@20   recall          0.9573     70
+  - reranked_recall@3    diagnostic      0.5869     70
   - reranked_recall@5    recall          0.7103     70
   - reranked_recall@8    recall          0.8059     70
   - final_context_hit@8  hit_rate        1.0000     70
-  - tutor route           reranked_recall@3 0.7096   31
-  - customer route        reranked_recall@3 0.4894   39
+  - tutor route           final_context_recall@8 0.9135   31
+  - customer route        final_context_recall@8 0.7204   39
 must_point_coverage       point_f1        0.8299     45
 ------------------------------------------------------------
-End-to-end estimate: 0.3135
-Bottleneck: chunk_retrieval (v7: recall@20 + rerank + context pack + MMR diversity)
+End-to-end actual: 0.8400
+Component quality estimate: 0.4590
+Bottleneck: llm_intent_detection
 ```
 
 **v7 架构说明**：
@@ -64,6 +66,11 @@ Bottleneck: chunk_retrieval (v7: recall@20 + rerank + context pack + MMR diversi
 - Rerank：轻量级多信号融合（语义/词汇/场景/类型/意图衰减）
 - Context Pack：final_k=5/8 时启用 MMR 多样性选择，避免同质 chunk
 - 目标：从 top3 升级到 top5/top8 上下文包，提升 LLM 决策质量
+
+**2026-07-06 指标契约更新**：
+- `reranked_recall@3` 不再作为 `chunk_retrieval` 主指标，只保留为 reranker 压缩能力的诊断项。
+- 主指标改为 `final_context_recall@8`，与当前主链路 `recall@20/40 -> rerank -> top8 context pack -> LLM` 对齐。
+- 总报告中 `end_to_end_estimate` 在存在 E2E 阶段时使用真实 `e2e_overall_pass`，另用 `component_quality_estimate` 表示子模块乘积。
 
 ### 3.2 参数扫描
 
@@ -166,7 +173,9 @@ query
 |------|------|------|
 | candidate_recall@10 | 候选池 top10 中找到 gold 的比例 | 衡量第一阶段召回能力 |
 | candidate_recall@20 | 候选池 top20 中找到 gold 的比例 | 衡量扩大候选池的效果 |
-| reranked_recall@3 | rerank 后 top3 中找到 gold 的比例 | 衡量最终给 LLM 的上下文质量 |
+| final_context_recall@8 | 最终送入 LLM 的 top8 context pack 覆盖 gold 的比例 | 当前 chunk_retrieval 主指标，贴近真实主链路 |
+| final_context_hit@8 | 最终 top8 中是否至少命中一个 gold | 业务可用性兜底指标 |
+| reranked_recall@3 | rerank 后 top3 中找到 gold 的比例 | 诊断 reranker 压缩能力，不再作为主指标 |
 | reranked_recall@5 | rerank 后 top5 中找到 gold 的比例 | 评估 top5 的召回能力 |
 | precision@3/5 | topN 中真正属于 gold 的比例 | 评估检索精确度 |
 | mrr | Mean Reciprocal Rank，gold 首次出现位置的倒数 | 评估 gold 排序质量 |
@@ -309,9 +318,9 @@ query
    - 候选池计算不影响最终返回大小
 
 **当前评估结果(v7)**:
-- **总体**: candidate_recall@20=0.9573, reranked_recall@3=0.5869, normalized_reranked_recall@3=1.0000, final_context_hit@8=1.0000
-- **Tutor**: candidate_recall@20=1.0000, reranked_recall@3=0.7096, normalized_reranked_recall@3=1.0000
-- **Customer**: candidate_recall@20=0.9233, reranked_recall@3=0.4894, normalized_reranked_recall@3=1.0
+- **总体**: candidate_recall@20=0.9573, final_context_recall@8=0.8059, final_context_hit@8=1.0000, reranked_recall@3=0.5869(诊断项)
+- **Tutor**: candidate_recall@20=1.0000, final_context_recall@8=0.9135, reranked_recall@3=0.7096(诊断项)
+- **Customer**: candidate_recall@20=0.9233, final_context_recall@8=0.7204, reranked_recall@3=0.4894(诊断项)
 - **瓶颈分析**:
   - Tutor route: 已达到当前 gold 标注下的 top3 理论天花板
   - Customer route: 已达数学天花板,recall@3=0.4894即为理论上限
@@ -328,9 +337,9 @@ query
 **当前主报告**:
 - llm_intent_detection: llm_only_micro_f1=0.7576
 - gap_computation: accuracy=0.9481
-- chunk_retrieval: reranked_recall@3=0.5869, candidate_recall@20=0.9573, final_context_hit@8=1.0000
+- chunk_retrieval: final_context_recall@8=0.8059, candidate_recall@20=0.9573, final_context_hit@8=1.0000
 - must_point_coverage: point_f1=0.8299, precision=0.7353, recall=0.9524
-- end_to_end_estimate=0.2449, bottleneck=chunk_retrieval（raw recall@3 受理论天花板限制）
+- end_to_end_actual=0.8400, component_quality_estimate≈0.4590，当前算法子模块瓶颈为 llm_intent_detection；chunk_retrieval 的 recall@3 已降级为诊断指标
 
 ## 6. 文件结构
 

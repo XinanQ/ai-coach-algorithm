@@ -1,6 +1,6 @@
 {
-  "run_id": "eval_20260705_111054",
-  "timestamp": "2026-07-05T11:10:54.620058",
+  "run_id": "eval_20260705_202025",
+  "timestamp": "2026-07-05T20:20:25.818191",
   "stages": [
     {
       "stage": "llm_intent_detection",
@@ -36,22 +36,22 @@
     {
       "stage": "gap_computation",
       "primary_metric": "accuracy",
-      "value": 0.9481,
+      "value": 0.9057,
       "gold_size": 104,
       "details": {
         "params": {
           "threshold": 0.1
         },
-        "accuracy": 0.9481,
-        "false_covered_rate": 0.0236,
-        "false_missing_rate": 0.0283,
+        "accuracy": 0.9057,
+        "false_covered_rate": 0.0189,
+        "false_missing_rate": 0.0755,
         "total_intents_evaluated": 212
       }
     },
     {
       "stage": "chunk_retrieval",
-      "primary_metric": "reranked_recall@3",
-      "value": 0.5869,
+      "primary_metric": "final_context_recall@8",
+      "value": 0.8059,
       "gold_size": 70,
       "details": {
         "params": {
@@ -97,6 +97,9 @@
             "precision@3": 0.871,
             "precision@5": 0.7742,
             "precision@8": 0.6694,
+            "final_context_recall@8": 0.9135,
+            "final_context_precision@8": 0.6694,
+            "final_context_hit@8": 1.0,
             "mrr": 1.0,
             "ceiling@3": 0.7096,
             "ceiling@10": 0.9447,
@@ -121,6 +124,9 @@
             "precision@3": 1.0,
             "precision@5": 1.0,
             "precision@8": 1.0,
+            "final_context_recall@8": 0.7204,
+            "final_context_precision@8": 1.0,
+            "final_context_hit@8": 1.0,
             "mrr": 1.0,
             "ceiling@3": 0.4894,
             "ceiling@10": 0.7852,
@@ -192,26 +198,28 @@
     {
       "stage": "e2e_dialogue",
       "primary_metric": "e2e_overall_pass",
-      "value": 1.0,
-      "gold_size": 20,
+      "value": 0.84,
+      "gold_size": 50,
       "details": {
-        "total_cases": 20,
+        "total_cases": 50,
         "sample_size": null,
         "skip_slow": false,
-        "e2e_overall_pass": 1.0,
+        "e2e_overall_pass": 0.84,
         "start_pass": 1.0,
         "contract_pass": 1.0,
         "intent_pass": 1.0,
         "gap_pass": 1.0,
         "retrieval_hit": 1.0,
         "followup_pass": 1.0,
-        "finish_score_pass": 1.0,
-        "weak_tag_pass": 1.0
+        "finish_score_pass": 0.86,
+        "weak_tag_pass": 0.98
       }
     }
   ],
-  "end_to_end_estimate": 0.3499,
-  "bottleneck": "chunk_retrieval",
+  "end_to_end_estimate": 0.84,
+  "end_to_end_metric_source": "e2e_dialogue",
+  "component_quality_estimate": 0.459,
+  "bottleneck": "llm_intent_detection",
   "runtime_info": {
     "embedding": {
       "requested_backend": "sentence_transformers",
