@@ -133,7 +133,23 @@ GET /practice/scripts/{scriptId}?taskId={taskId}
 
 说明：39 条任务卡来自 `data/customer_profiles.json` 的 39 个客户画像；成长等级、积分、任务完成状态等仍建议最终由 Java 后端业务库接管。算法侧接口用于联调、推荐场景目录和中文标签展示。
 
-任务详情页可直接使用 `scriptEntry` 渲染“查看标准话术”按钮，点击后调用 `/practice/tasks/{taskId}/scripts`。话术卡片返回 `scriptId`、`title`、`subtitle`、`tags`、`standardSpeech`、`copyText`、`sourceFile` 等字段；详情页可调用 `/practice/scripts/{scriptId}?taskId={taskId}`，用于实现“话术详情 / 复制标准话术”的页面。
+任务详情页可直接使用 `scriptEntry` 渲染“查看标准话术”按钮，点击后调用 `/practice/tasks/{taskId}/scripts`。话术卡片返回 `scriptId`、`title`、`displayTitle`、`sourceTitle`、`subtitle`、`tags`、`standardSpeech`、`copyText`、`sourceFile` 等字段；前端展示建议使用 `displayTitle` / `title`，排查资料来源时再看 `sourceTitle` / `sourceFile`。详情页可调用 `/practice/scripts/{scriptId}?taskId={taskId}`，用于实现“话术详情 / 复制标准话术”的页面。
+
+话术标题采用“离线生成 + 人工审核 + 运行时只读覆盖表”的方式维护，不在接口请求中实时调用 LLM：
+
+```powershell
+# 生成待审核标题候选，默认无 API 成本
+.\.venv\Scripts\python.exe scripts\generate_script_title_candidates.py --mode rule
+
+# 如已配置 DEEPSEEK_API_KEY，可离线批量用 LLM 生成候选
+.\.venv\Scripts\python.exe scripts\generate_script_title_candidates.py --mode llm --batch-size 8
+
+# 人工审核 data/review/script_title_candidates.json 后，将 status 改为 approved/locked
+# 再提升为运行时覆盖表 data/script_title_overrides.json
+.\.venv\Scripts\python.exe scripts\generate_script_title_candidates.py --promote-approved
+```
+
+运行时只使用 `data/script_title_overrides.json` 中 `status=approved` 或 `locked` 的标题；未审核条目继续走本地规则兜底，避免未经确认的 LLM 标题直接影响联调页面。
 
 ## Docker 开发环境（算法服务 + Redis + PostgreSQL）
 

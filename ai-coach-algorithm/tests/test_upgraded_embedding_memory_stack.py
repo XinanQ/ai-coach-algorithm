@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+import json
 from pathlib import Path
 
 from fastapi.testclient import TestClient
@@ -118,14 +120,26 @@ def test_practice_task_catalog_returns_display_ready_cards() -> None:
     assert {
         "scriptId",
         "title",
+        "displayTitle",
+        "sourceTitle",
         "subtitle",
         "tags",
         "standardSpeech",
         "copyText",
         "sourceFile",
+        "sourceScope",
     } <= set(script_card)
+    assert script_card["title"] == script_card["displayTitle"]
+    assert not re.match(r"^[（(]?[一二三四五六七八九十百千万\d]+[、.)）]", script_card["displayTitle"])
+    assert script_card["sourceScope"] in {"exact_scene", "same_business"}
     assert script_card["standardSpeech"]
     assert script_card["tags"]
+
+    dividend_scripts = client.get("/practice/tasks/TASK_CUST_RATE_DIVIDEND_LOW/scripts")
+    assert dividend_scripts.status_code == 200
+    dividend_cards = dividend_scripts.json()["list"]
+    assert any(card["displayTitle"] == "客户质疑前期收益低时怎么解释" for card in dividend_cards)
+    assert {card["sourceScope"] for card in dividend_cards} == {"exact_scene"}
 
     script_detail = client.get(
         f"/practice/scripts/{script_card['scriptId']}",
@@ -138,6 +152,36 @@ def test_practice_task_catalog_returns_display_ready_cards() -> None:
     assert profiles.status_code == 200
     profile = profiles.json()["profiles"][0]
     assert profile["tags"] and all("_" not in tag for tag in profile["tags"])
+
+
+def test_reviewed_script_title_override_takes_precedence(tmp_path: Path, monkeypatch) -> None:
+    from app.core import script_title_review
+    from app.core.script_materials import get_script_card
+
+    override_path = tmp_path / "script_title_overrides.json"
+    override_path.write_text(
+        json.dumps(
+            {
+                "overrides": {
+                    "MCH_000068": {
+                        "displayTitle": "审核后的分红险前期收益解释",
+                        "status": "approved",
+                    }
+                }
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(script_title_review, "SCRIPT_TITLE_OVERRIDES_PATH", override_path)
+    script_title_review.clear_script_title_override_cache()
+    try:
+        card = get_script_card("MCH_000068", task_id="TASK_CUST_RATE_DIVIDEND_LOW")
+        assert card is not None
+        assert card["displayTitle"] == "审核后的分红险前期收益解释"
+        assert card["title"] == "审核后的分红险前期收益解释"
+    finally:
+        script_title_review.clear_script_title_override_cache()
     assert profile["expectedIntents"] and any("_" in tag for tag in profile["expectedIntents"])
 
 

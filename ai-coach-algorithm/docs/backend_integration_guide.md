@@ -136,7 +136,24 @@ GET /practice/scripts/{scriptId}?taskId={taskId}
 | `GET /practice/tasks/{taskId}/scripts` | 算法 | 返回该任务对应的话术卡片列表 |
 | `GET /practice/scripts/{scriptId}?taskId={taskId}` | 算法 | 返回单张话术详情，用于“话术详情 / 复制标准话术”页 |
 
-话术卡片核心字段：`scriptId`、`title`、`subtitle`、`tags`、`standardSpeech`、`copyText`、`sourceFile`、`sourceChunkId`。前端展示文本用 `standardSpeech`，复制按钮用 `copyText`。
+话术卡片核心字段：`scriptId`、`title`、`displayTitle`、`sourceTitle`、`subtitle`、`tags`、`standardSpeech`、`copyText`、`sourceFile`、`sourceChunkId`、`sourceScope`。前端卡片标题建议用 `displayTitle` 或兼容字段 `title`，这两个字段已经是面向员工展示的中文标题；`sourceTitle` 保留原始资料标题，仅用于调试溯源。前端展示文本用 `standardSpeech`，复制按钮用 `copyText`。
+
+`sourceScope` 用于标识资料匹配范围：`exact_scene` 表示同一陪练场景，`same_business` 表示同业务大类兜底。算法侧默认优先返回 `exact_scene`，只有同场景话术不足时才补同业务资料，减少跨场景话术混入。
+
+话术标题不是运行时临时生成。算法侧会先读取 `data/script_title_overrides.json` 里已审核的标题覆盖；如果没有审核标题，再用本地规则兜底。标题审核流程如下：
+
+```powershell
+# 生成候选标题，输出到 data/review/script_title_candidates.json
+python scripts\generate_script_title_candidates.py --mode rule
+
+# 可选：配置 DEEPSEEK_API_KEY 后离线用 LLM 批量生成候选
+python scripts\generate_script_title_candidates.py --mode llm --batch-size 8
+
+# 人工审核候选文件，把可用条目的 status 改为 approved 或 locked
+python scripts\generate_script_title_candidates.py --promote-approved
+```
+
+这个流程不会增加小程序联调接口的实时耗时，也不会让未经人工审核的 LLM 标题直接出现在页面上。
 
 `GET /dialog/profiles` 也会保留原始 `expected_intents`，并额外返回 `tags` / `intentLabels` 中文展示字段。前端展示标签时优先用 `tags`，不要直接展示 `expected_intents`。
 

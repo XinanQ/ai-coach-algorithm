@@ -1,0 +1,1550 @@
+{
+  "meta": {
+    "version": 1,
+    "generatedAt": "2026-07-07T07:40:23+00:00",
+    "source": "data/review/script_title_candidates.json",
+    "totalApproved": 171
+  },
+  "overrides": {
+    "MCH_000001": {
+      "displayTitle": "客户定期到期时怎么邀约",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "到期类客户(以定期为例)",
+      "sourceFile": "保险营销话术/保险目标预约电邀话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000002": {
+      "displayTitle": "客户活期大额未持保险时怎么邀约",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "活期大额未持有保险客户",
+      "sourceFile": "保险营销话术/保险目标预约电邀话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000003": {
+      "displayTitle": "客户持有趸缴保险时怎么转化邀约",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "持有保险类客户(趸缴类转化)",
+      "sourceFile": "保险营销话术/保险目标预约电邀话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000004": {
+      "displayTitle": "客户理财到期时怎么邀约",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "持有理财客户(理财类转化)",
+      "sourceFile": "保险营销话术/保险目标预约电邀话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000005": {
+      "displayTitle": "客户无活期时怎么邀约",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "无活期类客户",
+      "sourceFile": "保险营销话术/保险目标预约电邀话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000006": {
+      "displayTitle": "客户降级时怎么邀约",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "降级类客户",
+      "sourceFile": "保险营销话术/保险目标预约电邀话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000007": {
+      "displayTitle": "客户大额流失时怎么邀约",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "大额流失客户",
+      "sourceFile": "保险营销话术/保险目标预约电邀话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000008": {
+      "displayTitle": "客户生日时怎么邀约",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "生日类客户",
+      "sourceFile": "保险营销话术/保险目标预约电邀话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000009": {
+      "displayTitle": "客户接到电话时怎么邀约",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "话术",
+      "sourceFile": "保险营销话术/保险营销标准流程话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000010": {
+      "displayTitle": "客户对分红险失望时怎么安抚",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "客户情绪安抚",
+      "sourceFile": "保险营销话术/保险营销标准流程话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000011": {
+      "displayTitle": "客户说没钱时怎么回应",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "【客户说没钱】就是因为您没钱,我才要帮您创造财富",
+      "sourceFile": "保险营销话术/保险营销标准流程话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000012": {
+      "displayTitle": "客户拒绝保险时怎么推荐其他产品",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "X姐/哥,我们其实还有为像您这样的客户量身打造的产品介绍给您.",
+      "sourceFile": "保险营销话术/保险营销标准流程话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000013": {
+      "displayTitle": "客户犹豫时怎么促成交易",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "促成交易",
+      "sourceFile": "保险营销话术/保险营销标准流程话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000014": {
+      "displayTitle": "客户离开时怎么留存资料",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "留存客户资料",
+      "sourceFile": "保险营销话术/保险营销标准流程话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000015": {
+      "displayTitle": "客户离开时怎么送别",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "送别客户",
+      "sourceFile": "保险营销话术/保险营销标准流程话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000016": {
+      "displayTitle": "产品到期客户来电时怎么邀约",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "(一)产品到期客户",
+      "sourceFile": "保险营销话术/保险营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000017": {
+      "displayTitle": "客户非现场转介时怎么邀约",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "(二)非现场转介客户",
+      "sourceFile": "保险营销话术/保险营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000018": {
+      "displayTitle": "客户持有本行产品时怎么营销",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "(三)持有本行投资理财产品客户",
+      "sourceFile": "保险营销话术/保险营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000019": {
+      "displayTitle": "客户AUM达标时怎么电话邀约",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "(四)系统筛选AUM XX 万以上客户",
+      "sourceFile": "保险营销话术/保险营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000020": {
+      "displayTitle": "客户熟人转介时怎么邀约",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "(五)熟人转介客户",
+      "sourceFile": "保险营销话术/保险营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000021": {
+      "displayTitle": "客户初次见面时怎么破冰",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "(一)relax talk",
+      "sourceFile": "保险营销话术/保险营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000022": {
+      "displayTitle": "客户需要了解服务人员时怎么介绍",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "(二)自我介绍",
+      "sourceFile": "保险营销话术/保险营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000023": {
+      "displayTitle": "客户对理财感兴趣时怎么切入",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "(三)切入投资理财",
+      "sourceFile": "保险营销话术/保险营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000024": {
+      "displayTitle": "客户说行情不好时怎么回应",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "(客户:现在行情不好/一点点,不是很多)",
+      "sourceFile": "保险营销话术/保险营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000025": {
+      "displayTitle": "客户说想赚钱时怎么回应",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "(客户:想赚点钱吧!)",
+      "sourceFile": "保险营销话术/保险营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000026": {
+      "displayTitle": "客户提到有存款时怎么引导",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "(客户:银行还有些存款,用于日常生活开支.)",
+      "sourceFile": "保险营销话术/保险营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000027": {
+      "displayTitle": "客户说没有其他理财时怎么介绍保险",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "(客户:没有了.)",
+      "sourceFile": "保险营销话术/保险营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000028": {
+      "displayTitle": "客户理解风险时怎么区分保险功能",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "(客户:风险就发生一些意外,造成一些财产和人身的伤害.)",
+      "sourceFile": "保险营销话术/保险营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000029": {
+      "displayTitle": "客户没买过保险时怎么开启对话",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "步骤一:",
+      "sourceFile": "保险营销话术/保险营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000030": {
+      "displayTitle": "客户有保险时怎么了解购买原因",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "步骤二:",
+      "sourceFile": "保险营销话术/保险营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000031": {
+      "displayTitle": "客户有保险时怎么检视保障内容",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "步骤三:",
+      "sourceFile": "保险营销话术/保险营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000032": {
+      "displayTitle": "客户有保额时怎么追问决策依据",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "步骤四:",
+      "sourceFile": "保险营销话术/保险营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000033": {
+      "displayTitle": "客户回避风险时怎么用提问引导",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "步骤五:",
+      "sourceFile": "保险营销话术/保险营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000034": {
+      "displayTitle": "客户忽视风险时怎么用收支曲线说明",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "(五)激发风险意识",
+      "sourceFile": "保险营销话术/保险营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000035": {
+      "displayTitle": "客户担心父母赡养时怎么规划",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "(五)激发风险意识",
+      "sourceFile": "保险营销话术/保险营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000036": {
+      "displayTitle": "客户考虑养老时怎么引导规划",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "(五)激发风险意识(续)",
+      "sourceFile": "保险营销话术/保险营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000037": {
+      "displayTitle": "客户准备规划时怎么收集家庭信息",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "(六)客户信息收集",
+      "sourceFile": "保险营销话术/保险营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000038": {
+      "displayTitle": "客户提供信息时怎么追问资产细节",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "(六)客户信息收集",
+      "sourceFile": "保险营销话术/保险营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000039": {
+      "displayTitle": "客户看重收益时怎么介绍安全产品",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "购买理财客户",
+      "sourceFile": "保险营销话术/保险营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000040": {
+      "displayTitle": "客户存定期时怎么推荐更高收益产品",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "3 - 5 年定期储蓄的客户",
+      "sourceFile": "保险营销话术/保险营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000041": {
+      "displayTitle": "客户已买过保险时怎么续保",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "购买过保险产品的客户",
+      "sourceFile": "保险营销话术/保险营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000042": {
+      "displayTitle": "客户45岁以上时怎么聊养老",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "45 岁以上的客户",
+      "sourceFile": "保险营销话术/保险营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000043": {
+      "displayTitle": "客户45岁以下时怎么聊教育金",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "45 岁以下的客户",
+      "sourceFile": "保险营销话术/保险营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000044": {
+      "displayTitle": "客户犹豫时怎么了解需求",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "(二)理财经理详细讲解",
+      "sourceFile": "保险营销话术/保险营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000045": {
+      "displayTitle": "客户关心养老或教育金时怎么介绍",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "您主要关心养老呢还是教育金呢?为什么关心这块呢?您有去考虑过养老风险和教育风险吗?",
+      "sourceFile": "保险营销话术/保险营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000046": {
+      "displayTitle": "客户嫌时间长时怎么解释",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "(一)时间太长",
+      "sourceFile": "保险营销话术/保险营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000047": {
+      "displayTitle": "客户嫌分红低时怎么回应",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "(二)分红不确定,收益太低",
+      "sourceFile": "保险营销话术/保险营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000048": {
+      "displayTitle": "客户说不如买理财时怎么应对",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "(三)还不如买理财",
+      "sourceFile": "保险营销话术/保险营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000049": {
+      "displayTitle": "客户说不如存定期时怎么回应",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "(四)还不如存定期",
+      "sourceFile": "保险营销话术/保险营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000050": {
+      "displayTitle": "客户说该买的保险都买了时怎么追问",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "(五)该买的保险都买了",
+      "sourceFile": "保险营销话术/保险营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000051": {
+      "displayTitle": "客户说已经买过你们保险时怎么跟进",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "(六)你们的保险已经买过了",
+      "sourceFile": "保险营销话术/保险营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000052": {
+      "displayTitle": "客户说不知道什么时候要用钱时怎么应对",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "(七)不知道什么时候要用钱",
+      "sourceFile": "保险营销话术/保险营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000053": {
+      "displayTitle": "客户说孩子要买房时怎么引导",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "(八)孩子要买房",
+      "sourceFile": "保险营销话术/保险营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000054": {
+      "displayTitle": "客户说我不买保险时怎么破冰",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "(九)我不买保险的",
+      "sourceFile": "保险营销话术/保险营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000055": {
+      "displayTitle": "客户说买房收租养老时怎么对比",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "(十)买房子收租金当养老钱,不需要这个年金",
+      "sourceFile": "保险营销话术/保险营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000056": {
+      "displayTitle": "客户说没钱时怎么激发储蓄意识",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "(十一)我没钱",
+      "sourceFile": "保险营销话术/保险营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000057": {
+      "displayTitle": "客户说保险骗人时怎么回应",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "(十二)保险都是骗人的",
+      "sourceFile": "保险营销话术/保险营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000058": {
+      "displayTitle": "客户担心保险公司倒闭时怎么说明",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "(十三)万一保险公司倒闭了怎么办",
+      "sourceFile": "保险营销话术/保险营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000059": {
+      "displayTitle": "客户质疑银行代销保险时怎么解释",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "银行存款都要向保险公司投保,银行倒闭后,50 万以下的客户存款,由保险公司负责偿付.",
+      "sourceFile": "保险营销话术/保险营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000060": {
+      "displayTitle": "客户说要问朋友时怎么说服",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "(十四)我有朋友在保险公司,我先问问他们吧",
+      "sourceFile": "保险营销话术/保险营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000061": {
+      "displayTitle": "客户说考虑考虑时怎么推进",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "(十五)我要考虑考虑",
+      "sourceFile": "保险营销话术/保险营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000062": {
+      "displayTitle": "客户说要和家人商量时怎么应对",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "(十六)我要和家人商量",
+      "sourceFile": "保险营销话术/保险营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000063": {
+      "displayTitle": "客户不接受分红不确定时怎么解释",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "1、分红不确定,客户不接受,怎么办?",
+      "sourceFile": "保险营销话术/分红险异议处理话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000064": {
+      "displayTitle": "客户质疑分红不稳定时怎么说明",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "1、分红不确定,客户不接受,怎么办?",
+      "sourceFile": "保险营销话术/分红险异议处理话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000065": {
+      "displayTitle": "客户担心分红险安全时怎么说明",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "2、这么一大笔钱放入分红险,安全么?",
+      "sourceFile": "保险营销话术/分红险异议处理话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000066": {
+      "displayTitle": "客户问分红险能否抗通胀时怎么答",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "3、分红险的收益并不高,能抵得过通货膨胀么?",
+      "sourceFile": "保险营销话术/分红险异议处理话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000067": {
+      "displayTitle": "客户再问通胀影响时怎么解释",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "3、分红险的收益并不高,能抵得过通货膨胀么?",
+      "sourceFile": "保险营销话术/分红险异议处理话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000068": {
+      "displayTitle": "客户嫌前期没收益返本慢时怎么回应",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "4、前期没有收益,返本慢?",
+      "sourceFile": "保险营销话术/分红险异议处理话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000069": {
+      "displayTitle": "客户不清楚分红每年能分多少时怎么说",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "5、不清楚分红每年能分多少",
+      "sourceFile": "保险营销话术/分红险异议处理话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000070": {
+      "displayTitle": "客户理财到期时怎么引导长期规划",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "1、观念引导",
+      "sourceFile": "保险营销话术/期交保险口语化营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000071": {
+      "displayTitle": "客户质疑保险靠谱吗时怎么处理",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "2、 异议处理",
+      "sourceFile": "保险营销话术/期交保险口语化营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000072": {
+      "displayTitle": "客户嫌利率低时怎么应对",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "客户嫌利率低.",
+      "sourceFile": "保险营销话术/期交保险口语化营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000073": {
+      "displayTitle": "客户说回去考虑时怎么应对",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "客户回去考虑一下.",
+      "sourceFile": "保险营销话术/期交保险口语化营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000074": {
+      "displayTitle": "客户质疑保险意义时怎么说明",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "保险营销话术参考",
+      "sourceFile": "保险营销话术/期交保险意向客户营销话术参考.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000075": {
+      "displayTitle": "客户问产品合规性时怎么回答",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "注意事项:",
+      "sourceFile": "保险营销话术/期交保险意向客户营销话术参考.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000076": {
+      "displayTitle": "客户想了解交费与返还时怎么介绍",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "注意事项:",
+      "sourceFile": "保险营销话术/期交保险意向客户营销话术参考.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000077": {
+      "displayTitle": "客户对降息焦虑时怎么邀约",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "一、接触话术",
+      "sourceFile": "保险营销话术/期交保险意向客户营销话术参考.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000078": {
+      "displayTitle": "客户说不如买理财时怎么推荐产品",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "一、接触话术",
+      "sourceFile": "保险营销话术/期交保险意向客户营销话术参考.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000079": {
+      "displayTitle": "老客户邀约时怎么电话沟通",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "一、接触话术",
+      "sourceFile": "保险营销话术/期交保险意向客户营销话术参考.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000080": {
+      "displayTitle": "定活期客户邀约时怎么开口",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "一、接触话术(续)",
+      "sourceFile": "保险营销话术/期交保险意向客户营销话术参考.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000081": {
+      "displayTitle": "邀约VIP大客户时怎么说明",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "一、接触话术(续)",
+      "sourceFile": "保险营销话术/期交保险意向客户营销话术参考.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000082": {
+      "displayTitle": "客户是VIP时怎么邀约",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "一、接触话术(续)",
+      "sourceFile": "保险营销话术/期交保险意向客户营销话术参考.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000083": {
+      "displayTitle": "客户是普通客户时怎么介绍",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "2. 对普通的客户:",
+      "sourceFile": "保险营销话术/期交保险意向客户营销话术参考.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000084": {
+      "displayTitle": "客户办定存转存时怎么推荐",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "3. 对于定存转存的客户:",
+      "sourceFile": "保险营销话术/期交保险意向客户营销话术参考.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000085": {
+      "displayTitle": "客户是到期老客户时怎么推荐",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "三、需求分析类话术 针对到期客户:突出产品稀缺性.",
+      "sourceFile": "保险营销话术/期交保险意向客户营销话术参考.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000086": {
+      "displayTitle": "客户两年期存款到期时怎么沟通",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "针对两年期以上存款到期客户:突出产品的收益性",
+      "sourceFile": "保险营销话术/期交保险意向客户营销话术参考.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000087": {
+      "displayTitle": "客户是40岁以上时怎么谈养老",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "针对两年期以上存款到期客户:突出产品的收益性",
+      "sourceFile": "保险营销话术/期交保险意向客户营销话术参考.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000088": {
+      "displayTitle": "客户说不需要保险时怎么回应",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "四、处理客户拒绝话术1、我现在很健康,不需要保险.",
+      "sourceFile": "保险营销话术/期交保险意向客户营销话术参考.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000089": {
+      "displayTitle": "客户认为养儿育女就是保障时怎么推荐保险",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "2、养儿育女就是保障,何必买保险.",
+      "sourceFile": "保险营销话术/期交保险意向客户营销话术参考.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000090": {
+      "displayTitle": "客户说保险不吉利时怎么解释",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "3、保险不吉利,不保不险,一保就险.",
+      "sourceFile": "保险营销话术/期交保险意向客户营销话术参考.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000091": {
+      "displayTitle": "客户说保险不赚钱时怎么说明",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "3、保险不吉利,不保不险,一保就险.",
+      "sourceFile": "保险营销话术/期交保险意向客户营销话术参考.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000092": {
+      "displayTitle": "客户说买少没用买多交不起时怎么应对",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "5、保险是买少了不管用,买多了交不起钱.",
+      "sourceFile": "保险营销话术/期交保险意向客户营销话术参考.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000093": {
+      "displayTitle": "客户说期限太长时怎么解释",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "7、期限太长了.",
+      "sourceFile": "保险营销话术/期交保险意向客户营销话术参考.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000094": {
+      "displayTitle": "客户说期限太长时怎么引导",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "7、期限太长了.",
+      "sourceFile": "保险营销话术/期交保险意向客户营销话术参考.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000095": {
+      "displayTitle": "客户说等老了再买保险时怎么回应",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "10、等我老一点再买吧.",
+      "sourceFile": "保险营销话术/期交保险意向客户营销话术参考.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000096": {
+      "displayTitle": "客户说以前没保险也过了时怎么说明",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "11、以前的人确实没有保险也都过了,我何必买呢.",
+      "sourceFile": "保险营销话术/期交保险意向客户营销话术参考.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000097": {
+      "displayTitle": "客户说有社保时怎么推荐保险",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "12、我已有社保,不需要再买保险.",
+      "sourceFile": "保险营销话术/期交保险意向客户营销话术参考.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000098": {
+      "displayTitle": "客户说考虑几天时怎么应对",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "14、让我考虑几天.",
+      "sourceFile": "保险营销话术/期交保险意向客户营销话术参考.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000099": {
+      "displayTitle": "客户说保险骗人时怎么处理",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "16.保险是骗人的,我不要!",
+      "sourceFile": "保险营销话术/期交保险意向客户营销话术参考.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000100": {
+      "displayTitle": "客户问谁买了时怎么回答",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "18.客户:你说这款产品好,我周围有很多人存,都有谁存了?",
+      "sourceFile": "保险营销话术/期交保险意向客户营销话术参考.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000101": {
+      "displayTitle": "客户担心续存困难时怎么建议",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "22.客户:你说这款产品好我也认同,但我怕后边每年存不上,怎么办?",
+      "sourceFile": "保险营销话术/期交保险意向客户营销话术参考.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000102": {
+      "displayTitle": "客户犹豫想回家商量时怎么促成",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "24.客户表示对产品犹豫或购买后对产品迟疑,想回家商量后再买的!",
+      "sourceFile": "保险营销话术/期交保险意向客户营销话术参考.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000103": {
+      "displayTitle": "客户说有钱不需要保险时怎么回应",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "27.客户:我有的是钱,不需要保险.",
+      "sourceFile": "保险营销话术/期交保险意向客户营销话术参考.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000104": {
+      "displayTitle": "客户要回家商量时怎么邀请",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "30.客户:我觉得这款保险产品我需要回家与家人商量一下再说!",
+      "sourceFile": "保险营销话术/期交保险意向客户营销话术参考.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000105": {
+      "displayTitle": "客户说朋友劝别买保险时怎么回应",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "34.我问过朋友,朋友都说“这是保险,不能买”.",
+      "sourceFile": "保险营销话术/期交保险意向客户营销话术参考.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000106": {
+      "displayTitle": "客户说钱要花在孩子补习时怎么回应",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "37.客户:我们孩子上初中,这些钱我都用做孩子的补习班,不能存保险啊!",
+      "sourceFile": "保险营销话术/期交保险意向客户营销话术参考.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000107": {
+      "displayTitle": "客户犹豫时怎么用身边事例促成",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "3、讲述身边事例",
+      "sourceFile": "保险营销话术/期交保险意向客户营销话术参考.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000108": {
+      "displayTitle": "客户犹豫时怎么用二择一法促成",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "5、二择一促成法",
+      "sourceFile": "保险营销话术/期交保险意向客户营销话术参考.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000109": {
+      "displayTitle": "促成前怎么做好位置和准备",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "1、合适的位置",
+      "sourceFile": "保险营销话术/期交保险意向客户营销话术参考.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000110": {
+      "displayTitle": "促成时怎么制造一对一环境",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "4、制造一对一的促成环境",
+      "sourceFile": "保险营销话术/期交保险意向客户营销话术参考.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000111": {
+      "displayTitle": "提问时怎么用开放式问题了解需求",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "4、制造一对一的促成环境",
+      "sourceFile": "保险营销话术/期交保险意向客户营销话术参考.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000112": {
+      "displayTitle": "客户基金到期时怎么邀约赎回",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "基金参考话术",
+      "sourceFile": "基金营销话术/2.0-基金电话邀约及异议处理话术 - （新）.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000113": {
+      "displayTitle": "客户问利率变化时怎么推荐债券基金",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "张先生,您一直都在买理财产品,有没有发现利率有什么变化呢(客户回答越来越低了)",
+      "sourceFile": "基金营销话术/2.0-基金电话邀约及异议处理话术 - （新）.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000114": {
+      "displayTitle": "客户质疑基金代销时怎么利用专业优势消除顾虑",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "异议处理",
+      "sourceFile": "基金营销话术/2.0-基金电话邀约及异议处理话术 - （新）.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000115": {
+      "displayTitle": "客户说赔光了不炒时怎么推荐定投",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "异议处理",
+      "sourceFile": "基金营销话术/2.0-基金电话邀约及异议处理话术 - （新）.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000116": {
+      "displayTitle": "客户问基金经理能力时怎么分析业绩",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "正文",
+      "sourceFile": "基金营销话术/2.1-基金销售关键点话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000117": {
+      "displayTitle": "客户担心风险时怎么说明低位建仓",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "基金异议处理话术",
+      "sourceFile": "基金营销话术/2.2-基金异议处理话术集锦.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000118": {
+      "displayTitle": "客户比较理财和基金时怎么区分特点",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "基金异议处理话术",
+      "sourceFile": "基金营销话术/2.2-基金异议处理话术集锦.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000119": {
+      "displayTitle": "客户担心基金经理乱投时怎么说明流程",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "基金异议处理话术(续)",
+      "sourceFile": "基金营销话术/2.2-基金异议处理话术集锦.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000120": {
+      "displayTitle": "客户拒绝定投时怎么转介理财经理",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "1.厅堂柜面转介话术.",
+      "sourceFile": "基金营销话术/基金保险贵金属营销话术.doc",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000121": {
+      "displayTitle": "客户未做过定投时怎么介绍",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "(1)针对新客户(未做过基金定投的客户).",
+      "sourceFile": "基金营销话术/基金保险贵金属营销话术.doc",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000122": {
+      "displayTitle": "客户投资亏损时怎么营销定投",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "(2)针对于做过基金、基金定投或者股票的客户亏损的客户.",
+      "sourceFile": "基金营销话术/基金保险贵金属营销话术.doc",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000123": {
+      "displayTitle": "客户定投盈利时怎么继续营销",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "(3)针对做过基金、基金定投盈利的客户.",
+      "sourceFile": "基金营销话术/基金保险贵金属营销话术.doc",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00",
+      "standardSpeech": "现在市场正式处于低点位置,正是捡便宜筹码,再赚一波钱的好时候."
+    },
+    "MCH_000124": {
+      "displayTitle": "客户问抗通胀产品时怎么推荐贵金属",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "二、账户贵金属",
+      "sourceFile": "基金营销话术/基金保险贵金属营销话术.doc",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000125": {
+      "displayTitle": "客户想了解健康险时怎么一句话营销",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "1.一句话营销:",
+      "sourceFile": "基金营销话术/基金保险贵金属营销话术.doc",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000126": {
+      "displayTitle": "客户犹豫保额时怎么促成交易",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "4.交易促成:您是想给自己规划50万还是更高的保额呢?",
+      "sourceFile": "基金营销话术/基金保险贵金属营销话术.doc",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000127": {
+      "displayTitle": "客户没听过产品时怎么介绍爱康宝",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "7.场景案例.",
+      "sourceFile": "基金营销话术/基金保险贵金属营销话术.doc",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000128": {
+      "displayTitle": "柜面客户时怎么营销重疾险",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "9.柜面营销参考话术(适用所有客户,含医保客户):",
+      "sourceFile": "基金营销话术/基金保险贵金属营销话术.doc",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000129": {
+      "displayTitle": "客户担心健康风险时怎么说明保障",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "10.异议处理.",
+      "sourceFile": "基金营销话术/基金保险贵金属营销话术.doc",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000130": {
+      "displayTitle": "客户问收益下行时怎么介绍定投",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "常用基金定投营销话术XX 先生/女士/姐/哥/叔:",
+      "sourceFile": "基金营销话术/基金定投营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000131": {
+      "displayTitle": "客户想了解定投原理时怎么讲解",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "这款产品的名称叫做基金定投.",
+      "sourceFile": "基金营销话术/基金定投营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000132": {
+      "displayTitle": "年轻客户想强制储蓄时怎么推荐",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "新开卡客户",
+      "sourceFile": "基金营销话术/基金定投营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000133": {
+      "displayTitle": "客户想为子女存钱时怎么建议",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "为子女存钱客户(强制储蓄)",
+      "sourceFile": "基金营销话术/基金定投营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000134": {
+      "displayTitle": "客户嫌利率低时怎么介绍定投",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "年轻流入类业务客户(存款/理财)(以小博大)",
+      "sourceFile": "基金营销话术/基金定投营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000135": {
+      "displayTitle": "客户想中断定投时怎么提醒",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "定投中断的提前防范",
+      "sourceFile": "基金营销话术/基金定投营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000136": {
+      "displayTitle": "客户比较收益率时怎么引导",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "称赞客户:客户到处去比较理财产品收益率,也是件很辛苦的事情.他们是需要被你称赞的:",
+      "sourceFile": "基金营销话术/理财、基金和保险营销话术.doc",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000137": {
+      "displayTitle": "客户问收益高低怎么解释",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "导入概念:很多客户常年买理财,但可能并不知道收益率高低的决定因素是什么:",
+      "sourceFile": "基金营销话术/理财、基金和保险营销话术.doc",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000138": {
+      "displayTitle": "客户犹豫不决时怎么给建议",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "帮助决策:此时,客户需要一个专业的人士给出清晰的建议:",
+      "sourceFile": "基金营销话术/理财、基金和保险营销话术.doc",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000139": {
+      "displayTitle": "客户AUM20万以上怎么电话邀约",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "【客户构成】基金、保险、理财持有,AUM20万以上",
+      "sourceFile": "基金营销话术/理财、基金和保险营销话术.doc",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000140": {
+      "displayTitle": "客户问怎么投资时怎么介绍定投",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "基金定投微沙龙参考话术",
+      "sourceFile": "基金营销话术/理财、基金和保险营销话术.doc",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000141": {
+      "displayTitle": "客户问长期收益时怎么举例",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "3、长期投资,收益高.只要您选好基金,在掌银或网银签约,长期投资,收益可观.",
+      "sourceFile": "基金营销话术/理财、基金和保险营销话术.doc",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000142": {
+      "displayTitle": "不同客户场景怎么一句话推保险",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "保险一句话营销话术分享",
+      "sourceFile": "基金营销话术/理财、基金和保险营销话术.doc",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000143": {
+      "displayTitle": "客户开卡或买理财时怎么推保险",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "6、开卡的客户:您用这张卡可以关联一个每年定期存的保险产品,形成强制存钱的动作.",
+      "sourceFile": "基金营销话术/理财、基金和保险营销话术.doc",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000144": {
+      "displayTitle": "客户开网银时怎么介绍保险产品",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "10、开网银的客户:咱们行还有网银买不到的代销保险产品,您来了解一下吧!",
+      "sourceFile": "基金营销话术/理财、基金和保险营销话术.doc",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000145": {
+      "displayTitle": "客户不相信保险时怎么说明",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "1 . 客户说:我不相信保险",
+      "sourceFile": "基金营销话术/理财、基金和保险营销话术.doc",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000146": {
+      "displayTitle": "客户说做生意更赚钱时怎么回应",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "2 . 客户说:我做生意也很赚钱",
+      "sourceFile": "基金营销话术/理财、基金和保险营销话术.doc",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000147": {
+      "displayTitle": "客户嫌短期现金价值低时怎么建议",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "3 . 客户说:短期现金价值太低",
+      "sourceFile": "基金营销话术/理财、基金和保险营销话术.doc",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000148": {
+      "displayTitle": "客户说产品时间太长时怎么追问",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "4 . 客户说:产品的时间太长了",
+      "sourceFile": "基金营销话术/理财、基金和保险营销话术.doc",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000149": {
+      "displayTitle": "客户嫌缴费时间长时怎么解释",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "客户说:交费时间长:",
+      "sourceFile": "基金营销话术/理财、基金和保险营销话术.doc",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000150": {
+      "displayTitle": "客户说买房养老更好时怎么提问",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "5 . 客户说:买房养老更好",
+      "sourceFile": "基金营销话术/理财、基金和保险营销话术.doc",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000151": {
+      "displayTitle": "客户想以房养老时怎么对比保险",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "客户说:收房租,以房养老:",
+      "sourceFile": "基金营销话术/理财、基金和保险营销话术.doc",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000152": {
+      "displayTitle": "客户想买房赚差价时怎么分析风险",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "客户说:买了卖,涨得很快:",
+      "sourceFile": "基金营销话术/理财、基金和保险营销话术.doc",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000153": {
+      "displayTitle": "客户问产品类型时怎么区分自营与代销",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "一、产品定位与类型区分",
+      "sourceFile": "理财营销话术/3-两三年期理财产品核心要素解析.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000154": {
+      "displayTitle": "客户问产品特点时怎么讲四大维度",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "二、核心特点(四大维度解析)",
+      "sourceFile": "理财营销话术/3-两三年期理财产品核心要素解析.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000155": {
+      "displayTitle": "客户问理财卖点时怎么场景化说明",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "三、核心卖点(场景化价值提炼)",
+      "sourceFile": "理财营销话术/3-两三年期理财产品核心要素解析.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000156": {
+      "displayTitle": "客户问底层资产时怎么介绍PR2配置",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "四、底层资产构成(PR2 级产品配置)",
+      "sourceFile": "理财营销话术/3-两三年期理财产品核心要素解析.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000157": {
+      "displayTitle": "客户问资产细节时怎么说明国债占比",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "国债及政策性金融债:35.2%(国家信用背书,零违约风险)",
+      "sourceFile": "理财营销话术/3-两三年期理财产品核心要素解析.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000158": {
+      "displayTitle": "客户问风险时怎么说明主要风险点",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "主要风险点",
+      "sourceFile": "理财营销话术/3-两三年期理财产品核心要素解析.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000159": {
+      "displayTitle": "客户问风控时怎么说明净值稳定机制",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "风险控制亮点",
+      "sourceFile": "理财营销话术/3-两三年期理财产品核心要素解析.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000160": {
+      "displayTitle": "客户问适合人群时怎么匹配中年家庭",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "中年家庭客户",
+      "sourceFile": "理财营销话术/3-两三年期理财产品核心要素解析.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000161": {
+      "displayTitle": "客户担心风险时怎么说明",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "低风险偏好投资者",
+      "sourceFile": "理财营销话术/3-两三年期理财产品核心要素解析.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000162": {
+      "displayTitle": "客户问底层资产时怎么介绍",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "热卖二三年期理财产品底层资产解析:",
+      "sourceFile": "理财营销话术/热卖二三年期理财产品底层资产解析.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000163": {
+      "displayTitle": "客户问固收类资产时怎么说明",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "1.固定收益类资产:",
+      "sourceFile": "理财营销话术/热卖二三年期理财产品底层资产解析.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000164": {
+      "displayTitle": "客户问衍生品时怎么解释",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "2.金融衍生品类资产:",
+      "sourceFile": "理财营销话术/热卖二三年期理财产品底层资产解析.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000165": {
+      "displayTitle": "客户问固收类资产时怎么说明",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "1.固定收益类资产:",
+      "sourceFile": "理财营销话术/热卖二三年期理财产品底层资产解析.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000166": {
+      "displayTitle": "客户问衍生品时怎么解释",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "2.金融衍生品类资产:",
+      "sourceFile": "理财营销话术/热卖二三年期理财产品底层资产解析.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000167": {
+      "displayTitle": "客户问底层资产时怎么介绍",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "2.金融衍生品类资产:",
+      "sourceFile": "理财营销话术/热卖二三年期理财产品底层资产解析.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000168": {
+      "displayTitle": "客户在柜台时怎么营销活期升级",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "1、厅堂职能服务区/现金柜业务办理客户:",
+      "sourceFile": "理财营销话术/理财营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000169": {
+      "displayTitle": "客户想存定期时怎么建议",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "定期转存/存定期客户:",
+      "sourceFile": "理财营销话术/理财营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000170": {
+      "displayTitle": "客户有大额活期闲置时怎么邀约",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "现金类理财存量客户邀约话术:",
+      "sourceFile": "理财营销话术/理财营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    },
+    "MCH_000171": {
+      "displayTitle": "客户定期理财到期时怎么邀约",
+      "status": "approved",
+      "source": "offline_review",
+      "sourceTitle": "定期、理财到期客户:",
+      "sourceFile": "理财营销话术/理财营销话术.docx",
+      "reviewNote": "",
+      "updatedAt": "2026-07-07T07:40:23+00:00"
+    }
+  }
+}
