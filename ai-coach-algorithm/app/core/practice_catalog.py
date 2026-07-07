@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from app.core.customer_profile_loader import load_customer_profiles
+from app.core.dialog_round_policy import build_dialog_round_policy
 
 
 INTENT_LABELS = {
@@ -184,7 +185,12 @@ def _present_task(task: dict[str, Any], profile: dict[str, Any] | None = None) -
     if difficulty and not any(tag in DIFFICULTY_TAGS.values() for tag in tags):
         tags = list(tags) + [DIFFICULTY_TAGS.get(difficulty, difficulty)]
     duration_minutes = int(task.get("duration_minutes") or _duration_for_difficulty(difficulty))
-
+    round_policy = build_dialog_round_policy(
+        direction=direction_key,
+        difficulty=difficulty,
+        expected_intents=intent_tags,
+        scene_id=scene_id,
+    )
     return {
         "taskId": task.get("task_id") or task.get("taskId"),
         "sceneId": scene_id,
@@ -207,7 +213,11 @@ def _present_task(task: dict[str, Any], profile: dict[str, Any] | None = None) -
         "intentLabels": localize_intents(intent_tags),
         "description": task.get("description") or profile.get("concern") or "",
         "recommendedReason": task.get("recommended_reason", ""),
-        "totalRounds": int(task.get("total_rounds") or 3),
+        "minRounds": round_policy.min_rounds,
+        "targetRounds": round_policy.target_rounds,
+        "maxRounds": round_policy.max_rounds,
+        "totalRounds": round_policy.target_rounds,
+        "roundPolicy": round_policy.to_dict(),
     }
 
 

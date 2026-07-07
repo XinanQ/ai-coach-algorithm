@@ -17,7 +17,6 @@
   "scene_id": "INS_PERIODIC",
   "customer_id": null,
   "task_id": null,
-  "total_rounds": 3,
   "employee_messages": [
     "第一轮员工回答...",
     "第二轮员工回答...",

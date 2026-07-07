@@ -27,7 +27,6 @@ def start(request: DialogStartRequest) -> dict[str, object]:
         scene_id=request.scene_id,
         customer_id=request.customer_id,
         task_id=request.task_id,
-        total_rounds=request.total_rounds,
         difficulty=request.difficulty,
         auto_difficulty=request.auto_difficulty,
     )

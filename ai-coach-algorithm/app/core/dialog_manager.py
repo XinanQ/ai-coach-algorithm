@@ -8,10 +8,12 @@ from app.core.adaptive_difficulty import recommend_difficulty
 from app.core.coverage import compute_intent_gap, update_covered_intents
 from app.core.customer_answer_understanding import analyze_customer_answer
 from app.core.customer_profile_loader import get_customer_profile, load_customer_profiles
+from app.core.dialog_round_policy import DEFAULT_TARGET_ROUNDS, build_dialog_round_policy
 from app.core.llm_customer import generate_customer_question_stream, generate_customer_question_with_llm
 from app.core.llm_scorer import score_with_llm_finish
 from app.core.marketing_rag import retrieve_marketing_knowledge
 from app.core.memory_manager import get_memory_manager
+from app.core.practice_catalog import get_practice_task_detail
 from app.core.rule_scorer import score_employee_answer
 from app.core.scoring_criteria_loader import get_primary_criterion
 from app.core.weakness_profile import build_weakness_profile
@@ -19,7 +21,7 @@ from app.utils.file_loader import now_iso
 
 
 DEFAULT_SCENE_ID = "INS_PERIODIC"
-DEFAULT_TOTAL_ROUNDS = 3
+DEFAULT_EFFECTIVE_ROUNDS = DEFAULT_TARGET_ROUNDS
 
 # Scorer selection: "llm" tries DeepSeek first then falls back to rule;
 # "rule" skips LLM entirely. Default to llm so the system uses the best
@@ -140,10 +142,15 @@ def start_dialogue(
     scene_id: str = DEFAULT_SCENE_ID,
     customer_id: str | None = None,
     task_id: str | None = None,
-    total_rounds: int = DEFAULT_TOTAL_ROUNDS,
     difficulty: str | None = None,
     auto_difficulty: bool = True,
 ) -> dict[str, Any]:
+    task_detail = get_practice_task_detail(task_id) if task_id else None
+    if task_detail:
+        scene_id = task_detail.get("sceneId") or scene_id
+        customer_id = customer_id or task_detail.get("customerId")
+        difficulty = difficulty or task_detail.get("difficultyLevel")
+
     # Layer 3: 自适应难度 — 如果未指定 difficulty 且开启自动推荐，则根据历史成绩推荐
     difficulty_rec = None
     if not difficulty and not customer_id and auto_difficulty:
@@ -151,6 +158,14 @@ def start_dialogue(
         difficulty = difficulty_rec.recommended_difficulty
 
     profile = get_customer_profile(scene_id=scene_id, customer_id=customer_id, difficulty=difficulty)
+    effective_scene_id = profile.get("scene_id") or scene_id
+    expected_intents = profile.get("expected_intents", [])
+    round_policy = build_dialog_round_policy(
+        direction=(task_detail or {}).get("direction"),
+        difficulty=profile.get("difficulty_level") or difficulty,
+        expected_intents=expected_intents,
+        scene_id=effective_scene_id,
+    )
     session_id = f"S_{uuid.uuid4().hex[:12]}"
     opening = profile.get("opening_question") or "您好，我想了解一下这个产品是否适合我。"
 
@@ -168,15 +183,19 @@ def start_dialogue(
         "session_id": session_id,
         "user_id": user_id,
         "task_id": task_id,
-        "scenario_id": profile.get("scene_id") or scene_id,
-        "scene_id": profile.get("scene_id") or scene_id,
+        "scenario_id": effective_scene_id,
+        "scene_id": effective_scene_id,
         "customer_id": profile.get("customer_id") or customer_id,
         "customer_type": profile.get("customer_type"),
         "difficulty_level": profile.get("difficulty_level") or difficulty or "中",
         "status": "running",
         "round": 1,
-        "total_rounds": max(1, int(total_rounds)),
-        "expected_intents": profile.get("expected_intents", []),
+        "effective_rounds": round_policy.target_rounds,
+        "min_rounds": round_policy.min_rounds,
+        "target_rounds": round_policy.target_rounds,
+        "max_rounds": round_policy.max_rounds,
+        "round_policy": {**round_policy.to_dict(), "effective_source": round_policy.source},
+        "expected_intents": expected_intents,
         "covered_intents": [],
         "weakness_profile": weakness_data,
         "messages": [{"role": "ai_customer", "content": opening, "created_at": now_iso()}],
@@ -204,11 +223,11 @@ async def reply_dialogue(session_id: str, employee_message: str) -> dict[str, An
         raise KeyError(f"session not found: {session_id}")
     session.setdefault("messages", []).append({"role": "employee", "content": employee_message, "created_at": now_iso()})
     scene_id = session.get("scene_id") or session.get("scenario_id")
-    total_rounds = int(session.get("total_rounds", DEFAULT_TOTAL_ROUNDS))
+    effective_rounds = int(session.get("effective_rounds", DEFAULT_EFFECTIVE_ROUNDS))
     # This reply closes the current round; if it was the last round, no new
     # question is generated and the front-end should call /dialog/finish next.
     current_round = int(session.get("round", 1))
-    finished = current_round >= total_rounds
+    finished = current_round >= effective_rounds
 
     intent = analyze_customer_answer(employee_message)
     expected_intents = session.get("expected_intents", [])
@@ -252,7 +271,11 @@ async def reply_dialogue(session_id: str, employee_message: str) -> dict[str, An
         "session": saved,
         "ai_customer_message": next_question,
         "round": session.get("round", current_round),
-        "total_rounds": total_rounds,
+        "effective_rounds": effective_rounds,
+        "min_rounds": int(session.get("min_rounds", 1)),
+        "target_rounds": int(session.get("target_rounds", effective_rounds)),
+        "max_rounds": int(session.get("max_rounds", effective_rounds)),
+        "round_policy": session.get("round_policy", {}),
         "finished": finished,
         "intent": intent,
         "expected_intents": expected_intents,
@@ -277,9 +300,9 @@ async def reply_dialogue_stream(session_id: str, employee_message: str):
         raise KeyError(f"session not found: {session_id}")
     session.setdefault("messages", []).append({"role": "employee", "content": employee_message, "created_at": now_iso()})
     scene_id = session.get("scene_id") or session.get("scenario_id")
-    total_rounds = int(session.get("total_rounds", DEFAULT_TOTAL_ROUNDS))
+    effective_rounds = int(session.get("effective_rounds", DEFAULT_EFFECTIVE_ROUNDS))
     current_round = int(session.get("round", 1))
-    finished = current_round >= total_rounds
+    finished = current_round >= effective_rounds
 
     intent = analyze_customer_answer(employee_message)
     expected_intents = session.get("expected_intents", [])
@@ -290,7 +313,11 @@ async def reply_dialogue_stream(session_id: str, employee_message: str):
         "event": "meta",
         "data": {
             "round": current_round,
-            "total_rounds": total_rounds,
+            "effective_rounds": effective_rounds,
+            "min_rounds": int(session.get("min_rounds", 1)),
+            "target_rounds": int(session.get("target_rounds", effective_rounds)),
+            "max_rounds": int(session.get("max_rounds", effective_rounds)),
+            "round_policy": session.get("round_policy", {}),
             "finished": finished,
             "intent": intent,
             "covered_intents": prev_covered,

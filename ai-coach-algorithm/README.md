@@ -248,12 +248,11 @@ http://127.0.0.1:8000/docs
 ```json
 {
   "user_id": "U_DEMO",
-  "scene_id": "INS_PERIODIC",
-  "total_rounds": 5
+  "scene_id": "INS_PERIODIC"
 }
 ```
 
-返回里复制 `sessionId` 留用。AI 客户的开场白来自画像配置（"流动性担忧型"客户）。
+算法会按任务方向、难度和客户意图自动推荐 6-10 轮；返回里的 `totalRounds` 通常等于 `targetRounds`。复制 `sessionId` 留用。AI 客户的开场白来自画像配置（"流动性担忧型"客户）。
 
 ### Step 2 · 第 1 轮回复 `POST /dialog/reply`
 

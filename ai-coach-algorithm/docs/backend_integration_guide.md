@@ -171,7 +171,6 @@ python scripts\generate_script_title_candidates.py --promote-approved
   "user_id": "U_TEST",
   "scene_id": "INS_PERIODIC",
   "task_id": "t1",
-  "total_rounds": 3,
   "customer_id": null,
   "difficulty": null,
   "auto_difficulty": true
@@ -183,7 +182,6 @@ python scripts\generate_script_title_candidates.py --promote-approved
 | `user_id` | 是 | 算法侧用于写长期记忆的用户标识（Java 后端用真实 employeeId 传） |
 | `scene_id` | 是 | 算法场景 id，见 §5 |
 | `task_id` | 否 | 业务 taskId，原样回传给前端，算法不解释 |
-| `total_rounds` | 否 | 总轮数，默认 3 |
 | `customer_id` | 否 | 指定客户画像 id；不传则按 scene_id + difficulty 找匹配画像 |
 | `difficulty` | 否 | 手动指定难度：`"低"` / `"中"` / `"高"`。不传则由算法自动推荐 |
 | `auto_difficulty` | 否 | 是否自动推荐难度，默认 `true`。设为 `false` 时跳过推荐,使用默认"中" |
@@ -194,7 +192,18 @@ python scripts\generate_script_title_candidates.py --promote-approved
   "sessionId": "S_a1b2c3d4e5f6",
   "taskId": "t1",
   "round": 1,
-  "totalRounds": 3,
+  "totalRounds": 8,
+  "minRounds": 6,
+  "targetRounds": 8,
+  "maxRounds": 10,
+  "roundPolicy": {
+    "min_rounds": 6,
+    "target_rounds": 8,
+    "max_rounds": 10,
+    "source": "dynamic_policy",
+    "reason": "default_dynamic_dialogue",
+    "effective_source": "dynamic_policy"
+  },
   "difficultyLevel": "高",
   "messages": [
     { "role": "ai", "content": "这个分红险，你能不能把历年的实际分红数据给我看一下？别拿演示利率忽悠我。" }
@@ -212,6 +221,8 @@ python scripts\generate_script_title_candidates.py --promote-approved
 **新增字段说明:**
 - `difficultyLevel`：本次训练实际使用的难度等级
 - `difficultyRecommendation`：仅在自动推荐时出现,包含推荐理由和依据。前端可展示给用户
+- `minRounds` / `targetRounds` / `maxRounds`：算法推荐的动态轮次区间。默认陪练为 6-10 轮，`totalRounds` 通常等于 `targetRounds`
+- `roundPolicy`：轮次策略调试信息。`effective_source=dynamic_policy` 表示算法自动推荐
 
 **Java 后端处理：** 字段可直接透传给小程序。新增字段为可选,前端不展示也不影响训练。
 
@@ -235,7 +246,10 @@ python scripts\generate_script_title_candidates.py --promote-approved
 ```json
 {
   "round": 2,
-  "totalRounds": 3,
+  "totalRounds": 8,
+  "minRounds": 6,
+  "targetRounds": 8,
+  "maxRounds": 10,
   "message": { "role": "ai", "content": "那我万一中途要用钱、或者交不上了，能取出来吗？会不会亏？" },
   "finished": false
 }
@@ -244,8 +258,11 @@ python scripts\generate_script_title_candidates.py --promote-approved
 **Response（末轮，即第 `totalRounds` 次 reply）：**
 ```json
 {
-  "round": 3,
-  "totalRounds": 3,
+  "round": 8,
+  "totalRounds": 8,
+  "minRounds": 6,
+  "targetRounds": 8,
+  "maxRounds": 10,
   "message": null,
   "finished": true
 }

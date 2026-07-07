@@ -52,7 +52,11 @@ def present_start(result: dict[str, Any]) -> dict[str, Any]:
         "sessionId": session.get("session_id"),
         "taskId": session.get("task_id") or session.get("scene_id"),
         "round": int(session.get("round", 1)),
-        "totalRounds": int(session.get("total_rounds", 3)),
+        "totalRounds": int(session.get("effective_rounds", 3)),
+        "minRounds": int(session.get("min_rounds", 1)),
+        "targetRounds": int(session.get("target_rounds", session.get("effective_rounds", 3))),
+        "maxRounds": int(session.get("max_rounds", session.get("effective_rounds", 3))),
+        "roundPolicy": session.get("round_policy", {}),
         "difficultyLevel": session.get("difficulty_level", "中"),
         "messages": [{"role": "ai", "content": opening}] if opening else [],
     }
@@ -70,7 +74,11 @@ def present_reply(result: dict[str, Any]) -> dict[str, Any]:
     next_text = result.get("ai_customer_message")
     return {
         "round": int(result.get("round", 1)),
-        "totalRounds": int(result.get("total_rounds", 3)),
+        "totalRounds": int(result.get("effective_rounds", 3)),
+        "minRounds": int(result.get("min_rounds", 1)),
+        "targetRounds": int(result.get("target_rounds", result.get("effective_rounds", 3))),
+        "maxRounds": int(result.get("max_rounds", result.get("effective_rounds", 3))),
+        "roundPolicy": result.get("round_policy", {}),
         "message": {"role": "ai", "content": next_text} if next_text else None,
         "finished": bool(result.get("finished", False)),
     }

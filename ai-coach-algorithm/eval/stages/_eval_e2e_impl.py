@@ -94,7 +94,7 @@ class E2EEvaluator:
         result = {
             "case_id": case.get("id", "unknown"),
             "scene_id": case.get("scene_id", "INS_PERIODIC"),
-            "total_rounds": len(case.get("employee_messages", [])),
+            "employee_turn_count": len(case.get("employee_messages", [])),
         }
 
         # Stage 1: Start dialogue
@@ -167,7 +167,6 @@ class E2EEvaluator:
                 scene_id=case.get("scene_id", "INS_PERIODIC"),
                 customer_id=case.get("customer_id"),
                 task_id=case.get("task_id"),
-                total_rounds=case.get("total_rounds", 3),
             )
             self.session_id = start_result.get("session", {}).get("session_id")
 

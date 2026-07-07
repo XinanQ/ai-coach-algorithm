@@ -90,6 +90,9 @@ def test_practice_task_catalog_returns_display_ready_cards() -> None:
     direction_counts = {item["key"]: 0 for item in body["directions"]}
     for item in body["list"]:
         direction_counts[item["direction"]] += 1
+        assert 6 <= item["totalRounds"] <= 10
+        assert item["minRounds"] <= item["targetRounds"] <= item["maxRounds"]
+        assert item["roundPolicy"]["source"] == "dynamic_policy"
     assert all(count > 0 for count in direction_counts.values())
     for direction in body["directions"]:
         filtered = client.get("/practice/tasks", params={"direction": direction["key"]})
@@ -189,13 +192,26 @@ def test_api_health_and_dialog_flow() -> None:
     client = TestClient(app)
     health = client.get("/health")
     assert health.status_code == 200
-    start = client.post("/dialog/start", json={"user_id": "U_TEST", "scene_id": "INS_PERIODIC", "total_rounds": 2})
+    task_list = client.get("/practice/tasks").json()["list"]
+    auto_task = next(item for item in task_list if item["direction"] in {"objection", "close", "compliance"})
+    auto_start = client.post("/dialog/start", json={"user_id": "U_AUTO", "task_id": auto_task["taskId"]})
+    assert auto_start.status_code == 200
+    auto_body = auto_start.json()
+    assert auto_body["taskId"] == auto_task["taskId"]
+    assert auto_body["totalRounds"] == auto_body["targetRounds"]
+    assert 6 <= auto_body["totalRounds"] <= 10
+    assert auto_body["minRounds"] <= auto_body["targetRounds"] <= auto_body["maxRounds"]
+    assert auto_body["roundPolicy"]["effective_source"] == "dynamic_policy"
+
+    start = client.post("/dialog/start", json={"user_id": "U_TEST", "scene_id": "INS_PERIODIC"})
     assert start.status_code == 200
     start_body = start.json()
     session_id = start_body["sessionId"]
-    assert start_body["totalRounds"] == 2 and start_body["round"] == 1
+    assert 6 <= start_body["totalRounds"] <= 10 and start_body["round"] == 1
+    assert start_body["totalRounds"] == start_body["targetRounds"]
+    assert start_body["roundPolicy"]["effective_source"] == "dynamic_policy"
     assert start_body["messages"] and start_body["messages"][0]["role"] == "ai"
-    # Round 1 reply: not yet finished, AI follow-up returned.
+    # Early reply: not yet finished, AI follow-up returned.
     # Per-turn live scoring is intentionally removed; score/source are only
     # returned once by /dialog/finish.
     reply1 = client.post(
@@ -208,14 +224,7 @@ def test_api_health_and_dialog_flow() -> None:
     assert reply1_body["message"] is not None
     assert "liveScore" not in reply1_body
     assert "source" not in reply1_body
-    # Final round: finished=true, message=null per 联调 contract.
-    reply2 = client.post(
-        "/dialog/reply",
-        json={"session_id": session_id, "employee_message": "建议先确认风险承受能力，再为您办理。请以正式合同为准。"},
-    )
-    reply2_body = reply2.json()
-    assert reply2_body["finished"] is True
-    assert reply2_body["message"] is None
+    assert reply1_body["totalRounds"] == start_body["totalRounds"]
     finish = client.post("/dialog/finish", json={"session_id": session_id})
     assert finish.status_code == 200
     finish_body = finish.json()
