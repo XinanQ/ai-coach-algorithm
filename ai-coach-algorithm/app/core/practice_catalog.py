@@ -216,7 +216,7 @@ def _present_task(task: dict[str, Any], profile: dict[str, Any] | None = None) -
         "minRounds": round_policy.min_rounds,
         "targetRounds": round_policy.target_rounds,
         "maxRounds": round_policy.max_rounds,
-        "totalRounds": round_policy.target_rounds,
+        "totalRounds": round_policy.max_rounds,
         "roundPolicy": round_policy.to_dict(),
     }
 
@@ -263,7 +263,7 @@ def get_practice_task_detail(task_id: str) -> dict[str, Any] | None:
             "customerDesc": raw_task.get("customer_desc") or profile.get("personality") or "",
             "background": raw_task.get("background") or profile.get("concern") or "",
             "openingQuestion": profile.get("opening_question", ""),
-            "goal": raw_task.get("goal") or f"完成 {task['totalRounds']} 轮对话，覆盖客户核心顾虑并保持合规表达。",
+            "goal": raw_task.get("goal") or f"完成 {task['minRounds']}-{task['maxRounds']} 轮对话，覆盖客户核心顾虑并保持合规表达。",
             "requirements": raw_task.get("requirements") or ["完成规定轮次", "覆盖客户核心顾虑", "避免绝对化承诺"],
         }
     return None

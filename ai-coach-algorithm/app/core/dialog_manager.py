@@ -8,7 +8,12 @@ from app.core.adaptive_difficulty import recommend_difficulty
 from app.core.coverage import compute_intent_gap, update_covered_intents
 from app.core.customer_answer_understanding import analyze_customer_answer
 from app.core.customer_profile_loader import get_customer_profile, load_customer_profiles
-from app.core.dialog_round_policy import DEFAULT_TARGET_ROUNDS, build_dialog_round_policy
+from app.core.dialog_round_policy import (
+    DEFAULT_TARGET_ROUNDS,
+    MAX_DIALOG_ROUNDS,
+    MIN_DIALOG_ROUNDS,
+    build_dialog_round_policy,
+)
 from app.core.llm_customer import generate_customer_question_stream, generate_customer_question_with_llm
 from app.core.llm_scorer import score_with_llm_finish
 from app.core.marketing_rag import retrieve_marketing_knowledge
@@ -21,7 +26,7 @@ from app.utils.file_loader import now_iso
 
 
 DEFAULT_SCENE_ID = "INS_PERIODIC"
-DEFAULT_EFFECTIVE_ROUNDS = DEFAULT_TARGET_ROUNDS
+DEFAULT_MAX_ROUNDS = MAX_DIALOG_ROUNDS
 
 # Scorer selection: "llm" tries DeepSeek first then falls back to rule;
 # "rule" skips LLM entirely. Default to llm so the system uses the best
@@ -40,6 +45,30 @@ _CUSTOMER_LLM_PREFERENCE = os.getenv("AI_COACH_CUSTOMER_LLM", "llm").lower()
 # Higher values provide more context but increase latency and token usage
 _REPLY_CONTEXT_K = int(os.getenv("AI_COACH_REPLY_CONTEXT_K", "5"))
 _FINISH_CONTEXT_K = int(os.getenv("AI_COACH_FINISH_CONTEXT_K", "8"))
+
+
+def _round_window(session: dict[str, Any]) -> tuple[int, int, int]:
+    min_rounds = int(session.get("min_rounds", MIN_DIALOG_ROUNDS))
+    target_rounds = int(session.get("target_rounds", DEFAULT_TARGET_ROUNDS))
+    max_rounds = int(session.get("max_rounds", DEFAULT_MAX_ROUNDS))
+    min_rounds = max(1, min(min_rounds, max_rounds))
+    target_rounds = max(min_rounds, min(target_rounds, max_rounds))
+    return min_rounds, target_rounds, max_rounds
+
+
+def _should_finish_round(
+    *,
+    current_round: int,
+    min_rounds: int,
+    target_rounds: int,
+    max_rounds: int,
+    gap_intents: list[str],
+) -> bool:
+    if current_round >= max_rounds:
+        return True
+    if current_round < min_rounds:
+        return False
+    return current_round >= target_rounds and not gap_intents
 
 
 async def _score_finish(
@@ -190,7 +219,6 @@ def start_dialogue(
         "difficulty_level": profile.get("difficulty_level") or difficulty or "中",
         "status": "running",
         "round": 1,
-        "effective_rounds": round_policy.target_rounds,
         "min_rounds": round_policy.min_rounds,
         "target_rounds": round_policy.target_rounds,
         "max_rounds": round_policy.max_rounds,
@@ -223,20 +251,24 @@ async def reply_dialogue(session_id: str, employee_message: str) -> dict[str, An
         raise KeyError(f"session not found: {session_id}")
     session.setdefault("messages", []).append({"role": "employee", "content": employee_message, "created_at": now_iso()})
     scene_id = session.get("scene_id") or session.get("scenario_id")
-    effective_rounds = int(session.get("effective_rounds", DEFAULT_EFFECTIVE_ROUNDS))
-    # This reply closes the current round; if it was the last round, no new
-    # question is generated and the front-end should call /dialog/finish next.
+    min_rounds, target_rounds, max_rounds = _round_window(session)
     current_round = int(session.get("round", 1))
-    finished = current_round >= effective_rounds
 
     intent = analyze_customer_answer(employee_message)
     expected_intents = session.get("expected_intents", [])
     prev_covered = list(session.get("covered_intents", []))
-    gap_intents = compute_intent_gap(expected_intents, prev_covered)
+    covered_intents = update_covered_intents(prev_covered, intent.get("intent_scores", {}))
+    gap_intents = compute_intent_gap(expected_intents, covered_intents)
+    finished = _should_finish_round(
+        current_round=current_round,
+        min_rounds=min_rounds,
+        target_rounds=target_rounds,
+        max_rounds=max_rounds,
+        gap_intents=gap_intents,
+    )
 
     retrieval: dict[str, Any] = {}
     next_question = None
-    covered_intents = prev_covered
     if not finished:
         retrieval = retrieve_marketing_knowledge(
             employee_message, route="customer", final_k=_REPLY_CONTEXT_K,
@@ -245,23 +277,24 @@ async def reply_dialogue(session_id: str, employee_message: str) -> dict[str, An
         retrieval_items = retrieval.get("items", [])
         customer_weakness = (session.get("weakness_profile") or {}).get("customer_prompt", "")
         cq_result = await _next_customer_question(
-            session, employee_message, retrieval_items, intent, gap_intents, prev_covered,
+            session, employee_message, retrieval_items, intent, gap_intents, covered_intents,
             weakness_prompt=customer_weakness,
         )
         next_question = cq_result["follow_up"]
         llm_intents = cq_result.get("llm_intents")
         if llm_intents is not None:
             # LLM 为主：直接用 LLM 检测的意图更新 covered
-            covered_intents = _merge_llm_intents(prev_covered, llm_intents)
+            covered_intents = _merge_llm_intents(covered_intents, llm_intents)
             intent["llm_intents"] = llm_intents
             intent["intent_source"] = "llm"
         else:
             # LLM 不可用：keyword 兜底
-            covered_intents = update_covered_intents(prev_covered, intent.get("intent_scores", {}))
             intent["intent_source"] = "keyword"
         gap_intents = compute_intent_gap(expected_intents, covered_intents)
         session["messages"].append({"role": "ai_customer", "content": next_question, "created_at": now_iso()})
         session["round"] = current_round + 1
+    else:
+        intent["intent_source"] = intent.get("intent_source", "keyword")
 
     session["last_intent"] = intent
     session["covered_intents"] = covered_intents
@@ -271,10 +304,9 @@ async def reply_dialogue(session_id: str, employee_message: str) -> dict[str, An
         "session": saved,
         "ai_customer_message": next_question,
         "round": session.get("round", current_round),
-        "effective_rounds": effective_rounds,
-        "min_rounds": int(session.get("min_rounds", 1)),
-        "target_rounds": int(session.get("target_rounds", effective_rounds)),
-        "max_rounds": int(session.get("max_rounds", effective_rounds)),
+        "min_rounds": min_rounds,
+        "target_rounds": target_rounds,
+        "max_rounds": max_rounds,
         "round_policy": session.get("round_policy", {}),
         "finished": finished,
         "intent": intent,
@@ -300,32 +332,38 @@ async def reply_dialogue_stream(session_id: str, employee_message: str):
         raise KeyError(f"session not found: {session_id}")
     session.setdefault("messages", []).append({"role": "employee", "content": employee_message, "created_at": now_iso()})
     scene_id = session.get("scene_id") or session.get("scenario_id")
-    effective_rounds = int(session.get("effective_rounds", DEFAULT_EFFECTIVE_ROUNDS))
+    min_rounds, target_rounds, max_rounds = _round_window(session)
     current_round = int(session.get("round", 1))
-    finished = current_round >= effective_rounds
 
     intent = analyze_customer_answer(employee_message)
     expected_intents = session.get("expected_intents", [])
     prev_covered = list(session.get("covered_intents", []))
-    gap_intents = compute_intent_gap(expected_intents, prev_covered)
+    covered_intents = update_covered_intents(prev_covered, intent.get("intent_scores", {}))
+    gap_intents = compute_intent_gap(expected_intents, covered_intents)
+    finished = _should_finish_round(
+        current_round=current_round,
+        min_rounds=min_rounds,
+        target_rounds=target_rounds,
+        max_rounds=max_rounds,
+        gap_intents=gap_intents,
+    )
 
     yield {
         "event": "meta",
         "data": {
             "round": current_round,
-            "effective_rounds": effective_rounds,
-            "min_rounds": int(session.get("min_rounds", 1)),
-            "target_rounds": int(session.get("target_rounds", effective_rounds)),
-            "max_rounds": int(session.get("max_rounds", effective_rounds)),
+            "totalRounds": max_rounds,
+            "minRounds": min_rounds,
+            "targetRounds": target_rounds,
+            "maxRounds": max_rounds,
             "round_policy": session.get("round_policy", {}),
             "finished": finished,
             "intent": intent,
-            "covered_intents": prev_covered,
+            "covered_intents": covered_intents,
             "intent_gap": gap_intents,
         },
     }
 
-    covered_intents = prev_covered
     if finished:
         session["last_intent"] = intent
         session["covered_intents"] = covered_intents
@@ -368,7 +406,7 @@ async def reply_dialogue_stream(session_id: str, employee_message: str):
             if parsed and parsed.get("follow_up"):
                 full_text = parsed["follow_up"]
                 llm_intents = parsed.get("intents") or []
-                covered_intents = _merge_llm_intents(prev_covered, llm_intents)
+                covered_intents = _merge_llm_intents(covered_intents, llm_intents)
                 gap_intents = compute_intent_gap(expected_intents, covered_intents)
                 intent["llm_intents"] = llm_intents
                 intent["intent_source"] = "llm"
@@ -383,17 +421,16 @@ async def reply_dialogue_stream(session_id: str, employee_message: str):
 
     # LLM streaming failed or not enabled — fallback to non-streaming path
     cq_result = await _next_customer_question(
-        session, employee_message, retrieval_items, intent, gap_intents, prev_covered,
+        session, employee_message, retrieval_items, intent, gap_intents, covered_intents,
         weakness_prompt=customer_weakness,
     )
     next_question = cq_result["follow_up"]
     llm_intents = cq_result.get("llm_intents")
     if llm_intents is not None:
-        covered_intents = _merge_llm_intents(prev_covered, llm_intents)
+        covered_intents = _merge_llm_intents(covered_intents, llm_intents)
         intent["llm_intents"] = llm_intents
         intent["intent_source"] = "llm"
     else:
-        covered_intents = update_covered_intents(prev_covered, intent.get("intent_scores", {}))
         intent["intent_source"] = "keyword"
     gap_intents = compute_intent_gap(expected_intents, covered_intents)
     session["messages"].append({"role": "ai_customer", "content": next_question, "created_at": now_iso()})

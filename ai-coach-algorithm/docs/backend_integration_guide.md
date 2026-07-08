@@ -192,7 +192,7 @@ python scripts\generate_script_title_candidates.py --promote-approved
   "sessionId": "S_a1b2c3d4e5f6",
   "taskId": "t1",
   "round": 1,
-  "totalRounds": 8,
+  "totalRounds": 10,
   "minRounds": 6,
   "targetRounds": 8,
   "maxRounds": 10,
@@ -221,7 +221,8 @@ python scripts\generate_script_title_candidates.py --promote-approved
 **新增字段说明:**
 - `difficultyLevel`：本次训练实际使用的难度等级
 - `difficultyRecommendation`：仅在自动推荐时出现,包含推荐理由和依据。前端可展示给用户
-- `minRounds` / `targetRounds` / `maxRounds`：算法推荐的动态轮次区间。默认陪练为 6-10 轮，`totalRounds` 通常等于 `targetRounds`
+- `minRounds` / `targetRounds` / `maxRounds`：算法推荐的动态轮次区间。默认陪练为 6-10 轮；`targetRounds` 是推荐轮次，`totalRounds` 为兼容字段，等于 `maxRounds`
+- 前端不要用 `totalRounds` 强制截断训练；是否结束只以 `/dialog/reply` 返回的 `finished` 为准
 - `roundPolicy`：轮次策略调试信息。`effective_source=dynamic_policy` 表示算法自动推荐
 
 **Java 后端处理：** 字段可直接透传给小程序。新增字段为可选,前端不展示也不影响训练。
@@ -246,7 +247,7 @@ python scripts\generate_script_title_candidates.py --promote-approved
 ```json
 {
   "round": 2,
-  "totalRounds": 8,
+  "totalRounds": 10,
   "minRounds": 6,
   "targetRounds": 8,
   "maxRounds": 10,
@@ -255,11 +256,11 @@ python scripts\generate_script_title_candidates.py --promote-approved
 }
 ```
 
-**Response（末轮，即第 `totalRounds` 次 reply）：**
+**Response（结束轮，以 `finished: true` 为准，可能早于 `totalRounds`）：**
 ```json
 {
   "round": 8,
-  "totalRounds": 8,
+  "totalRounds": 10,
   "minRounds": 6,
   "targetRounds": 8,
   "maxRounds": 10,

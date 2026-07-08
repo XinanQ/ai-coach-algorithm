@@ -70,7 +70,7 @@
 
 ### 3.1 `/dialog/start`(同步,零 LLM 调用)
 
-轮次策略：公开 start 请求不再接收手动轮次数，避免调用方指定轮次造成联调口径混乱。算法根据 `taskId -> scene/customer/difficulty/direction`、客户画像 `expected_intents` 和训练方向自动推荐 6-10 轮，并在响应中返回 `totalRounds / minRounds / targetRounds / maxRounds / roundPolicy`。
+轮次策略：公开 start 请求不再接收手动轮次数，避免调用方指定轮次造成联调口径混乱。算法根据 `taskId -> scene/customer/difficulty/direction`、客户画像 `expected_intents` 和训练方向自动推荐 6-10 轮，并在响应中返回 `totalRounds / minRounds / targetRounds / maxRounds / roundPolicy`；其中 `totalRounds` 是兼容前端进度展示的最大轮次上限，真实结束只看 `finished`。
 
 ```
 Java → start(taskId, scene_id, difficulty?)
@@ -81,7 +81,7 @@ get_customer_profile(scene_id, difficulty=推荐) → 加载对应难度画像
    ↓
 build_weakness_profile(user_id, scene_id) → 弱点画像(Layer 1)
    ↓
-session = { round=1, effective_rounds=N, difficulty_level, weakness_profile, ... }
+session = { round=1, min_rounds=6, target_rounds=N, max_rounds=10, difficulty_level, weakness_profile, ... }
    ↓
 upsert_session → 写记忆
    ↓
@@ -107,7 +107,7 @@ retrieve_marketing_knowledge(route="customer", focus_intents=gap)
 generate_customer_question_with_llm(profile, gap, retrieval, history)
    → 自然的 in-character 客户追问(reply 阶段唯一的 LLM 调用)
    ↓
-末轮判断:current_round >= effective_rounds → finished=True,message=null
+末轮判断:current_round >= max_rounds，或 current_round >= target_rounds 且意图缺口已覆盖 → finished=True,message=null
    (末轮跳过 RAG 检索和追问生成,直接交给 finish)
    ↓
 presenter.present_reply → 返回 camelCase
@@ -461,7 +461,7 @@ user 消息:    L3 → L4_global → L4_scene → L5 → L2(动态)
 |---|---|---|
 | `sessionId` | `session.session_id` | 算法 |
 | `taskId` | `session.task_id`(透传) | 算法 |
-| `round` / `totalRounds` | `session.round` / 动态有效轮次 | 算法 |
+| `round` / `totalRounds` | `session.round` / 动态最大轮次 | 算法 |
 | `score` | `score_result.total_score` | 算法 |
 | `dimensionScores` | `score_result.dimension_scores` 转换 | 算法 |
 | `weakTags` | `score_result.weakness_tags` | 算法 |

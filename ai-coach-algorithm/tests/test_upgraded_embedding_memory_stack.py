@@ -92,6 +92,7 @@ def test_practice_task_catalog_returns_display_ready_cards() -> None:
         direction_counts[item["direction"]] += 1
         assert 6 <= item["totalRounds"] <= 10
         assert item["minRounds"] <= item["targetRounds"] <= item["maxRounds"]
+        assert item["totalRounds"] == item["maxRounds"]
         assert item["roundPolicy"]["source"] == "dynamic_policy"
     assert all(count > 0 for count in direction_counts.values())
     for direction in body["directions"]:
@@ -198,7 +199,7 @@ def test_api_health_and_dialog_flow() -> None:
     assert auto_start.status_code == 200
     auto_body = auto_start.json()
     assert auto_body["taskId"] == auto_task["taskId"]
-    assert auto_body["totalRounds"] == auto_body["targetRounds"]
+    assert auto_body["totalRounds"] == auto_body["maxRounds"]
     assert 6 <= auto_body["totalRounds"] <= 10
     assert auto_body["minRounds"] <= auto_body["targetRounds"] <= auto_body["maxRounds"]
     assert auto_body["roundPolicy"]["effective_source"] == "dynamic_policy"
@@ -208,7 +209,7 @@ def test_api_health_and_dialog_flow() -> None:
     start_body = start.json()
     session_id = start_body["sessionId"]
     assert 6 <= start_body["totalRounds"] <= 10 and start_body["round"] == 1
-    assert start_body["totalRounds"] == start_body["targetRounds"]
+    assert start_body["totalRounds"] == start_body["maxRounds"]
     assert start_body["roundPolicy"]["effective_source"] == "dynamic_policy"
     assert start_body["messages"] and start_body["messages"][0]["role"] == "ai"
     # Early reply: not yet finished, AI follow-up returned.

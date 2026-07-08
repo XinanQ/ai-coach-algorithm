@@ -58,17 +58,20 @@ def build_dialog_round_policy(
     intents = set(expected_intents or [])
     scene_value = str(scene_id or "")
 
+    min_rounds = MIN_DIALOG_ROUNDS
+    max_rounds = MAX_DIALOG_ROUNDS
+
     if direction_key in _COMPLEX_DIRECTIONS or "compliance_sensitive" in intents:
-        min_rounds, target_rounds, max_rounds = 8, 9, 10
+        target_rounds = 9
         reason = "complex_direction_or_compliance"
     elif direction_key in _MEDIUM_DIRECTIONS:
-        min_rounds, target_rounds, max_rounds = 6, 7, 8
+        target_rounds = 8
         reason = "medium_training_direction"
     elif direction_key in _LIGHT_DIRECTIONS or scene_value.endswith("_INVITE"):
-        min_rounds, target_rounds, max_rounds = 6, 6, 8
+        target_rounds = 6
         reason = "light_touch_or_service_direction"
     else:
-        min_rounds, target_rounds, max_rounds = 6, DEFAULT_TARGET_ROUNDS, 9
+        target_rounds = DEFAULT_TARGET_ROUNDS
         reason = "default_dynamic_dialogue"
 
     if difficulty_key == "high":
