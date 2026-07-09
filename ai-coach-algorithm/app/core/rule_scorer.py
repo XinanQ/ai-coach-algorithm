@@ -395,6 +395,22 @@ def _score_compliance(value: str, red_lines: list[str]) -> tuple[int, list[str],
     return base_score, actual_hits, severe_violation
 
 
+def detect_compliance_violation(
+    answer: str,
+    criterion: dict[str, Any] | None = None,
+) -> tuple[list[str], bool]:
+    """Deterministic red-line check, exposed for cross-validating LLM scoring.
+
+    Runs the same negative-context-aware detection as `_score_compliance` so
+    "不保本" style disclaimers do not false-positive. Returns
+    (hit red-line terms, is severe violation).
+    """
+    value = clean_text(answer)
+    red_lines = sorted(set(HIGH_RISK_TERMS) | set((criterion or {}).get("compliance_red_lines") or []))
+    _, risk_hits, severe_violation = _score_compliance(value, red_lines)
+    return risk_hits, severe_violation
+
+
 def _score_objection(value: str, coverage: dict[str, Any] | None) -> int:
     """Objection handling: core is must_point coverage rate (how many standard points covered).
 

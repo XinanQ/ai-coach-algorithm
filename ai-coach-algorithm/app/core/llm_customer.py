@@ -12,13 +12,12 @@ falls back to the hardcoded CUSTOMER_INTENT_PROBES template.
 """
 from __future__ import annotations
 
-import json
 import logging
 from typing import Any
 
 from app.core.intent_labels import INTENT_LABELS
 from app.core.llm.client import is_llm_available
-from app.core.llm.parser import clean_plain_text
+from app.core.llm.parser import clean_plain_text, parse_json_lenient
 from app.core.llm.prompts.customer import get_customer_builder_for_scene
 from app.core.llm_scorer import _call_llm_text, _call_llm_text_stream
 
@@ -28,23 +27,23 @@ VALID_INTENTS = set(INTENT_LABELS)
 
 
 def _parse_customer_response(raw: str | None) -> dict[str, Any] | None:
-    """Parse LLM customer response JSON. Returns {"intents": [...], "follow_up": "..."} or None."""
+    """Parse LLM customer response JSON. Returns {"intents": [...], "follow_up": "..."} or None.
+
+    Uses the shared three-tier lenient parser (json → json_repair → code block).
+    When parsing fails entirely, the raw text is only accepted as a plain-text
+    follow-up if it does NOT look like broken JSON/markdown — a malformed JSON
+    blob must never be spoken to the user as the customer's line; returning
+    None lets the dialog manager fall back to the probe templates instead.
+    """
     if not raw:
         return None
-    try:
-        data = json.loads(raw)
-    except json.JSONDecodeError:
-        import re
-        match = re.search(r'\{[\s\S]*\}', raw)
-        if not match:
-            return {"intents": [], "follow_up": clean_plain_text(raw)}
-        try:
-            data = json.loads(match.group(0))
-        except json.JSONDecodeError:
-            return {"intents": [], "follow_up": clean_plain_text(raw)}
-
-    if not isinstance(data, dict):
-        return {"intents": [], "follow_up": clean_plain_text(raw)}
+    data, _method = parse_json_lenient(raw)
+    if data is None:
+        text = clean_plain_text(raw)
+        if not text or text.lstrip().startswith(("{", "[", "```")):
+            logger.warning("customer LLM output unparseable and JSON-like; using template fallback")
+            return None
+        return {"intents": [], "follow_up": text}
 
     intents = [i for i in data.get("intents", []) if i in VALID_INTENTS]
     follow_up = clean_plain_text(str(data.get("follow_up", "")))

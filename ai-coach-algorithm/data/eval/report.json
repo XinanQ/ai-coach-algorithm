@@ -1,236 +1,32 @@
 {
-  "run_id": "eval_20260709_160131",
-  "timestamp": "2026-07-09T16:01:31.834225",
+  "run_id": "eval_20260709_191746",
+  "timestamp": "2026-07-09T19:17:46.216169",
   "stages": [
-    {
-      "stage": "llm_intent_detection",
-      "primary_metric": "llm_only_micro_f1",
-      "value": 0.7576,
-      "gold_size": 50,
-      "details": {
-        "result_source": "cached:data/eval/llm_intent_eval.json",
-        "strategies": {
-          "keyword_only": {
-            "micro_precision": 0.2952,
-            "micro_recall": 0.8611,
-            "micro_f1": 0.4397
-          },
-          "llm_only": {
-            "micro_precision": 0.8333,
-            "micro_recall": 0.6944,
-            "micro_f1": 0.7576
-          },
-          "llm_primary": {
-            "micro_precision": 0.3867,
-            "micro_recall": 0.8056,
-            "micro_f1": 0.5225
-          },
-          "union": {
-            "micro_precision": 0.2991,
-            "micro_recall": 0.8889,
-            "micro_f1": 0.4476
-          }
-        }
-      }
-    },
-    {
-      "stage": "gap_computation",
-      "primary_metric": "accuracy",
-      "value": 0.9057,
-      "gold_size": 104,
-      "details": {
-        "params": {
-          "threshold": 0.1
-        },
-        "accuracy": 0.9057,
-        "false_covered_rate": 0.0189,
-        "false_missing_rate": 0.0755,
-        "total_intents_evaluated": 212
-      }
-    },
-    {
-      "stage": "chunk_retrieval",
-      "primary_metric": "final_context_recall@8",
-      "value": 0.8059,
-      "gold_size": 70,
-      "details": {
-        "params": {
-          "candidate_k": 40,
-          "final_k": 8,
-          "fusion_weights": null,
-          "max_query_results": 80
-        },
-        "candidate_recall@10": 0.8558,
-        "candidate_recall@20": 0.9573,
-        "reranked_recall@3": 0.5869,
-        "reranked_recall@5": 0.7103,
-        "reranked_recall@8": 0.8059,
-        "reranked_recall@10": 0.8558,
-        "context_hit@5": 1.0,
-        "context_hit@8": 1.0,
-        "precision@3": 0.9429,
-        "precision@5": 0.9,
-        "precision@8": 0.8536,
-        "final_context_recall@8": 0.8059,
-        "final_context_precision@8": 0.8536,
-        "final_context_hit@8": 1.0,
-        "mrr": 1.0,
-        "ceiling@3": 0.5869,
-        "ceiling@10": 0.8558,
-        "ceiling@20": 0.9573,
-        "normalized_candidate_recall@10": 1.0,
-        "normalized_candidate_recall@20": 1.0,
-        "normalized_reranked_recall@3": 1.0,
-        "normalized_reranked_recall@5": 1.0,
-        "normalized_reranked_recall@8": 1.0,
-        "normalized_context_hit@5": 1.0,
-        "normalized_context_hit@8": 1.0,
-        "by_route": {
-          "tutor": {
-            "candidate_recall@10": 0.9447,
-            "candidate_recall@20": 1.0,
-            "reranked_recall@3": 0.7096,
-            "reranked_recall@5": 0.8359,
-            "reranked_recall@8": 0.9135,
-            "context_hit@5": 1.0,
-            "context_hit@8": 1.0,
-            "precision@3": 0.871,
-            "precision@5": 0.7742,
-            "precision@8": 0.6694,
-            "final_context_recall@8": 0.9135,
-            "final_context_precision@8": 0.6694,
-            "final_context_hit@8": 1.0,
-            "mrr": 1.0,
-            "ceiling@3": 0.7096,
-            "ceiling@10": 0.9447,
-            "ceiling@20": 1.0,
-            "normalized_candidate_recall@10": 1.0,
-            "normalized_candidate_recall@20": 1.0,
-            "normalized_reranked_recall@3": 1.0,
-            "normalized_reranked_recall@5": 1.0,
-            "normalized_reranked_recall@8": 1.0,
-            "normalized_context_hit@5": 1.0,
-            "normalized_context_hit@8": 1.0,
-            "count": 31
-          },
-          "customer": {
-            "candidate_recall@10": 0.7852,
-            "candidate_recall@20": 0.9233,
-            "reranked_recall@3": 0.4894,
-            "reranked_recall@5": 0.6105,
-            "reranked_recall@8": 0.7204,
-            "context_hit@5": 1.0,
-            "context_hit@8": 1.0,
-            "precision@3": 1.0,
-            "precision@5": 1.0,
-            "precision@8": 1.0,
-            "final_context_recall@8": 0.7204,
-            "final_context_precision@8": 1.0,
-            "final_context_hit@8": 1.0,
-            "mrr": 1.0,
-            "ceiling@3": 0.4894,
-            "ceiling@10": 0.7852,
-            "ceiling@20": 0.9233,
-            "normalized_candidate_recall@10": 1.0,
-            "normalized_candidate_recall@20": 1.0,
-            "normalized_reranked_recall@3": 1.0,
-            "normalized_reranked_recall@5": 1.0,
-            "normalized_reranked_recall@8": 1.0,
-            "normalized_context_hit@5": 1.0,
-            "normalized_context_hit@8": 1.0,
-            "count": 39
-          }
-        }
-      }
-    },
-    {
-      "stage": "must_point_coverage",
-      "primary_metric": "point_f1",
-      "value": 0.8376,
-      "gold_size": 45,
-      "details": {
-        "params": {
-          "threshold": 0.35,
-          "kw_weight": 0.4,
-          "sem_weight": 0.6,
-          "calibration": "local_hash_calibrated"
-        },
-        "point_precision": 0.7597,
-        "point_recall": 0.9333,
-        "point_f1": 0.8376,
-        "coverage_rate_mae": 0.1,
-        "quality_stats": {
-          "good": {
-            "count": 15,
-            "avg_case_f1": 0.8186,
-            "point_precision": 0.7556,
-            "point_recall": 0.9067,
-            "point_f1": 0.8242
-          },
-          "partial": {
-            "count": 15,
-            "avg_case_f1": 0.9314,
-            "point_precision": 0.7692,
-            "point_recall": 1.0,
-            "point_f1": 0.8696
-          },
-          "poor": {
-            "count": 15,
-            "avg_case_f1": 0.0,
-            "point_precision": 0.0,
-            "point_recall": 0.0,
-            "point_f1": 0.0
-          }
-        },
-        "runtime_info": {
-          "embedding": {
-            "requested_backend": "sentence_transformers",
-            "requested_model": "BAAI/bge-small-zh-v1.5",
-            "active_backend": "local_hash",
-            "active_model": "local_hash_embedding_v1",
-            "dimensions": 384,
-            "is_fallback": true,
-            "fallback_reason": "RuntimeError: Cannot send a request, as the client has been closed."
-          }
-        }
-      }
-    },
     {
       "stage": "e2e_dialogue",
       "primary_metric": "e2e_overall_pass",
-      "value": 0.96,
+      "value": 0.26,
       "gold_size": 50,
       "details": {
         "total_cases": 50,
         "sample_size": null,
         "skip_slow": false,
-        "e2e_overall_pass": 0.96,
+        "e2e_overall_pass": 0.26,
         "start_pass": 1.0,
         "contract_pass": 1.0,
         "intent_pass": 1.0,
         "gap_pass": 1.0,
-        "retrieval_hit": 0.96,
-        "followup_pass": 1.0,
-        "finish_score_pass": 1.0,
-        "strict_score_pass": 0.98,
-        "strict_e2e_overall_pass": 0.94,
-        "weak_tag_pass": 1.0
+        "retrieval_hit": 0.94,
+        "followup_pass": 0.88,
+        "finish_score_pass": 0.36,
+        "strict_score_pass": 0.32,
+        "strict_e2e_overall_pass": 0.22,
+        "weak_tag_pass": 0.96
       }
     }
   ],
-  "end_to_end_estimate": 0.96,
+  "end_to_end_estimate": 0.26,
   "end_to_end_metric_source": "e2e_dialogue",
-  "component_quality_estimate": 0.4632,
-  "bottleneck": "llm_intent_detection",
-  "runtime_info": {
-    "embedding": {
-      "requested_backend": "sentence_transformers",
-      "requested_model": "BAAI/bge-small-zh-v1.5",
-      "active_backend": "local_hash",
-      "active_model": "local_hash_embedding_v1",
-      "dimensions": 384,
-      "is_fallback": true,
-      "fallback_reason": "RuntimeError: Cannot send a request, as the client has been closed."
-    }
-  }
+  "component_quality_estimate": null,
+  "bottleneck": "e2e_dialogue"
 }

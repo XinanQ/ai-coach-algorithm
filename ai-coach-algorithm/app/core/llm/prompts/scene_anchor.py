@@ -29,8 +29,9 @@ class CustomerSceneAnchorLayer(PromptLayer):
     def __init__(self, profile: dict[str, Any] | None, scene_id: str | None):
         self.profile = profile or {}
         self.scene_id = scene_id or "unknown"
-        # 缓存 key 包含 scene_id,builder 间不会串号
-        self.name = f"L2anchor_customer__{self.scene_id}"
+        # 同一 scene 有 2-3 个不同难度画像,锚点必须按 customer_id 区分,否则串号
+        customer_id = self.profile.get("customer_id") or "default"
+        self.name = f"L2anchor_customer__{self.scene_id}__{customer_id}"
 
     def render(self, context: dict[str, Any]) -> str:
         p = self.profile

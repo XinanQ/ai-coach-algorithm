@@ -127,6 +127,7 @@ class E2EEvaluator:
         result["finish_score_pass"] = finish_result.get("score_pass", True)
         result["strict_score_pass"] = finish_result.get("strict_score_pass", result["finish_score_pass"])
         result["weak_tag_pass"] = finish_result.get("weak_tag_pass", True)
+        result["scorer_method"] = finish_result.get("scorer_method", "unknown")
         result["finish_trace"] = finish_result.get("trace", {})
 
         # Overall pass: all stages must pass
@@ -301,9 +302,11 @@ class E2EEvaluator:
                 "weak_tag_pass": weak_tag_result["pass"],
                 "weak_tag_method": weak_tag_result.get("method"),
                 "weak_tag_reason": weak_tag_result.get("reason"),
+                "scorer_method": score_result.get("method", "unknown"),
                 "trace": {
                     "total_score": total_score,
                     "weak_tags": weak_tags,
+                    "scorer_method": score_result.get("method", "unknown"),
                     "expected_range": expected_range,
                     "strict_expected_range": strict_range,
                     "calibration_reason": case.get("calibration_reason"),
@@ -873,6 +876,7 @@ def compute_e2e_metrics(results: list[dict[str, Any]]) -> dict[str, Any]:
     """Compute aggregate E2E metrics from case results."""
     if not results:
         return {
+            "scorer_method_distribution": {},
             "e2e_overall_pass": 0.0,
             "start_pass": 0.0,
             "contract_pass": 0.0,
@@ -891,7 +895,17 @@ def compute_e2e_metrics(results: list[dict[str, Any]]) -> dict[str, Any]:
     def pass_rate(key: str) -> float:
         return sum(1 for r in results if r.get(key, False)) / max(total, 1)
 
+    # Which scorer actually graded each case (llm vs rule vs +redline_cap).
+    # Surfacing this in the summary prevents a whole class of silent-config
+    # accidents — e.g. an unset DEEPSEEK_API_KEY making every case rule-scored
+    # while the report still reads like an LLM-path evaluation.
+    scorer_methods: dict[str, int] = {}
+    for r in results:
+        method = r.get("scorer_method", "unknown")
+        scorer_methods[method] = scorer_methods.get(method, 0) + 1
+
     return {
+        "scorer_method_distribution": scorer_methods,
         "e2e_overall_pass": round(pass_rate("overall_pass"), 4),
         "start_pass": round(pass_rate("start_pass"), 4),
         "contract_pass": round(pass_rate("contract_pass"), 4),

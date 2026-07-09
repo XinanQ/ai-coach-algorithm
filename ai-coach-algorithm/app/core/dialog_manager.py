@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 import uuid
 from typing import Any
@@ -19,11 +20,13 @@ from app.core.llm_scorer import score_with_llm_finish
 from app.core.marketing_rag import retrieve_marketing_knowledge
 from app.core.memory_manager import get_memory_manager
 from app.core.practice_catalog import get_practice_task_detail
-from app.core.rule_scorer import score_employee_answer
+from app.core.rule_scorer import detect_compliance_violation, score_employee_answer
 from app.core.scoring_criteria_loader import get_primary_criterion
 from app.core.weakness_profile import build_weakness_profile
 from app.utils.file_loader import now_iso
 
+
+logger = logging.getLogger(__name__)
 
 DEFAULT_SCENE_ID = "INS_PERIODIC"
 DEFAULT_MAX_ROUNDS = MAX_DIALOG_ROUNDS
@@ -90,11 +93,56 @@ async def _score_finish(
             weakness_prompt=weakness_prompt,
         )
         if llm_result is not None:
+            if _REDLINE_CROSS_CHECK_ENABLED:
+                return _cross_check_red_lines(llm_result, answer, criterion)
             return llm_result
     # Rule scorer is sync (no I/O), call it directly — no need for to_thread
     return score_employee_answer(
         answer, reference_items, criterion=criterion, coverage=coverage
     )
+
+
+# LLM 评委的最后一道程序化闸门:prompt(L4)和 schema 一致性校验都拦不住
+# "回答里有红线词但 LLM 仍给高合规分"这类漏判——只有确定性的规则检测能兜底。
+# 设 AI_COACH_REDLINE_CROSS_CHECK=0 可整体禁用(用于 A/B 对照)。
+_RED_LINE_COMPLIANCE_CAP = 30
+_REDLINE_CROSS_CHECK_ENABLED = os.getenv("AI_COACH_REDLINE_CROSS_CHECK", "1").lower() not in ("0", "false", "off")
+
+
+def _cross_check_red_lines(
+    score: dict[str, Any],
+    answer: str,
+    criterion: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Deterministic red-line cross-check applied to LLM scoring output.
+
+    If the rule detector finds a severe compliance violation but the LLM gave
+    compliance > cap, force the cap, recompute the weighted total, and merge
+    the detected risk terms / weakness tag so the report stays consistent.
+    """
+    risk_hits, severe_violation = detect_compliance_violation(answer, criterion)
+    if not severe_violation:
+        return score
+
+    dims = score.get("dimension_scores") or []
+    compliance_dim = next((d for d in dims if d.get("key") == "compliance"), None)
+    llm_compliance = int(compliance_dim.get("score", 0)) if compliance_dim else 0
+    if compliance_dim is None or llm_compliance <= _RED_LINE_COMPLIANCE_CAP:
+        return score  # LLM already penalized correctly
+
+    logger.warning(
+        "LLM scorer missed a severe red-line violation; capping compliance %s -> %s (hits=%s)",
+        llm_compliance, _RED_LINE_COMPLIANCE_CAP, risk_hits,
+    )
+    compliance_dim["score"] = _RED_LINE_COMPLIANCE_CAP
+    total = sum(int(d.get("score", 0)) * float(d.get("weight", 0)) for d in dims)
+    score["total_score"] = int(max(0, min(100, round(total))))
+    merged_risks = list(dict.fromkeys([*(score.get("risk_terms") or []), *risk_hits]))
+    score["risk_terms"] = merged_risks
+    if "合规红线" not in (score.get("weakness_tags") or []):
+        score.setdefault("weakness_tags", []).append("合规红线")
+    score["method"] = f"{score.get('method', '')}+redline_cap"
+    return score
 
 
 def _build_dialog_pairs(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -467,6 +515,14 @@ async def finish_dialogue(session_id: str) -> dict[str, Any]:
         key_terms=criterion.get("key_terms") or None,
     )
     coverage = retrieval.get("retrieval_trace", {}).get("must_point_coverage") or {}
+    if not coverage and criterion.get("must_points"):
+        # Retrieval fell back (see fallback_reason) — must-point penalties are
+        # disabled for this finish, so the score may run high. Surface it.
+        logger.warning(
+            "finish scoring without must_point coverage: session=%s scene=%s backend=%s reason=%s",
+            session_id, scene_id,
+            retrieval.get("retrieval_backend"), retrieval.get("fallback_reason"),
+        )
     # Full rubric scoring: LLM-first (grounded in retrieved standard scripts +
     # criterion + coverage + full dialog trajectory), with rule_scorer as
     # fallback. The dialog_pairs let the LLM judge overall performance and

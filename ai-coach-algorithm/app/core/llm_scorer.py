@@ -16,6 +16,7 @@ caller, the per-reply latency (scorer + customer in parallel) drops ~50%.
 from __future__ import annotations
 
 import logging
+import os
 from typing import Any
 
 from app.core.customer_answer_understanding import analyze_customer_answer
@@ -34,6 +35,12 @@ logger = logging.getLogger(__name__)
 # compatible. The LLM is asked to fill these exact keys.
 _DIMENSION_NAMES = {key: name for key, name, _ in DIMENSION_DEFS}
 _DIMENSION_WEIGHTS = {key: weight for key, _, weight in DIMENSION_DEFS}
+
+# Tunable via env so scoring behavior can be A/B'd without code changes.
+# temperature 0.0 = reproducible judgment; max_tokens 0 = no cap.
+_SCORER_TEMPERATURE = float(os.getenv("AI_COACH_SCORER_TEMPERATURE", "0.0"))
+_SCORER_MAX_TOKENS = int(os.getenv("AI_COACH_SCORER_MAX_TOKENS", "800"))
+_CUSTOMER_MAX_TOKENS = int(os.getenv("AI_COACH_CUSTOMER_MAX_TOKENS", "300"))
 
 # Builders are now per-scene (cached by scene_id inside the prompt module).
 # Each scene gets its own ScorerSceneAnchorLayer containing the scene rubric
@@ -73,12 +80,18 @@ async def _call_llm_json_raw(
             rec.retry_count += 1
 
         async def do_call():
-            return await client.chat.completions.create(
-                model=chosen_model,
-                messages=messages,
-                response_format={"type": "json_object"},
-                temperature=0.2,
-            )
+            kwargs: dict[str, Any] = {
+                "model": chosen_model,
+                "messages": messages,
+                "response_format": {"type": "json_object"},
+                # Scoring is a judgment task, not generation — 0.0 keeps repeat
+                # runs of the same dialog reproducible.
+                "temperature": _SCORER_TEMPERATURE,
+            }
+            # Cap kills pathological long generations that blow latency; 0 disables.
+            if _SCORER_MAX_TOKENS > 0:
+                kwargs["max_tokens"] = _SCORER_MAX_TOKENS
+            return await client.chat.completions.create(**kwargs)
 
         try:
             resp = await call_with_retry(do_call, label=f"llm_json/{method}", on_retry=on_retry)
@@ -120,11 +133,16 @@ async def _call_llm_text(
             rec.retry_count += 1
 
         async def do_call():
-            return await client.chat.completions.create(
-                model=chosen_model,
-                messages=messages,
-                temperature=temperature,
-            )
+            kwargs: dict[str, Any] = {
+                "model": chosen_model,
+                "messages": messages,
+                "temperature": temperature,
+            }
+            # Customer follow-up is one sentence plus a small intents JSON;
+            # capping output shortens the per-turn latency tail. 0 disables.
+            if _CUSTOMER_MAX_TOKENS > 0:
+                kwargs["max_tokens"] = _CUSTOMER_MAX_TOKENS
+            return await client.chat.completions.create(**kwargs)
 
         try:
             resp = await call_with_retry(do_call, label=f"llm_text/{method}", on_retry=on_retry)
@@ -166,13 +184,16 @@ async def _call_llm_text_stream(
             rec.retry_count += 1
 
         async def do_call():
-            return await client.chat.completions.create(
-                model=chosen_model,
-                messages=messages,
-                temperature=temperature,
-                stream=True,
-                stream_options={"include_usage": True},
-            )
+            kwargs: dict[str, Any] = {
+                "model": chosen_model,
+                "messages": messages,
+                "temperature": temperature,
+                "stream": True,
+                "stream_options": {"include_usage": True},
+            }
+            if _CUSTOMER_MAX_TOKENS > 0:
+                kwargs["max_tokens"] = _CUSTOMER_MAX_TOKENS
+            return await client.chat.completions.create(**kwargs)
 
         try:
             stream = await call_with_retry(do_call, label=f"llm_text_stream/{method}", on_retry=on_retry)

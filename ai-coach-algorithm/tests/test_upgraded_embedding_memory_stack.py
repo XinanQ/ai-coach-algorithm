@@ -35,12 +35,13 @@ def test_chroma_vector_index_build_and_retrieve_with_hash_backend(tmp_path: Path
     tutor_retrieved = retrieve_marketing_knowledge("客户担心定期提前支取是否方便", route="tutor", top_k=3)
     assert tutor_retrieved["items"]
     assert tutor_retrieved["retrieval_backend"] in {"chroma", "json_lexical_fallback"}
-    assert tutor_retrieved["retrieval_algorithm"] == "tutor_hyde_chroma_fusion_v1"
+    # 只锚定路由前缀,不锚定版本号,避免每次算法迭代都要改断言
+    assert tutor_retrieved["retrieval_algorithm"].startswith("tutor_hyde")
     assert "hypothetical_answer" in tutor_retrieved["retrieval_trace"]["hyde"]
 
     customer_retrieved = retrieve_marketing_knowledge("客户说别的银行利率更高，我应该怎么追问", route="customer", top_k=3)
     assert customer_retrieved["items"]
-    assert customer_retrieved["retrieval_algorithm"] == "customer_intent_embedding_keyword_fusion_v1"
+    assert customer_retrieved["retrieval_algorithm"].startswith("customer_intent")
     assert customer_retrieved["retrieval_trace"]["query_plan"]["intent_labels"]
 
 
@@ -142,7 +143,8 @@ def test_practice_task_catalog_returns_display_ready_cards() -> None:
     dividend_scripts = client.get("/practice/tasks/TASK_CUST_RATE_DIVIDEND_LOW/scripts")
     assert dividend_scripts.status_code == 200
     dividend_cards = dividend_scripts.json()["list"]
-    assert any(card["displayTitle"] == "客户质疑前期收益低时怎么解释" for card in dividend_cards)
+    # 与 data/script_title_overrides.json 中 MCH_000068 的 approved 标题保持一致
+    assert any(card["displayTitle"] == "客户嫌前期没收益返本慢时怎么回应" for card in dividend_cards)
     assert {card["sourceScope"] for card in dividend_cards} == {"exact_scene"}
 
     script_detail = client.get(
@@ -156,6 +158,7 @@ def test_practice_task_catalog_returns_display_ready_cards() -> None:
     assert profiles.status_code == 200
     profile = profiles.json()["profiles"][0]
     assert profile["tags"] and all("_" not in tag for tag in profile["tags"])
+    assert profile["expected_intents"] and any("_" in tag for tag in profile["expected_intents"])
 
 
 def test_reviewed_script_title_override_takes_precedence(tmp_path: Path, monkeypatch) -> None:
@@ -186,7 +189,6 @@ def test_reviewed_script_title_override_takes_precedence(tmp_path: Path, monkeyp
         assert card["title"] == "审核后的分红险前期收益解释"
     finally:
         script_title_review.clear_script_title_override_cache()
-    assert profile["expectedIntents"] and any("_" in tag for tag in profile["expectedIntents"])
 
 
 def test_api_health_and_dialog_flow() -> None:

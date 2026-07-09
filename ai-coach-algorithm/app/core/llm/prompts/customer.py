@@ -179,12 +179,15 @@ def get_customer_builder_for_scene(
     profile: dict[str, Any] | None,
     scene_id: str | None,
 ) -> LayeredPromptBuilder:
-    """按 scene_id 取/造 builder(进程级 LRU,无淘汰)。
+    """按 scene_id + customer_id 取/造 builder(进程级缓存,无淘汰)。
 
-    同一 scene 多次调用复用同一 builder,SceneAnchorLayer 的 profile 字节
-    完全一致 → DeepSeek prefix cache 跨调用命中。
+    同一 scene 下有 2-3 个不同难度的客户画像(customer_id 不同),缓存 key 必须
+    包含 customer_id——否则同 scene 的第二个画像会复用第一个画像的静态锚点,
+    LLM 扮演错误的客户人设。同一画像多次调用的锚点字节完全一致,
+    DeepSeek prefix cache 仍然跨调用命中。
     """
-    cache_key = scene_id or "default"
+    customer_id = (profile or {}).get("customer_id") or "default"
+    cache_key = f"{scene_id or 'default'}::{customer_id}"
     if cache_key not in _CUSTOMER_BUILDER_CACHE:
         _CUSTOMER_BUILDER_CACHE[cache_key] = build_customer_builder(profile, scene_id)
     return _CUSTOMER_BUILDER_CACHE[cache_key]
