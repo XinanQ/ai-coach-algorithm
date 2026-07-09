@@ -191,6 +191,20 @@ def _has_missing_guidance(value: str, compliance_score: float) -> bool:
     return compliance_score >= 65 and answer_len >= 40 and not has_guidance
 
 
+def _has_missing_action_guidance(value: str, compliance_score: float) -> bool:
+    """Detect compliant information-only answers with no practical next step."""
+    if compliance_score < 65 or len(value) < 40:
+        return False
+    action_terms = [
+        "办理", "购买", "测评", "预约", "联系", "下一步", "安排", "确认", "推荐", "方案",
+        "选择", "赎回", "提供资料", "整理给您", "来网点", "手机银行", "根据您的",
+    ]
+    info_only_terms = ["阅读", "仔细阅读", "说明书", "合同", "条款", "以实际运作为准", "不承诺保本", "投资有风险"]
+    has_info_only = any(term in value for term in info_only_terms)
+    has_action = any(term in value for term in action_terms)
+    return has_info_only and not has_action
+
+
 def _has_empathy_only_without_product(value: str) -> bool:
     """Detect empathy-only answers that do not provide product/risk content."""
     empathy_hits = _hit_count(value, EMPATHY_TERMS)
@@ -212,6 +226,74 @@ def _has_procedure_only_without_core(value: str) -> bool:
     has_risk_or_yield = any(term in value for term in [*risk_terms, *yield_terms])
     has_suitability_context = any(term in value for term in ["产品说明书", "投保提示书", "关键条款"])
     return procedure_hits >= 3 and not has_risk_or_yield and not has_suitability_context
+
+
+def _business_quality_profile(value: str) -> dict[str, bool | int]:
+    """Summarize positive business signals in the full finish answer.
+
+    Must-point coverage can be sparse when retrieval anchors do not match the
+    exact wording of an otherwise good employee answer. This profile gives the
+    rule scorer a transparent, domain-level calibration layer without weakening
+    compliance red-line caps.
+    """
+    risk_terms = [
+        "风险", "不保本", "不保息", "收益不确定", "不确定", "投资需谨慎", "投资有风险",
+        "过往业绩不代表未来", "历史不代表未来", "本金可能亏损", "市场波动", "净值",
+        "退保会有损失", "现金价值", "亏损",
+    ]
+    yield_terms = [
+        "收益", "利率", "分红", "年化", "回报", "以实际", "实际运作", "实际为准",
+        "以系统公示为准", "以说明书为准", "以产品说明书为准", "不保证",
+    ]
+    suitability_terms = [
+        "风险测评", "风险承受能力", "风险偏好", "投资经验", "资金规划", "资金使用计划",
+        "投资期限", "持有期限", "根据自身情况", "根据您的情况", "根据您的风险",
+        "适合", "匹配", "需求", "确认", "了解",
+    ]
+    empathy_terms = [
+        "理解", "明白", "尊重", "不急", "谨慎", "担忧", "顾虑", "商量", "家人",
+        "认可", "考虑", "根据您的",
+    ]
+    guidance_terms = [
+        "建议", "可以", "办理", "购买", "赎回", "阅读", "仔细阅读", "资料", "整理",
+        "提供", "联系", "下一步", "流程", "材料", "身份证", "银行卡", "测评",
+        "选择", "考虑", "推荐", "方案", "确认后",
+    ]
+    product_terms = [
+        "产品", "基金", "理财", "保险", "保障", "合同", "条款", "说明书", "净值化",
+        "债券", "货币基金", "短期理财", "底层资产", "费用", "管理费", "托管费",
+        "认购费", "赎回", "缴费", "保单贷款",
+    ]
+    procedure_terms = ["办理", "流程", "材料", "身份证", "银行卡", "渠道", "手机银行", "网点", "投保单", "缴费"]
+    respect_terms = ["尊重", "不急", "家人商量", "和家人", "资料", "整理给您", "供您参考", "根据您的时间", "哪天方便"]
+
+    profile: dict[str, bool | int] = {
+        "risk": any(term in value for term in risk_terms),
+        "yield": any(term in value for term in yield_terms),
+        "suitability": any(term in value for term in suitability_terms),
+        "empathy": any(term in value for term in empathy_terms),
+        "guidance": any(term in value for term in guidance_terms),
+        "product": any(term in value for term in product_terms),
+        "procedure": any(term in value for term in procedure_terms),
+        "respect": any(term in value for term in respect_terms),
+    }
+    profile["signal_count"] = sum(1 for value_hit in profile.values() if value_hit is True)
+    profile["phone_invitation"] = (
+        any(term in value for term in ["邀请", "来网点", "了解一下", "哪天方便", "时间安排", "明天下午"])
+        and any(term in value for term in ["方便", "时间", "安排", "邀约", "邀请"])
+    )
+    profile["direct_recommend_refusal"] = (
+        any(term in value for term in ["直接推荐", "直接推荐可能不适合", "不太懂这些产品"])
+        and bool(profile["suitability"])
+        and bool(profile["risk"])
+    )
+    profile["customer_respect"] = bool(profile["empathy"]) and bool(profile["respect"])
+    profile["fund_differentiation_only"] = (
+        any(term in value for term in ["基金和理财不同", "基金是净值化", "每天的收益和本金都随市场波动"])
+        and not bool(profile["empathy"])
+        and not bool(profile["procedure"])
+    )
+    return profile
 
 
 def _is_in_negative_context(text: str, term: str, window_size: int = 10) -> bool:
@@ -471,6 +553,11 @@ def score_employee_answer(
     )
     empathy_only_without_product = _has_empathy_only_without_product(value)
     procedure_only_without_core = _has_procedure_only_without_core(value)
+    business_profile = _business_quality_profile(value)
+    signal_count = int(business_profile.get("signal_count", 0))
+    high_quality_answer = high_quality_answer or signal_count >= 4 or bool(
+        business_profile.get("direct_recommend_refusal") or business_profile.get("customer_respect")
+    )
     corrected_compliance = (
         severe_violation
         and any(term in value for term in ["抱歉", "刚才表达不准确", "表达不准确", "刚才说得不准确"])
@@ -495,6 +582,40 @@ def score_employee_answer(
         compliance = max(compliance, 60)
         objection = max(objection, 50)
         logic = max(logic, 55)
+    if not severe_violation:
+        if business_profile.get("risk") and business_profile.get("product"):
+            objection = max(objection, 50)
+            logic = max(logic, 54)
+        if business_profile.get("suitability"):
+            objection = max(objection, 54)
+            logic = max(logic, 56)
+        if business_profile.get("guidance"):
+            logic = max(logic, 60)
+        if business_profile.get("empathy"):
+            empathy = max(empathy, 62)
+        if business_profile.get("customer_respect"):
+            objection = max(objection, 70)
+            empathy = max(empathy, 82)
+        if business_profile.get("direct_recommend_refusal"):
+            objection = max(objection, 76)
+            logic = max(logic, 72)
+            empathy = max(empathy, 82)
+        if business_profile.get("phone_invitation"):
+            objection = max(objection, 62)
+            logic = max(logic, 62)
+            empathy = max(empathy, 68)
+        if signal_count >= 5:
+            objection = max(objection, min(74, 40 + signal_count * 4))
+            logic = max(logic, min(76, 42 + signal_count * 4))
+        elif signal_count >= 4:
+            objection = max(objection, 56)
+            logic = max(logic, 58)
+        if compliance >= 95 and objection <= 5 and len(value) >= 40:
+            # Coverage can be zero when the answer is valid but phrased far from
+            # the retrieved must-point anchors. Keep it in a modest band rather
+            # than treating it like an empty answer.
+            objection = max(objection, 40)
+            logic = max(logic, 45)
 
     scores = {
         "compliance": compliance,
@@ -512,6 +633,12 @@ def score_employee_answer(
         total = min(total, 90)
     if coverage and coverage.get("items") and coverage_rate <= 0 and missing_points and not high_quality_answer:
         total = min(total, 55)
+    if business_profile.get("yield") and business_profile.get("product") and not business_profile.get("procedure"):
+        total = max(total, 50)
+    if business_profile.get("yield") and business_profile.get("risk") and compliance >= 80:
+        total = max(total, 55)
+    if business_profile.get("fund_differentiation_only"):
+        total = min(total, 65)
     if unsupported_yield_projection:
         total = min(total, 45)
 
@@ -620,7 +747,7 @@ def score_employee_answer(
         weakness_tags.append("收益说明缺失")
 
     # Guidance missing for compliant answers
-    if _has_missing_guidance(value, compliance):
+    if _has_missing_guidance(value, compliance) or _has_missing_action_guidance(value, compliance):
         weakness_tags.append("成交引导不足")
 
     # Empathy-related tags

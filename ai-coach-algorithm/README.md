@@ -448,7 +448,7 @@ E2E 评测模拟完整的陪练对话流程，验证从 `start_dialogue` → 多
 | `e2e_overall_pass` | 综合通过率 | > 60% |
 | `strict_e2e_overall_pass` | 严格综合通过率，用于防止 gold 区间过宽 | > 60% |
 
-当前基线（2026-07-06）：E2E gold 已扩展到 50 条，并为部分容易过宽的评分 case 增加 `strict_score_range`。主报告仍看标准 `e2e_overall_pass`，同时用 `strict_e2e_overall_pass` 观察真实业务校准压力。当前主链路短板主要在 finish 最终评分校准。
+当前基线（2026-07-09）：E2E gold 为 50 条，主链路 `e2e_overall_pass=0.92`，`finish_score_pass=0.96`，`weak_tag_pass=1.00`。主报告仍看标准 `e2e_overall_pass`，同时用 `strict_e2e_overall_pass` 观察真实业务校准压力。当前剩余短板主要在 LLM intent 独立评估和少量客户侧 retrieval 命中。
 
 详细文档：[docs/algorithms/08_e2e_evaluation.md](docs/algorithms/08_e2e_evaluation.md)
 

@@ -96,4 +96,8 @@ mock_db/auto_update_history.json
 
 # Evaluation verbose output (temporary diagnostic files)
 data/eval/*_verbose_*.json
+data/eval/retrieval_verbose.json
 eval_result.json
+
+# Accidental nested copy of this module (never commit)
+ai-coach-algorithm/
