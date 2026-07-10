@@ -42,6 +42,10 @@ from typing import Any
 
 from eval.metrics import StageResult
 from app.core.weakness_taxonomy import normalize_weakness_tags, weakness_tag_matches
+from eval.scorer_fingerprint import (
+    compute_scorer_config_fingerprint,
+    load_blessed_fingerprint,
+)
 from eval.transcript import transcript_hash
 
 GOLD_PATH = Path("data/eval/scorer_transcript_gold.jsonl")
@@ -230,6 +234,20 @@ def evaluate(
                 f"got {f['detected_tags']} ({f['scorer_method']})"
             )
 
+    # Config fingerprint: the frozen 0.94 baseline is only citable while the
+    # scorer that produced it is byte-identical. A mismatch does not fail the
+    # run (diagnostics stay useful) but it strips citability until the new
+    # config is re-baselined and blessed.
+    current_fp = compute_scorer_config_fingerprint()
+    blessed = load_blessed_fingerprint()
+    fingerprint_match = bool(blessed and blessed.get("fingerprint") == current_fp["fingerprint"])
+    if blessed and not fingerprint_match:
+        print(
+            "WARNING: scorer config changed since the blessed baseline "
+            f"(blessed {blessed.get('blessed_at', '?')}). Results are diagnostic only; "
+            "rerun the full 50-case suite and re-bless with --bless-fingerprint."
+        )
+
     return StageResult(
         stage="scorer_transcript",
         primary_metric="score_band_pass",
@@ -237,7 +255,9 @@ def evaluate(
         gold_size=len(primary_pool),
         details={
             "primary_basis": primary_basis,
-            "citable_full_baseline": len(cases) == len(all_cases),
+            "citable_full_baseline": len(cases) == len(all_cases) and (blessed is None or fingerprint_match),
+            "scorer_config_fingerprint": current_fp["fingerprint"],
+            "baseline_fingerprint_match": fingerprint_match if blessed else None,
             "selected_case_ids": sorted(case_ids) if case_ids else [],
             "total_gold_cases": len(all_cases),
             "total_cases": len(results),
@@ -291,6 +311,11 @@ def main() -> None:
         action="store_true",
         help="Diagnostic only: allow rule-scored cases instead of failing the formal LLM baseline.",
     )
+    parser.add_argument(
+        "--bless-fingerprint",
+        action="store_true",
+        help="After a full-gold LLM-only run, record the current scorer config as the frozen-baseline config.",
+    )
     args = parser.parse_args()
     result = evaluate(
         gold_path=args.gold_path,
@@ -299,6 +324,23 @@ def main() -> None:
         case_ids=set(args.case_id) or None,
     )
     print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+
+    if args.bless_fingerprint:
+        from eval.scorer_fingerprint import bless_fingerprint
+
+        details = result.details
+        if args.case_id or args.allow_rule_fallback:
+            raise SystemExit("refusing to bless: fingerprint may only be blessed on a full-gold, LLM-only run")
+        bless_fingerprint(
+            compute_scorer_config_fingerprint(),
+            baseline_summary={
+                "score_band_pass": result.value,
+                "mean_band_distance": details.get("mean_band_distance"),
+                "gold_size": result.gold_size,
+                "run_primary_basis": details.get("primary_basis"),
+            },
+        )
+        print("Blessed current scorer config as the frozen-baseline fingerprint.")
 
 
 if __name__ == "__main__":

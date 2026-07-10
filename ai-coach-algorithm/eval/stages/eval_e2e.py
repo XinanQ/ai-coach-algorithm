@@ -163,6 +163,21 @@ def evaluate(
                     for reply in r.get("reply_results", [])
                     if reply.get("ai_customer_message")
                 ],
+                # Per-turn follow-up verdicts — the raw material for the
+                # follow-up checker credibility audit
+                # (scripts/build_followup_audit.py).
+                "turns": [
+                    {
+                        "round": reply.get("round"),
+                        "ai_customer_message": reply.get("ai_customer_message"),
+                        "followup_pass": reply.get("followup_pass"),
+                        "followup_method": reply.get("followup_method"),
+                        "followup_reason": reply.get("followup_reason"),
+                        "expected_direction": (reply.get("followup_trace") or {}).get("expected_direction"),
+                        "gap_intents": (reply.get("followup_trace") or {}).get("gap_intents"),
+                    }
+                    for reply in r.get("reply_results", [])
+                ],
                 "actual_score": r.get("finish_trace", {}).get("total_score"),
                 "scorer_method": r.get("scorer_method"),
                 "overall_pass": r.get("overall_pass"),
@@ -210,6 +225,62 @@ def save_trace(trace: dict[str, Any], path: Path | None = None) -> None:
     _get_eval_impl()["save_e2e_trace"](trace, path)
 
 
+# Version-controlled fields that are counts/config, not quality metrics —
+# excluded from multi-run aggregation.
+_NON_METRIC_NUMERIC_KEYS = {
+    "evaluation_schema_version", "total_cases", "sample_size",
+    "failure_count", "strict_failure_count",
+}
+
+
+def evaluate_runs(
+    runs: int = 1,
+    **kwargs: Any,
+) -> "StageResult":
+    """Run the dynamic E2E evaluation `runs` times and aggregate.
+
+    The LLM customer is stochastic (temperature 0.7), so a single run of any
+    dynamic metric is a sample, not an estimate. With runs >= 2 the report
+    carries mean/min/max per metric and the primary value becomes the mean.
+    A single run is always stamped `single_run_not_citable=true`.
+    """
+    if runs <= 1:
+        result = evaluate(**kwargs)
+        result.details["runs"] = 1
+        result.details["single_run_not_citable"] = True
+        return result
+
+    results = [evaluate(**kwargs) for _ in range(runs)]
+    last = results[-1]
+
+    metric_keys = [
+        k for k, v in last.details.items()
+        if isinstance(v, (int, float)) and not isinstance(v, bool)
+        and k not in _NON_METRIC_NUMERIC_KEYS
+    ]
+    aggregate: dict[str, Any] = {}
+    for key in metric_keys:
+        values = [r.details.get(key) for r in results]
+        if any(not isinstance(v, (int, float)) or isinstance(v, bool) for v in values):
+            continue
+        aggregate[key] = {
+            "mean": round(sum(values) / len(values), 4),
+            "min": round(min(values), 4),
+            "max": round(max(values), 4),
+            "runs": [round(v, 4) for v in values],
+        }
+        # Surface the mean as the headline number for each metric.
+        last.details[key] = aggregate[key]["mean"]
+
+    last.details["runs"] = runs
+    last.details["single_run_not_citable"] = False
+    last.details["aggregate"] = aggregate
+    primary = last.primary_metric
+    if primary in aggregate:
+        last.value = aggregate[primary]["mean"]
+    return last
+
+
 def main() -> None:
     import argparse
 
@@ -219,9 +290,15 @@ def main() -> None:
     parser.add_argument("--verbose", action="store_true")
     parser.add_argument("--skip-slow", action="store_true", help="Skip LLM-dependent validation")
     parser.add_argument("--save-trace", action="store_true", help="Save full trace to file")
+    parser.add_argument(
+        "--runs", type=int, default=1,
+        help="Repeat the dynamic evaluation N times and report mean/min/max. "
+             "Single runs are stamped single_run_not_citable.",
+    )
     args = parser.parse_args()
 
-    result = evaluate(
+    result = evaluate_runs(
+        runs=args.runs,
         gold_path=args.gold_path,
         sample_size=args.sample_size,
         verbose=args.verbose,

@@ -1,0 +1,11 @@
+{
+  "_comment": "Regression gate floors. Set slightly below frozen baselines so noise doesn't flap the gate but real regressions fail it. Raising a floor is fine; lowering one requires a documented reason.",
+  "gap": {"metric": "value", "min": 0.88},
+  "retrieval": {"metric": "value", "min": 0.78},
+  "must_point": {"metric": "value", "min": 0.80},
+  "scorer": {"metric": "value", "min": 0.90, "_reason": "formal baseline 0.94; observed temp-0 run variance of 1-2 case flips (0.92-0.94), floor set below the variance band so the gate catches real regressions without flapping"},
+  "scorer_details": {
+    "transcript_integrity_pass": {"min": 1.0},
+    "mean_band_distance": {"max": 1.0}
+  }
+}

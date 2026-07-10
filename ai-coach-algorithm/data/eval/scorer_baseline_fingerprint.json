@@ -1,0 +1,30 @@
+{
+  "fingerprint": "e3d922163e8201d19b4d131169a545e7d36771a39a9264508130d9cd44683bad",
+  "blessed_at": "2026-07-10T14:50:50.082552+00:00",
+  "baseline_summary": {
+    "score_band_pass": 0.92,
+    "mean_band_distance": 0.3,
+    "gold_size": 50,
+    "run_primary_basis": "reviewed"
+  },
+  "components": {
+    "model": "deepseek-chat",
+    "temperature": 0.0,
+    "max_tokens": 800,
+    "redline_cross_check": true,
+    "redline_cap": 30,
+    "rendered_prompt_sha": "9e5f9193217624a91f5ae7da975904dae3cc85c76011828736837466ae7d3344",
+    "red_line_terms_sha": "4647732d63c82314ed4452d5216ea4a4b91548242b86e82eef0554434fec7e28",
+    "source_shas": {
+      "app/core/llm_scorer.py": "52ffd04bf75de74bd9e7059b902e030a9cd3a2ea9e96caff55a6bd7a81c0fcfb",
+      "app/core/rule_scorer.py": "2c498056889c8e3e05b6f184214c7eb7d64a4424f471b5e8fb934182e56f36e9",
+      "app/core/dialog_manager.py": "3fee9863833254fe1b137ba212263fb418281a7f162c78df7bb3d51b0f432d4e",
+      "app/core/weakness_taxonomy.py": "4e15a15ddc601542facdaaf74bedcc59a8104fdc8851dc3c9a5520dee64d341d",
+      "app/core/llm/prompts/scorer.py": "0709c6c8d93e939257a6b7ddfd8af1bfe415a499c2246d10d71d5d1f62f2a3c3",
+      "app/core/llm/prompts/boundaries.py": "c6b9f910017eb8c41eb541c70684d176fd8822777f0b76b4f4db2be7e0471226",
+      "app/core/llm/prompts/scene_anchor.py": "026a839a08431757bc56bcb150c3650b46bebc692c91097895234e1a41e3c9e2",
+      "app/core/llm/prompts/formats.py": "0a3ddd709cae3cbc35f6611a19d9abbec209c5d6d2cb264cbdb26f146ac1f18c",
+      "app/core/llm/schemas.py": "aa45c8c688003bd335acd2ab744835f31be8fdcd8634276fa0a75214125cf9c7"
+    }
+  }
+}
