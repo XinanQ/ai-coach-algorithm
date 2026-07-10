@@ -27,6 +27,7 @@ from app.core.practice_catalog import get_practice_task_detail
 from app.core.rule_scorer import detect_compliance_violation, score_employee_answer
 from app.core.scoring_criteria_loader import get_primary_criterion
 from app.core.weakness_profile import build_weakness_profile
+from app.core.weakness_taxonomy import normalize_weakness_tags
 from app.utils.file_loader import now_iso
 
 
@@ -97,9 +98,16 @@ async def _score_finish(
             weakness_prompt=weakness_prompt,
         )
         if llm_result is not None:
+            rule_result = score_employee_answer(
+                answer,
+                reference_items,
+                criterion=criterion,
+                coverage=coverage,
+            )
+            llm_result = _augment_llm_weakness_tags(llm_result, rule_result)
             if _REDLINE_CROSS_CHECK_ENABLED:
-                return _cross_check_red_lines(llm_result, answer, criterion)
-            return llm_result
+                llm_result = _cross_check_red_lines(llm_result, answer, criterion)
+            return _cross_check_coercive_sales(llm_result, answer)
     # Rule scorer is sync (no I/O), call it directly — no need for to_thread
     return score_employee_answer(
         answer, reference_items, criterion=criterion, coverage=coverage
@@ -111,6 +119,79 @@ async def _score_finish(
 # 设 AI_COACH_REDLINE_CROSS_CHECK=0 可整体禁用(用于 A/B 对照)。
 _RED_LINE_COMPLIANCE_CAP = 30
 _REDLINE_CROSS_CHECK_ENABLED = os.getenv("AI_COACH_REDLINE_CROSS_CHECK", "1").lower() not in ("0", "false", "off")
+
+_HIGH_CONFIDENCE_RULE_TAGS = {
+    "合规问题",
+    "不当承诺",
+    "风险揭示不足",
+    "适当性管理不足",
+    "信息过载",
+    "重点不突出",
+    "客户关系不佳",
+    "强推销",
+}
+
+
+def _augment_llm_weakness_tags(
+    score: dict[str, Any],
+    rule_score: dict[str, Any],
+) -> dict[str, Any]:
+    """Merge deterministic high-confidence tags without changing LLM scores."""
+    llm_tags = normalize_weakness_tags(score.get("weakness_tags") or [])
+    guarded_tags = [
+        tag
+        for tag in normalize_weakness_tags(rule_score.get("weakness_tags") or [])
+        if tag in _HIGH_CONFIDENCE_RULE_TAGS
+    ]
+    merged = normalize_weakness_tags([*llm_tags, *guarded_tags])
+    if merged != llm_tags:
+        score["weakness_tags"] = merged
+        score["method"] = f"{score.get('method', '')}+rule_tag_guard"
+    return score
+
+
+def _cross_check_coercive_sales(
+    score: dict[str, Any],
+    answer: str,
+) -> dict[str, Any]:
+    """Cap a narrow, high-risk combination that strips customer autonomy."""
+    value = str(answer or "")
+    overrides_family_decision = any(
+        term in value for term in ("不用和家人商量", "别和家人商量")
+    )
+    forces_immediate_signature = any(
+        term in value for term in ("今天就签", "现在就签", "马上就签")
+    )
+    uses_scarcity_pressure = "名额" in value and any(
+        term in value for term in ("有限", "没有", "就一个")
+    )
+    if not (overrides_family_decision and forces_immediate_signature and uses_scarcity_pressure):
+        return score
+
+    caps = {
+        "compliance": 30,
+        "objection_handling": 10,
+        "logic_structure": 15,
+        "empathy": 10,
+    }
+    dimensions = score.get("dimension_scores") or []
+    for dimension in dimensions:
+        key = str(dimension.get("key") or "")
+        if key in caps:
+            dimension["score"] = min(int(dimension.get("score", 0)), caps[key])
+    total = sum(
+        int(dimension.get("score", 0)) * float(dimension.get("weight", 0))
+        for dimension in dimensions
+    )
+    score["total_score"] = min(25, int(max(0, round(total))))
+    score["weakness_tags"] = normalize_weakness_tags([
+        *(score.get("weakness_tags") or []),
+        "异议处理不当",
+        "客户关系不佳",
+        "强推销",
+    ])
+    score["method"] = f"{score.get('method', '')}+coercive_sales_cap"
+    return score
 
 
 def _cross_check_red_lines(
@@ -143,8 +224,8 @@ def _cross_check_red_lines(
     score["total_score"] = int(max(0, min(100, round(total))))
     merged_risks = list(dict.fromkeys([*(score.get("risk_terms") or []), *risk_hits]))
     score["risk_terms"] = merged_risks
-    if "合规红线" not in (score.get("weakness_tags") or []):
-        score.setdefault("weakness_tags", []).append("合规红线")
+    if "合规问题" not in (score.get("weakness_tags") or []):
+        score.setdefault("weakness_tags", []).append("合规问题")
     score["method"] = f"{score.get('method', '')}+redline_cap"
     return score
 

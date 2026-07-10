@@ -4,6 +4,7 @@ from typing import Any
 
 from app.core.customer_answer_understanding import analyze_customer_answer
 from app.core.text_cleaner import clean_text
+from app.core.weakness_taxonomy import normalize_weakness_tags
 
 
 # Terms that signal good marketing practice (used as a weak fallback signal when
@@ -786,7 +787,7 @@ def score_employee_answer(
             weakness_tags.append("行动引导不足")
 
     # Remove duplicates while preserving order
-    weakness_tags = list(dict.fromkeys(weakness_tags))
+    weakness_tags = normalize_weakness_tags(weakness_tags)
 
     return {
         "total_score": total,

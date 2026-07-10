@@ -237,7 +237,7 @@ must_point coverage 依赖检索锚点和标准话术原文,当员工回答表�
   "matched_terms": [...],                    # 命中的良好话术词
   "risk_terms": ["稳赚"],                    # 命中的合规敏感词
   "missing_points": ["说明分红不确定性"],     # 漏答的标准要点
-  "weakness_tags": ["合规风险", "共情缺失"], # 弱点标签
+  "weakness_tags": ["合规问题", "共情不足"], # 归一后的标准弱点标签
   "suggestion": "...",                       # 自然语言改进建议
   "intent_understanding": {...},             # 意图识别快照
   "method": "llm_scorer_deepseek_finish",    # ← 给 presenter 判 source 用
@@ -257,6 +257,20 @@ must_point coverage 依赖检索锚点和标准话术原文,当员工回答表�
 | 全局合规红线(场景红线之外的兜底) | `rule_scorer.HIGH_RISK_TERMS` |
 | 良好话术词 | `rule_scorer.GOOD_PRACTICE_TERMS` |
 | LLM 评分 prompt 任一层 | `app/core/llm/prompts/scorer.py` |
+| 弱点标签标准词表/alias | `app/core/weakness_taxonomy.py` |
+
+LLM 仍负责总分、维度分和主要弱点判断；finish 阶段会额外运行一次无模型成本的
+规则标签守卫，只补充高置信业务标签，不修改 LLM 分数。发生补全时 `method` 会追加
+`+rule_tag_guard`，便于评估和线上追踪。
+
+守卫白名单通过 50 条人工 gold 按标签 precision 校准，只包含 precision `>=0.80`
+的 8 个标签；低精度的需求确认、行动引导、产品/收益缺失等标签不会由规则补全。
+
+评分器评估除 `tag_pass`（期望标签是否全部覆盖）外，还报告标签 micro precision、
+micro recall、micro F1 和 exact-match；因此规则补全不能通过堆叠无关标签获得虚高结果。
+
+Prompt 调试可重复传入 `--case-id` 只运行指定 case，以控制 LLM 成本；子集报告会标记
+`citable_full_baseline=false`，只有未筛选的 50 条全量结果可以作为正式基线引用。
 | LLM 评分硬约束(L4) | `app/core/llm/prompts/boundaries.py` `ScorerBoundaryLayer` |
 | Pydantic 内部一致性规则 | `app/core/llm/schemas.py` `LLMScoreOutput._internal_consistency` |
 | 重试时给 LLM 的纠错提示 | `llm_scorer._call_with_retry` 第 162-175 行 |
@@ -282,7 +296,7 @@ must_point coverage 依赖检索锚点和标准话术原文,当员工回答表�
 |---|---|---|
 | Rule scorer 抓不到软违规 | 已知 | LLM 评分能抓,优先保 LLM 可用率 |
 | 维度权重经验值,未在数据上校准 | 已知 | 需要 gold 评分集做权重调优 |
-| 无 LLM 评分回归测试集 | 已知 | 攒 30 条 gold 对话,每次 prompt 改完跑 |
+| 固定 transcript 评分基线 | 已建立 | 50 条 reviewed case，正式运行必须 50/50 LLM |
 | LLM 评分分布偏严(尤其 empathy) | 已知 | 调 L3 instruction 的"标准要点 ≥50%"门槛 |
 | 对话过程中无实时分数反馈 | 设计取舍(为省 token 下线了 reply 评分) | 如需恢复:dialog_manager 重新接 `score_with_llm_reply` |
 

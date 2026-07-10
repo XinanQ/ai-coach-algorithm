@@ -8,6 +8,14 @@ from typing import Any
 from eval.metrics import StageResult
 
 
+_COMPONENT_PRODUCT_STAGES = {
+    "llm_intent_detection",
+    "gap_computation",
+    "chunk_retrieval",
+    "must_point_coverage",
+}
+
+
 def _product(values: list[float]) -> float | None:
     if not values:
         return None
@@ -22,7 +30,10 @@ def build_report(results: list[StageResult], run_id: str | None = None) -> dict[
         run_id = f"eval_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
     stages = [r.to_dict() for r in results]
-    component_results = [r for r in results if r.stage != "e2e_dialogue"]
+    # The fixed-transcript scorer is an independent quality baseline, not a
+    # multiplicative E2E component. Keeping it out prevents a scorer-only run
+    # from being mislabeled as an end-to-end estimate.
+    component_results = [r for r in results if r.stage in _COMPONENT_PRODUCT_STAGES]
     component_values = [r.value for r in component_results]
     component_quality_estimate = _product(component_values)
 
@@ -30,9 +41,12 @@ def build_report(results: list[StageResult], run_id: str | None = None) -> dict[
     if e2e_result is not None:
         end_to_end_value = e2e_result.value
         end_to_end_source = "e2e_dialogue"
-    else:
+    elif component_quality_estimate is not None:
         end_to_end_value = component_quality_estimate
         end_to_end_source = "component_product"
+    else:
+        end_to_end_value = None
+        end_to_end_source = "unavailable"
 
     bottleneck_pool = component_results or results
     bottleneck = min(bottleneck_pool, key=lambda r: r.value).stage if bottleneck_pool else "none"

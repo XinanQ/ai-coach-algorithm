@@ -16,6 +16,7 @@ and expected outcomes at each turn.
 from __future__ import annotations
 
 import json
+import os
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -82,7 +83,8 @@ def evaluate(
         skip_slow: Skip LLM-dependent validation steps for faster feedback
 
     Returns:
-        StageResult with e2e_overall_pass as primary metric
+        StageResult with dynamic_dialogue_pass as the primary metric. The
+        legacy-unbound finish score bands remain visible only as diagnostics.
     """
     impl = _get_eval_impl()
     E2EEvaluator = impl["E2EEvaluator"]
@@ -101,10 +103,35 @@ def evaluate(
 
     metrics = compute_e2e_metrics(results)
 
+    total_employee_turns = sum(len(case.get("employee_messages") or []) for case in gold_cases)
+    reviewed_direction_turns = sum(
+        len(case.get("expected_followup_direction") or []) for case in gold_cases
+    )
     details: dict[str, Any] = {
+        "evaluation_schema_version": 2,
+        "metric_contract": "dual_route_evidence_and_canonical_tags_v2",
+        "primary_metric_contract": "dynamic_start_reply_quality",
+        "dynamic_score_band_contract": "legacy_unbound_diagnostic_only",
         "total_cases": len(results),
+        "gold_annotation_coverage": {
+            "total_employee_turns": total_employee_turns,
+            "reviewed_followup_turns": reviewed_direction_turns,
+            "followup_turn_coverage": round(
+                reviewed_direction_turns / total_employee_turns, 4
+            ) if total_employee_turns else 0.0,
+        },
         "sample_size": sample_size,
         "skip_slow": skip_slow,
+        "runtime_config": {
+            "customer_llm_mode": os.getenv("AI_COACH_CUSTOMER_LLM", "llm"),
+            "scorer_mode": os.getenv("AI_COACH_SCORER", "llm"),
+            "embedding_backend": os.getenv("AI_COACH_EMBEDDING_BACKEND", "sentence_transformers"),
+            "embedding_model": os.getenv("AI_COACH_EMBEDDING_MODEL", "BAAI/bge-small-zh-v1.5"),
+            "followup_semantic_threshold": os.getenv(
+                "AI_COACH_E2E_FOLLOWUP_SEMANTIC_THRESHOLD",
+                "backend_default",
+            ),
+        },
         **metrics,
     }
 
@@ -145,8 +172,8 @@ def evaluate(
 
     return _get_eval_impl()["StageResult"](
         stage="e2e_dialogue",
-        primary_metric="e2e_overall_pass",
-        value=round(metrics.get("e2e_overall_pass", 0.0), 4),
+        primary_metric="dynamic_dialogue_pass",
+        value=round(metrics.get("dynamic_dialogue_pass", 0.0), 4),
         gold_size=len(gold_cases),
         details=details,
     )
@@ -160,6 +187,7 @@ def _analyze_failures_by_stage(failures: list[dict[str, Any]]) -> dict[str, int]
         "intent_pass": 0,
         "gap_pass": 0,
         "retrieval_hit": 0,
+        "tutor_retrieval_hit": 0,
         "followup_pass": 0,
         "finish_score_pass": 0,
         "strict_score_pass": 0,

@@ -40,12 +40,12 @@ TUTOR_RERANK_WEIGHTS = {
 
 # Customer route rerank weights - more emphasis on semantic/intent
 CUSTOMER_RERANK_WEIGHTS = {
-    "semantic_score": 0.45,
+    "semantic_score": 0.40,
     "lexical_similarity": 0.15,
     "scene_boost": 0.15,
     "type_boost": 0.05,
-    "intent_boost": 0.10,         # Customer-specific: intent matching
-    "rank_decay": 0.10,
+    "intent_boost": 0.18,         # Customer-specific: intent matching
+    "rank_decay": 0.07,
 }
 
 
@@ -396,6 +396,7 @@ def _build_context_pack(
     reranked: list[dict[str, Any]],
     target_size: int = 8,
     diversity_lambda: float = 0.7,
+    direct_count: int | None = None,
 ) -> list[dict[str, Any]]:
     """Build a diverse context pack from reranked candidates.
 
@@ -408,6 +409,7 @@ def _build_context_pack(
         reranked: Reranked candidates
         target_size: Desired context pack size
         diversity_lambda: MMR lambda parameter
+        direct_count: Number of highest-relevance items retained before MMR
 
     Returns:
         Context pack of size target_size
@@ -416,7 +418,7 @@ def _build_context_pack(
         return reranked
 
     # Take top items directly (relevance priority)
-    direct_count = max(3, target_size // 2)
+    direct_count = min(target_size, direct_count or max(3, target_size // 2))
     direct_items = reranked[:direct_count]
 
     # Use MMR for remaining slots
@@ -820,7 +822,9 @@ def _intent_match_score(labels: list[str], text: str) -> float:
         label_scores.append(hits / len(keywords))
     if not label_scores:
         return 0.0
-    return round(sum(label_scores) / len(label_scores), 4)
+    # A follow-up only needs one unresolved concern to be strongly grounded.
+    # Averaging several gap labels diluted chunks highly relevant to one gap.
+    return round(max(label_scores), 4)
 
 
 def _retrieve_customer_intent_fusion(
@@ -890,7 +894,12 @@ def _retrieve_customer_intent_fusion(
     # Stage 3: Final selection with context pack diversity
     # For customer route, use diversity selection when final_k > 3
     if final_k > 3:
-        ranked = _build_context_pack(reranked, target_size=final_k, diversity_lambda=0.65)
+        ranked = _build_context_pack(
+            reranked,
+            target_size=final_k,
+            diversity_lambda=0.65,
+            direct_count=min(4, final_k),
+        )
         selection_method = "mmr_context_pack"
     else:
         ranked = sorted(reranked, key=lambda item: item.get("rerank_score", 0), reverse=True)[:final_k]

@@ -15,6 +15,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from app.core.memory_manager import get_memory_manager
+from app.core.weakness_taxonomy import normalize_weakness_tags
 
 
 @dataclass
@@ -135,7 +136,7 @@ def build_weakness_profile(
 
         tags = rec.get("weakness_tags") or []
         if isinstance(tags, list):
-            all_tags.extend(tags)
+            all_tags.extend(normalize_weakness_tags(tags))
 
         score_result = rec.get("score_result") or {}
         for dim_entry in score_result.get("dimension_scores") or []:
@@ -148,7 +149,7 @@ def build_weakness_profile(
     frequent_tags = [tag for tag, count in tag_counter.most_common(5) if count >= 2]
 
     latest = records[-1]
-    recent_tags = latest.get("weakness_tags") or []
+    recent_tags = normalize_weakness_tags(latest.get("weakness_tags") or [])
     recent_score = latest.get("score")
     recent_suggestion = (latest.get("score_result") or {}).get("suggestion", "")
     if not recent_suggestion:

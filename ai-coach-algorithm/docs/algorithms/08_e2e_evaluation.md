@@ -29,6 +29,14 @@
     "追问收益率具体数字和比较",
     "确认办理流程和所需材料"
   ],
+  "expected_customer_evidence": ["追问保本承诺的合规性", "追问收益率具体数字和比较"],
+  "expected_customer_evidence_after_each_turn": [
+    ["保本承诺", "合规边界"],
+    ["收益比较"],
+    ["办理流程", "所需材料"]
+  ],
+  "customer_evidence_status": "derived_v2",
+  "expected_tutor_evidence": ["避免承诺收益", "风险揭示", "合规边界"],
   "expected_must_points": ["避免承诺收益", "风险揭示", "合规边界"],
   "expected_weak_tags": ["合规揭示不足", "风险说明缺失"],
   "expected_score_range": [40, 60],
@@ -45,15 +53,83 @@ E2E 评测分为多个可解释的子指标：
 | `contract_pass` | 接口契约符合性：reply 不返回 liveScore/source | 100% |
 | `intent_pass` | 每轮意图识别合理性 | > 80% |
 | `gap_pass` | 漏答项计算准确性 | > 90% |
-| `retrieval_hit` | RAG 上下文包含关键知识（必须命中 expected_must_points 或相关关键词） | > 70% |
+| `customer_retrieval_hit` | reply 的客户侧 RAG 命中客户顾虑/追问素材 | > 90% |
+| `tutor_retrieval_hit` | finish 的导师侧 RAG 命中 must points/评分依据 | > 95% |
 | `followup_pass` | AI 客户追问方向符合预期（必须匹配 gap intent 或 expected_followup_direction） | > 75% |
+| `dynamic_dialogue_pass` | start/reply 动态链路通过，不受 finish 分数带宽与弱点标签影响 | > 80% |
 | `finish_score_pass` | 最终分数落在合理区间（校准后：合规红线 0-40，好回答 80-95） | > 80% |
 | `strict_score_pass` | 最终分数落在更窄业务区间，只有配置 `strict_score_range` 的 case 会比标准口径更严格 | > 80% |
 | `weak_tag_pass` | 弱点标签命中相关性（expected_weak_tags 非空时必须检测到标签） | > 70% |
-| `e2e_overall_pass` | 综合通过（所有子指标通过） | 目标 > 60% |
+| `e2e_overall_pass` | 动态 transcript 与 `legacy_unbound` 分数带宽的混合诊断值 | 诊断项 |
 | `strict_e2e_overall_pass` | 严格综合通过，防止 gold 区间过宽导致指标虚高 | 目标 > 60% |
 
-### 当前基线（2026-07-06）
+### 当前三个口径（2026-07-10）
+
+| 口径 | 当前值 | 用途 |
+|---|---:|---|
+| rule E2E 回归 | 0.80 | 确定性守护链路，不代表生产 LLM 质量 |
+| 动态 E2E 生产混合口径 | 0.36 | 动态客户 + 检索 + 旧 score band 的组合压力指标 |
+| scorer_transcript | 0.94 | 50 条人工审定固定 transcript；平均带宽偏差 0.10，50/50 LLM |
+
+上述 `0.80` 与 `0.36` 是 v1 历史基线，不能和采用双路检索证据、语义追问
+校验及标准标签词表的 v2 指标直接做升降对比。v2 报告会写入
+`evaluation_schema_version=2`、`metric_contract` 和 `runtime_config`；其中
+`dynamic_dialogue_pass` 是 v2 的主指标，专门衡量动态 start/reply。`e2e_overall_pass`
+继续展示包含导师检索、最终评分和弱点标签的混合结果，但动态客户问题每次变化，旧分数
+带宽没有绑定当前 transcript，因此该值仅供定位压力，不可引用为系统端到端正确率。
+
+客户侧检索按 `expected_customer_evidence_after_each_turn[turn_idx]` 逐轮验收，不能用
+整场对话任意一个未来方向替当前轮次通过。旧数据仍兼容 `expected_customer_evidence`，
+但新增或人工校准 case 应优先填写逐轮字段。`derived_v2` 表示业务锚点由已审定的
+follow-up direction 确定性生成；人工确认后可改为 `reviewed`，迁移脚本不会覆盖。
+“客户可能同意/决定”等纯行为结果不伪造 RAG 证据要求。
+报告中的 `gold_annotation_coverage.followup_turn_coverage` 会显示已审定追问方向覆盖了
+多少员工轮次；逐轮字段存在但某轮未标注时，该轮不继承整场旧字段，也不计为检索失败。
+
+客户侧 rerank 对多个 gap intent 取“最强匹配”而不是平均匹配，避免一个 chunk 对某项
+顾虑高度相关却被其他未命中意图稀释。final-5 context pack 固定保留前 4 个相关结果，
+剩余 1 个位置再做多样性选择；该调整不增加候选数、LLM token 或额外模型调用。
+
+`scorer_transcript` 的人工带宽只对其完整 `dialog_pairs` 生效。每条 reviewed case
+都必须保存 `transcript_hash`；修改客户问题或员工回答后，旧带宽自动失效。不能仅按
+case id 把固定 transcript 带宽覆盖到每次都会重新生成客户追问的动态 E2E。
+
+正式 scorer 基线默认要求全部 case 使用 `llm_scorer_*`。出现任何 rule fallback
+会直接失败；只有诊断时才能显式传 `--allow-rule-fallback`。
+
+### v2 离线诊断基线（2026-07-10）
+
+以下结果使用 `AI_COACH_CUSTOMER_LLM=template`、`AI_COACH_SCORER=rule` 和
+`sentence_transformers`，用于确定性诊断，不是生产 LLM 指标，也不会覆盖正式 report：
+
+| 指标 | 数值 |
+|---|---:|
+| `dynamic_dialogue_pass` | 0.62 |
+| `e2e_overall_pass` | 0.46 |
+| `customer_retrieval_hit` | 0.80 |
+| `tutor_retrieval_hit` | 0.98 |
+| `followup_pass` | 0.72 |
+| `finish_score_pass` | 0.86 |
+| `weak_tag_pass` | 0.94 |
+| follow-up gold 轮次覆盖率 | 0.7872（74/94） |
+
+独立 retrieval 回归为 `final_context_recall@8=0.8059`，其中 tutor 为 `0.9135`、
+customer 为 `0.7204`，`context_hit@8=1.0`。客户 E2E 剩余失败的分层诊断显示：
+候选召回缺失 4 轮、rerank top-5 丢失 7 轮、context-pack 丢失 1 轮，因此本轮只调整
+客户 rerank 信号，不增加候选池、final context 或 LLM 调用成本。
+
+Docker 启动后，正式验证必须分别运行：
+
+```powershell
+docker compose exec ai-coach-api python -m pytest tests/test_eval_quality_guards.py -q
+docker compose exec ai-coach-api python -m eval.stages.eval_scorer --verbose
+docker compose exec ai-coach-api python -m eval.stages.eval_e2e
+```
+
+第二条若任何 case 发生 rule fallback 会返回非零退出码；只有 50/50 都是
+`llm_scorer_*` 才能引用为正式 scorer 基线。
+
+### 历史基线（2026-07-06）
 
 当前 E2E 基线通过 `python -m eval.stages.eval_e2e` 生成，E2E 阶段结果如下：
 
@@ -98,8 +174,8 @@ E2E evaluator 使用每次运行独立的临时 JSON memory，避免读写 `mock
 #### retrieval_hit 收紧规则
 - **旧规则**：只要返回 items 就算通过
 - **新规则**：
-  - 如果 `expected_must_points` 非空，必须命中至少一个关键词
-  - 提取 `expected_must_points` 中的中文关键词（2+ 字符）
+  - reply 使用 `expected_customer_evidence` 检查 customer route
+  - finish 使用 `expected_tutor_evidence` 检查 tutor route
   - 检查 top-5 检索结果的 content/title 是否包含关键词
   - 如果 `expected_must_points` 非空但无任何命中 → FAIL
 
@@ -115,7 +191,8 @@ E2E evaluator 使用每次运行独立的临时 JSON memory，避免读写 `mock
 - **旧规则**：未检测到标签也算通过
 - **新规则**：
   - 如果 `expected_weak_tags` 非空，必须检测到至少一个相关标签
-  - 支持 2-4 字符子串匹配
+  - 评分输出与评估共用 `weakness_taxonomy` 标准词表和显式 alias
+  - 不再允许无关标签仅凭两个汉字重叠通过
   - 如果 `expected_weak_tags` 非空但 `weak_tags` 为空 → FAIL
 
 #### finish_score_pass 校准

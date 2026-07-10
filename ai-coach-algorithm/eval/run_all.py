@@ -15,8 +15,9 @@ from eval.metrics import StageResult
 from eval.report import build_report, format_ascii_table, save_report
 
 DEFAULT_STAGES = ["llm_intent", "gap", "retrieval", "must_point", "e2e"]
-# "scorer" (fixed-transcript scorer quality) is opt-in until its gold bands
-# are human-reviewed: python -m eval.run_all --stages scorer
+# "scorer" is opt-in because it is a paid, LLM-only fixed-transcript quality
+# gate. Its reviewed bands are transcript-hash bound and any rule fallback
+# fails the formal run: python -m eval.run_all --stages scorer
 AVAILABLE_STAGES = ["intent", "llm_intent", "gap", "retrieval", "must_point", "e2e", "scorer"]
 
 
@@ -98,7 +99,9 @@ def run(stages: list[str], verbose: bool = False) -> list[StageResult]:
         except FileNotFoundError as e:
             print(f"  {stage}: SKIPPED — {e}")
         except Exception as e:
-            print(f"  {stage}: ERROR — {e}")
+            print(f"  {stage}: ERROR - {e}")
+            if stage == "scorer":
+                raise
     return results
 
 

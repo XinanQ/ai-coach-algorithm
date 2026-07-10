@@ -7,6 +7,8 @@ from __future__ import annotations
 
 import asyncio
 import json
+import math
+import os
 import tempfile
 import uuid
 from datetime import datetime
@@ -20,6 +22,8 @@ from app.core.dialog_manager import (
 )
 from app.core.marketing_rag import retrieve_marketing_knowledge
 from app.core.intent_labels import INTENT_LABELS
+from app.core.text_cleaner import clean_text
+from app.core.weakness_taxonomy import weakness_tag_matches
 from eval.metrics import StageResult
 
 
@@ -63,6 +67,8 @@ class E2EEvaluator:
         self.verbose = verbose
         self.session_id: str | None = None
         self.run_id = f"e2e_{uuid.uuid4().hex[:8]}"
+        self._semantic_adapter: Any = None
+        self._semantic_adapter_initialized = False
         self._tempdir = tempfile.TemporaryDirectory(prefix=f"ai_coach_{self.run_id}_")
         self._install_isolated_memory()
 
@@ -116,6 +122,7 @@ class E2EEvaluator:
         result["intent_pass"] = all(r.get("intent_pass", True) for r in reply_results)
         result["gap_pass"] = all(r.get("gap_pass", True) for r in reply_results)
         result["retrieval_hit"] = all(r.get("retrieval_hit", True) for r in reply_results)
+        result["customer_retrieval_hit"] = result["retrieval_hit"]
         result["followup_pass"] = all(r.get("followup_pass", True) for r in reply_results)
 
         # Stage 3: Contract compliance (no liveScore/source in reply)
@@ -127,16 +134,30 @@ class E2EEvaluator:
         result["finish_score_pass"] = finish_result.get("score_pass", True)
         result["strict_score_pass"] = finish_result.get("strict_score_pass", result["finish_score_pass"])
         result["weak_tag_pass"] = finish_result.get("weak_tag_pass", True)
+        result["tutor_retrieval_hit"] = finish_result.get("tutor_retrieval_hit", True)
         result["scorer_method"] = finish_result.get("scorer_method", "unknown")
         result["finish_trace"] = finish_result.get("trace", {})
 
-        # Overall pass: all stages must pass
+        # Dynamic dialogue quality deliberately excludes finish-time scoring.
+        # It measures the stochastic start/reply path without letting an old
+        # score band hide whether the customer simulation itself is healthy.
+        result["dynamic_dialogue_pass"] = (
+            result["start_pass"]
+            and result["contract_pass"]
+            and result["intent_pass"]
+            and result["gap_pass"]
+            and result["customer_retrieval_hit"]
+            and result["followup_pass"]
+        )
+
+        # Production mixed pass: all online stages must pass.
         result["overall_pass"] = (
             result["start_pass"]
             and result["contract_pass"]
             and result["intent_pass"]
             and result["gap_pass"]
             and result["retrieval_hit"]
+            and result["tutor_retrieval_hit"]
             and result["followup_pass"]
             and result["finish_score_pass"]
             and result["weak_tag_pass"]
@@ -147,6 +168,7 @@ class E2EEvaluator:
             and result["intent_pass"]
             and result["gap_pass"]
             and result["retrieval_hit"]
+            and result["tutor_retrieval_hit"]
             and result["followup_pass"]
             and result["strict_score_pass"]
             and result["weak_tag_pass"]
@@ -217,9 +239,10 @@ class E2EEvaluator:
             is_finished = reply_result.get("finished", False)
             retrieval_result = {"pass": True, "method": "skipped", "reason": "dialogue_finished", "trace": {}}
             if not is_finished:
+                expected_customer_evidence = self._customer_evidence_for_turn(case, turn_idx)
                 retrieval_result = self._validate_retrieval(
                     reply_result.get("retrieval", {}),
-                    case.get("expected_must_points", []),
+                    expected_customer_evidence,
                 )
 
             # Follow-up validation (skip if finished)
@@ -241,12 +264,16 @@ class E2EEvaluator:
                 "retrieval_method": retrieval_result.get("method"),
                 "retrieval_reason": retrieval_result.get("reason"),
                 "retrieval_trace": retrieval_result.get("trace", {}),
+                "retrieval_runtime_trace": reply_result.get("retrieval", {}).get("retrieval_trace", {}),
+                "expected_retrieval_evidence": expected_customer_evidence if not is_finished else [],
                 "followup_pass": followup_result["pass"],
                 "followup_method": followup_result.get("method"),
                 "followup_reason": followup_result.get("reason"),
                 "followup_trace": followup_result.get("trace", {}),
                 "round": reply_result.get("round"),
                 "finished": is_finished,
+                "intent_gap": reply_result.get("intent_gap", []),
+                "covered_intents": reply_result.get("covered_intents", []),
                 "ai_customer_message": reply_result.get("ai_customer_message", ""),
                 "retrieval_items": reply_result.get("retrieval", {}).get("items", []),
             }
@@ -269,6 +296,35 @@ class E2EEvaluator:
                 "finished": False,
                 "error": str(e),
             }
+
+    @staticmethod
+    def _customer_evidence_for_turn(case: dict[str, Any], turn_idx: int) -> list[str]:
+        """Return customer-route evidence expected for exactly one reply turn."""
+        if "expected_customer_evidence_after_each_turn" in case:
+            per_turn = case.get("expected_customer_evidence_after_each_turn") or []
+            if turn_idx >= len(per_turn):
+                return []
+            value = per_turn[turn_idx]
+            if isinstance(value, str):
+                return [value] if value else []
+            if isinstance(value, list):
+                return [str(item) for item in value if item]
+            return []
+
+        legacy = case.get("expected_customer_evidence") or []
+        employee_messages = case.get("employee_messages") or []
+        if (
+            isinstance(legacy, list)
+            and len(legacy) == len(employee_messages)
+            and all(isinstance(item, str) for item in legacy)
+            and turn_idx < len(legacy)
+        ):
+            return [legacy[turn_idx]] if legacy[turn_idx] else []
+
+        directions = case.get("expected_followup_direction") or []
+        if turn_idx < len(directions):
+            return [directions[turn_idx]] if directions[turn_idx] else []
+        return [str(item) for item in legacy if item] if isinstance(legacy, list) else []
 
     def _evaluate_finish(self, case: dict[str, Any]) -> dict[str, Any]:
         """Evaluate dialogue finish."""
@@ -294,12 +350,19 @@ class E2EEvaluator:
                 weak_tags,
                 case.get("expected_weak_tags", []),
             )
+            tutor_retrieval_result = self._validate_retrieval(
+                finish_result.get("retrieval", {}),
+                case.get("expected_tutor_evidence")
+                or case.get("expected_must_points", []),
+            )
 
             return {
                 "pass": True,
                 "score_pass": score_pass,
                 "strict_score_pass": strict_score_pass,
                 "weak_tag_pass": weak_tag_result["pass"],
+                "tutor_retrieval_hit": tutor_retrieval_result["pass"],
+                "tutor_retrieval_reason": tutor_retrieval_result.get("reason"),
                 "weak_tag_method": weak_tag_result.get("method"),
                 "weak_tag_reason": weak_tag_result.get("reason"),
                 "scorer_method": score_result.get("method", "unknown"),
@@ -311,6 +374,8 @@ class E2EEvaluator:
                     "strict_expected_range": strict_range,
                     "calibration_reason": case.get("calibration_reason"),
                     "weak_tag_trace": weak_tag_result.get("trace", {}),
+                    "tutor_retrieval_reason": tutor_retrieval_result.get("reason"),
+                    "tutor_retrieval_trace": tutor_retrieval_result.get("trace", {}),
                 },
             }
 
@@ -320,6 +385,7 @@ class E2EEvaluator:
                 "score_pass": False,
                 "strict_score_pass": False,
                 "weak_tag_pass": False,
+                "tutor_retrieval_hit": False,
                 "weak_tag_method": "error",
                 "weak_tag_reason": str(e)[:100],
                 "error": str(e),
@@ -457,7 +523,7 @@ class E2EEvaluator:
     def _validate_retrieval(
         self,
         retrieval: dict[str, Any],
-        expected_must_points: list[str],
+        expected_evidence: list[str],
     ) -> dict[str, Any]:
         """Validate RAG retrieval quality with stricter requirements.
 
@@ -486,10 +552,10 @@ class E2EEvaluator:
             result["reason"] = "no_items_returned"
             return result
 
-        if not expected_must_points:
-            # If no must_points expected, any retrieval is acceptable
+        if not expected_evidence:
+            # The case does not declare route-specific evidence requirements.
             result["pass"] = True
-            result["reason"] = "no_expected_must_points"
+            result["reason"] = "no_expected_evidence"
             return result
 
         # Synonym mapping for common business terms. Core terms are strong
@@ -508,6 +574,10 @@ class E2EEvaluator:
             "引导": ["引导", "建议", "指导", "方案", "邀约"],
             "异议": ["异议", "拒绝", "犹豫", "顾虑", "担心", "担忧", "商量", "解决方案", "方案", "灵活"],
             "产品": ["产品", "保障", "功能", "条款", "介绍"],
+            "适当性": ["适当性", "风险测评", "风险等级", "风险偏好", "承受能力", "匹配"],
+            "合同": ["合同", "条款", "说明书", "约定", "责任"],
+            "保障": ["保障", "保障责任", "责任", "条款", "保险责任"],
+            "清晰说明": ["通俗", "清晰", "重点", "简明", "解释"],
         }
         generic_terms = {
             "客户", "您", "可能", "说明", "介绍", "解释", "告知", "确认",
@@ -517,7 +587,7 @@ class E2EEvaluator:
         # Expand keywords with synonyms.
         core_keywords = set()
         expanded_keywords = set()
-        for point in expected_must_points:
+        for point in expected_evidence:
             if point:
                 expanded_keywords.add(point)
                 # Extract 2-4 char chunks
@@ -560,8 +630,8 @@ class E2EEvaluator:
                 result["trace"]["all_extracted_keywords"] = list(expanded_keywords)[:10]
                 return result
 
-        # If expected_must_points is non-empty but no matches found, FAIL
-        result["reason"] = f"expected_must_points_not_found: {list(expanded_keywords)[:5]}"
+        # Expected evidence exists but no meaningful match was found.
+        result["reason"] = f"expected_evidence_not_found: {list(expanded_keywords)[:5]}"
         result["trace"]["missing_core_keywords"] = list(core_keywords)[:10]
         result["trace"]["all_extracted_keywords"] = list(expanded_keywords)[:10]
         return result
@@ -627,14 +697,27 @@ class E2EEvaluator:
         # If no gap, check against expected directions
         if expected_directions and turn_idx < len(expected_directions):
             expected = expected_directions[turn_idx].lower()
-            # Extract keywords from expected direction (Chinese)
-            expected_keywords = [w for w in expected if len(w) >= 2]
+            expected_keywords = self._direction_keywords(expected)
             matched = [kw for kw in expected_keywords if kw in followup_lower]
             if matched:
                 result["pass"] = True
                 result["reason"] = "matched_expected_direction"
                 result["trace"]["matched_keywords"] = matched
                 return result
+
+            semantic_score, semantic_backend = self._semantic_similarity(expected, followup_message)
+            semantic_threshold = self._semantic_threshold(semantic_backend)
+            result["trace"]["semantic_similarity"] = round(semantic_score, 4)
+            result["trace"]["semantic_backend"] = semantic_backend
+            result["trace"]["semantic_threshold"] = semantic_threshold
+            if semantic_score >= semantic_threshold:
+                result["pass"] = True
+                result["method"] = "semantic_direction_match"
+                result["reason"] = "matched_expected_direction_semantically"
+                return result
+
+            result["reason"] = "expected_direction_not_matched"
+            return result
 
         # If neither gap nor expected direction, check for any meaningful content
         # But still need some relevance keywords
@@ -651,6 +734,58 @@ class E2EEvaluator:
 
         result["reason"] = "no_relevance_match"
         return result
+
+    @staticmethod
+    def _direction_keywords(expected: str) -> list[str]:
+        generic = {"客户", "可能", "追问", "确认", "询问", "继续", "具体", "是否"}
+        domain_terms = {
+            "收益", "利率", "分红", "回报", "比较", "风险", "本金", "安全",
+            "亏损", "退保", "赎回", "流动性", "费用", "缴费", "合同", "承诺",
+            "办理", "流程", "材料", "适当性", "测评", "家人", "考虑", "邀约",
+            "时间", "网点", "产品", "保障",
+        }
+        cleaned = clean_text(expected)
+        return sorted(term for term in domain_terms if term in cleaned and term not in generic)
+
+    def _semantic_similarity(self, expected: str, actual: str) -> tuple[float, str]:
+        try:
+            if not self._semantic_adapter_initialized:
+                from app.core.embedding_adapter import get_embedding_adapter
+                from app.core.chroma_vector_store import load_vector_manifest
+
+                manifest = load_vector_manifest()
+                adapter_info = manifest.get("embedding_adapter") or {}
+                self._semantic_adapter = get_embedding_adapter(
+                    backend=adapter_info.get("active_backend") or manifest.get("embedding_backend"),
+                    model_name=adapter_info.get("active_model") or manifest.get("embedding_model"),
+                    dimensions=manifest.get("dimensions"),
+                    allow_fallback=True,
+                )
+                self._semantic_adapter_initialized = True
+            adapter = self._semantic_adapter
+            if adapter is None:
+                return 0.0, "unavailable"
+            expected_value = clean_text(expected)
+            for prefix in ("客户可能", "客户", "可能", "追问", "确认", "询问"):
+                expected_value = expected_value.replace(prefix, "")
+            left, right = adapter.embed_texts([expected_value, clean_text(actual)])
+            denom = math.sqrt(sum(x * x for x in left)) * math.sqrt(sum(x * x for x in right))
+            score = sum(x * y for x, y in zip(left, right)) / denom if denom else 0.0
+            return max(-1.0, min(1.0, float(score))), str(adapter.info.active_backend)
+        except Exception:
+            self._semantic_adapter_initialized = True
+            self._semantic_adapter = None
+            return 0.0, "unavailable"
+
+    @staticmethod
+    def _semantic_threshold(backend: str) -> float:
+        env_value = os.getenv("AI_COACH_E2E_FOLLOWUP_SEMANTIC_THRESHOLD")
+        if env_value:
+            try:
+                return max(0.0, min(1.0, float(env_value)))
+            except ValueError:
+                pass
+        return 0.30 if backend == "local_hash" else 0.58
 
     def _validate_weak_tags(
         self,
@@ -687,38 +822,21 @@ class E2EEvaluator:
             result["reason"] = "expected_weak_tags_but_none_detected"
             return result
 
-        # Convert to lowercase for case-insensitive matching
-        weak_lower = [tag.lower() for tag in weak_tags]
-        expected_lower = [tag.lower() for tag in expected_weak_tags]
-
-        # Check for exact match
-        exact_matches = set(weak_lower) & set(expected_lower)
-        if exact_matches:
+        matched = {
+            expected: [detected for detected in weak_tags if weakness_tag_matches(expected, detected)]
+            for expected in expected_weak_tags
+        }
+        missing = [expected for expected, hits in matched.items() if not hits]
+        if not missing:
             result["pass"] = True
-            result["reason"] = "exact_match"
-            result["trace"]["exact_matches"] = list(exact_matches)
+            result["method"] = "canonical_taxonomy"
+            result["reason"] = "all_expected_tags_matched"
+            result["trace"]["canonical_matches"] = matched
             return result
-
-        # Check for substring/keyword matches
-        # Extract key terms (2-4 chars) from each expected tag
-        matched_substrings = []
-        for expected_tag in expected_lower:
-            for weak_tag in weak_lower:
-                # Check if weak_tag contains key characters from expected_tag
-                for i in range(len(expected_tag) - 1):
-                    for seq_len in [2, 3, 4]:
-                        if i + seq_len <= len(expected_tag):
-                            seq = expected_tag[i:i + seq_len]
-                            if seq in weak_tag:
-                                matched_substrings.append(seq)
-                                # Found at least one match
-                                result["pass"] = True
-                                result["reason"] = "substring_match"
-                                result["trace"]["matched_substrings"] = matched_substrings
-                                return result
 
         # Expected weak tags but no meaningful match
         result["reason"] = "expected_weak_tags_no_match_found"
+        result["trace"]["missing_expected_tags"] = missing
         return result
 
     def _build_dialogue_trace(
@@ -760,7 +878,8 @@ class E2EEvaluator:
             ("contract_pass", "Contract Compliance"),
             ("intent_pass", "Intent Detection"),
             ("gap_pass", "Gap Computation"),
-            ("retrieval_hit", "Retrieval Quality"),
+            ("retrieval_hit", "Customer Retrieval Quality"),
+            ("tutor_retrieval_hit", "Tutor Retrieval Quality"),
             ("followup_pass", "Follow-up Direction"),
             ("finish_score_pass", "Finish Score"),
             ("strict_score_pass", "Strict Finish Score"),
@@ -805,13 +924,22 @@ class E2EEvaluator:
                         "reason": reply.get("retrieval_reason", ""),
                         "method": reply.get("retrieval_method", ""),
                         "trace": reply.get("retrieval_trace", {}),
-                        "expected_must_points": case.get("expected_must_points", []),
+                        "runtime_trace": reply.get("retrieval_runtime_trace", {}),
+                        "intent_gap": reply.get("intent_gap", []),
+                        "expected_customer_evidence": reply.get("expected_retrieval_evidence", []),
                         "retrieval_items_count": len(reply.get("retrieval_items", [])),
                         "retrieval_top_titles": [
                             item.get("metadata", {}).get("title", "")[:50]
                             for item in reply.get("retrieval_items", [])[:3]
                         ],
                     }
+
+        elif stage_key == "tutor_retrieval_hit":
+            details = {
+                "reason": result.get("finish_trace", {}).get("tutor_retrieval_reason"),
+                "expected_tutor_evidence": case.get("expected_tutor_evidence", []),
+                "trace": result.get("finish_trace", {}).get("tutor_retrieval_trace", {}),
+            }
 
         elif stage_key == "followup_pass":
             # Show followup failures
@@ -877,12 +1005,15 @@ def compute_e2e_metrics(results: list[dict[str, Any]]) -> dict[str, Any]:
     if not results:
         return {
             "scorer_method_distribution": {},
+            "dynamic_dialogue_pass": 0.0,
             "e2e_overall_pass": 0.0,
             "start_pass": 0.0,
             "contract_pass": 0.0,
             "intent_pass": 0.0,
             "gap_pass": 0.0,
             "retrieval_hit": 0.0,
+            "customer_retrieval_hit": 0.0,
+            "tutor_retrieval_hit": 0.0,
             "followup_pass": 0.0,
             "finish_score_pass": 0.0,
             "strict_score_pass": 0.0,
@@ -906,12 +1037,15 @@ def compute_e2e_metrics(results: list[dict[str, Any]]) -> dict[str, Any]:
 
     return {
         "scorer_method_distribution": scorer_methods,
+        "dynamic_dialogue_pass": round(pass_rate("dynamic_dialogue_pass"), 4),
         "e2e_overall_pass": round(pass_rate("overall_pass"), 4),
         "start_pass": round(pass_rate("start_pass"), 4),
         "contract_pass": round(pass_rate("contract_pass"), 4),
         "intent_pass": round(pass_rate("intent_pass"), 4),
         "gap_pass": round(pass_rate("gap_pass"), 4),
         "retrieval_hit": round(pass_rate("retrieval_hit"), 4),
+        "customer_retrieval_hit": round(pass_rate("customer_retrieval_hit"), 4),
+        "tutor_retrieval_hit": round(pass_rate("tutor_retrieval_hit"), 4),
         "followup_pass": round(pass_rate("followup_pass"), 4),
         "finish_score_pass": round(pass_rate("finish_score_pass"), 4),
         "strict_score_pass": round(pass_rate("strict_score_pass"), 4),

@@ -1,68 +1,63 @@
 {
-  "run_id": "eval_20260710_010829",
-  "timestamp": "2026-07-10T01:08:29.831277",
+  "run_id": "eval_20260710_scorer_final",
+  "timestamp": "2026-07-10T21:55:50.169571+08:00",
   "stages": [
     {
       "stage": "scorer_transcript",
       "primary_metric": "score_band_pass",
-      "value": 0.4,
-      "gold_size": 5,
+      "value": 0.94,
+      "gold_size": 50,
       "details": {
-        "primary_basis": "all_cases_draft",
-        "total_cases": 5,
-        "reviewed_cases": 0,
-        "draft_cases": 5,
-        "band_pass_all": 0.4,
-        "band_pass_reviewed": 0.0,
-        "band_pass_draft": 0.4,
-        "tag_pass": 0.8,
-        "mean_band_distance": 6.6,
+        "primary_basis": "reviewed",
+        "citable_full_baseline": true,
+        "total_gold_cases": 50,
+        "total_cases": 50,
+        "reviewed_cases": 50,
+        "draft_cases": 0,
+        "band_pass_all": 0.94,
+        "band_pass_reviewed": 0.94,
+        "tag_pass": 0.9,
+        "tag_exact_match_pass": 0.0,
+        "tag_micro_precision": 0.226,
+        "tag_micro_recall": 0.8545,
+        "tag_micro_f1": 0.3574,
+        "tag_annotation_contract": "provisional_required_tags_not_exhaustive",
+        "transcript_integrity_pass": 1.0,
+        "mean_band_distance": 0.1,
         "scorer_method_distribution": {
-          "llm_scorer_deepseek_finish": 5
+          "llm_scorer_deepseek_finish": 45,
+          "llm_scorer_deepseek_finish+rule_tag_guard": 4,
+          "llm_scorer_deepseek_finish+coercive_sales_cap": 1
         },
         "failures": [
           {
-            "id": "scorer_e2e_007_comprehensive_answer",
-            "quality": "",
-            "band_status": "draft",
-            "expected_range": [
-              70,
-              82
-            ],
-            "actual_score": 54,
-            "band_distance": 16,
-            "scorer_method": "llm_scorer_deepseek_finish"
+            "id": "scorer_e2e_021_family_decision_respected",
+            "expected_range": [60, 75],
+            "actual_score": 58,
+            "band_distance": 2
           },
           {
-            "id": "scorer_e2e_010_good_need_confirmation",
-            "quality": "",
-            "band_status": "draft",
-            "expected_range": [
-              70,
-              85
-            ],
-            "actual_score": 60,
-            "band_distance": 10,
-            "scorer_method": "llm_scorer_deepseek_finish"
+            "id": "scorer_e2e_037_fee_sensitive_good",
+            "expected_range": [50, 65],
+            "actual_score": 48,
+            "band_distance": 2
           },
           {
-            "id": "scorer_e2e_005_partial_compliance",
-            "quality": "",
-            "band_status": "draft",
-            "expected_range": [
-              30,
-              45
-            ],
-            "actual_score": 52,
-            "band_distance": 7,
-            "scorer_method": "llm_scorer_deepseek_finish"
+            "id": "scorer_e2e_012_phone_invitation_good",
+            "expected_range": [40, 55],
+            "actual_score": 39,
+            "band_distance": 1
           }
+        ],
+        "known_risks": [
+          "Weak-tag gold contains required labels rather than exhaustive labels, so tag precision and exact match are diagnostic only.",
+          "LLM tends to emit generic weakness tags on otherwise good answers; address in a separate tag-quality iteration."
         ]
       }
     }
   ],
-  "end_to_end_estimate": 0.4,
-  "end_to_end_metric_source": "component_product",
-  "component_quality_estimate": 0.4,
+  "end_to_end_estimate": null,
+  "end_to_end_metric_source": "unavailable_scorer_is_independent",
+  "component_quality_estimate": null,
   "bottleneck": "scorer_transcript"
 }

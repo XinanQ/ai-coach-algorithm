@@ -440,15 +440,19 @@ E2E 评测模拟完整的陪练对话流程，验证从 `start_dialogue` → 多
 | `contract_pass` | 接口契约符合性（reply 不返回 liveScore/source） | 100% |
 | `intent_pass` | 意图识别合理性 | > 80% |
 | `gap_pass` | 漏答项计算准确性 | > 90% |
-| `retrieval_hit` | RAG 上下文包含关键知识 | > 70% |
+| `customer_retrieval_hit` | 客户侧 RAG 包含客户顾虑/追问素材 | > 90% |
+| `tutor_retrieval_hit` | 导师侧 RAG 包含 must points/评分依据 | > 95% |
 | `followup_pass` | AI 客户追问方向符合预期 | > 75% |
+| `dynamic_dialogue_pass` | start/reply 动态对话质量，不包含 finish 评分 | > 80% |
 | `finish_score_pass` | 最终分数落在合理区间 | > 80% |
 | `strict_score_pass` | 最终分数落在更窄业务校准区间 | > 80% |
 | `weak_tag_pass` | 弱点标签命中相关性 | > 70% |
-| `e2e_overall_pass` | 综合通过率 | > 60% |
+| `e2e_overall_pass` | 动态 transcript 与旧分数带宽的混合诊断值，不作为主指标 | 诊断项 |
 | `strict_e2e_overall_pass` | 严格综合通过率，用于防止 gold 区间过宽 | > 60% |
 
-当前基线（2026-07-09）：E2E gold 为 50 条，主链路 `e2e_overall_pass=0.92`，`finish_score_pass=0.96`，`weak_tag_pass=1.00`。主报告仍看标准 `e2e_overall_pass`，同时用 `strict_e2e_overall_pass` 观察真实业务校准压力。当前剩余短板主要在 LLM intent 独立评估和少量客户侧 retrieval 命中。
+当前口径（2026-07-10）必须分开引用：历史 rule E2E v1 回归为 `0.80`，用于确定性守护；动态客户 + LLM 评分的生产混合 E2E v1 为 `0.36`，仅保留为组合压力历史值；50 条人工审定固定 transcript 的 `scorer_transcript score_band_pass=0.94`、平均带宽偏差 `0.10`，用于衡量 LLM 评分器本身。v2 的 E2E 主指标改为 `dynamic_dialogue_pass`，只衡量 start/reply 动态链路；旧分数带宽标记为 `legacy_unbound`，其 `e2e_overall_pass` 只作诊断。固定 transcript 带宽通过 SHA-256 `transcript_hash` 绑定完整对话，不能只按 case id 回灌到动态 E2E。
+
+E2E retrieval 已拆成 `customer_retrieval_hit`（reply 客户侧）与 `tutor_retrieval_hit`（finish 导师侧）；weak tag 由生产和 eval 共用标准 taxonomy，不再使用任意 2 字符子串放行。
 
 详细文档：[docs/algorithms/08_e2e_evaluation.md](docs/algorithms/08_e2e_evaluation.md)
 

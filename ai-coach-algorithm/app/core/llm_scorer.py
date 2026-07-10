@@ -28,6 +28,7 @@ from app.core.llm.retry import call_with_retry
 from app.core.llm.schemas import LLMScoreOutput
 from app.core.rule_scorer import DIMENSION_DEFS
 from app.core.scoring_criteria_loader import get_primary_criterion
+from app.core.weakness_taxonomy import normalize_weakness_tags
 
 logger = logging.getLogger(__name__)
 
@@ -295,7 +296,7 @@ def _shape_result(parsed: LLMScoreOutput, answer: str, method: str) -> dict[str,
         "matched_terms": [],
         "risk_terms": parsed.risk_terms,
         "missing_points": parsed.missing_points,
-        "weakness_tags": parsed.weakness_tags,
+        "weakness_tags": normalize_weakness_tags(parsed.weakness_tags),
         "suggestion": parsed.suggestion.strip(),
         "intent_understanding": analyze_customer_answer(answer),
         "method": method,

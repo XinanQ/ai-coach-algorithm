@@ -9,6 +9,7 @@ import json
 from typing import Any
 
 from app.core.llm.prompts.base import PromptLayer
+from app.core.weakness_taxonomy import CANONICAL_WEAKNESS_TAGS
 
 
 _SCORER_SCHEMA = {
@@ -18,7 +19,7 @@ _SCORER_SCHEMA = {
         "logic_structure": "0-100,回答结构是否清晰(共情→解释→引导)",
         "empathy": "0-100,是否先认可顾虑、站在客户角度",
     },
-    "weakness_tags": ["简短弱点标签,例如:合规风险、标准要点覆盖不足"],
+    "weakness_tags": ["从标准弱点标签词表中选择,不要自造近义标签"],
     "missing_points": ["实际仍未覆盖的标准要点文本"],
     "risk_terms": ["命中的合规敏感词或表述"],
     "suggestion": "一句话改进建议,中文,<=80 字",
@@ -32,7 +33,7 @@ _SCORER_GOOD_EXAMPLE = {
         "logic_structure": 72,
         "empathy": 65,
     },
-    "weakness_tags": ["共情挖掘不足", "标准要点覆盖部分"],
+    "weakness_tags": ["共情不足", "标准要点覆盖不足"],
     "missing_points": ["说明现金价值的变化规律", "提示退保前几年损失情况"],
     "risk_terms": [],
     "suggestion": "先认可客户对流动性的担忧,再补充现金价值的具体变化规律,并提示前期退保损失。"
@@ -45,7 +46,7 @@ _SCORER_BAD_EXAMPLE = {
         "logic_structure": 35,
         "empathy": 20,
     },
-    "weakness_tags": ["合规红线", "绝对化承诺", "包装成存款", "未做风险揭示"],
+    "weakness_tags": ["合规问题", "不当承诺", "风险揭示不足"],
     "missing_points": ["分红存在不确定性", "以保险合同为准"],
     "risk_terms": ["稳赚不赔", "跟存款一样", "绝对保证"],
     "suggestion": "删除所有绝对化承诺,严禁将保险类比存款,围绕合同条款和保障责任进行规范说明。"
@@ -65,6 +66,9 @@ class ScorerFormatLayer(PromptLayer):
             "```json\n"
             + json.dumps(_SCORER_SCHEMA, ensure_ascii=False, indent=2)
             + "\n```\n\n"
+            "### weakness_tags 标准词表\n"
+            + " / ".join(CANONICAL_WEAKNESS_TAGS)
+            + "\n只能从该词表选择；语义相同的近义表达必须归一到这里。\n\n"
             "### 良好评分输出示例(中等水平员工回答的合理评分)\n"
             "```json\n"
             + json.dumps(_SCORER_GOOD_EXAMPLE, ensure_ascii=False, indent=2)
