@@ -15,7 +15,9 @@ from eval.metrics import StageResult
 from eval.report import build_report, format_ascii_table, save_report
 
 DEFAULT_STAGES = ["llm_intent", "gap", "retrieval", "must_point", "e2e"]
-AVAILABLE_STAGES = ["intent", "llm_intent", "gap", "retrieval", "must_point", "e2e"]
+# "scorer" (fixed-transcript scorer quality) is opt-in until its gold bands
+# are human-reviewed: python -m eval.run_all --stages scorer
+AVAILABLE_STAGES = ["intent", "llm_intent", "gap", "retrieval", "must_point", "e2e", "scorer"]
 
 
 def _run_intent(verbose: bool = False) -> StageResult:
@@ -66,6 +68,11 @@ def _run_e2e(verbose: bool = False) -> StageResult:
     return evaluate(sample_size=None, verbose=verbose, skip_slow=False)
 
 
+def _run_scorer(verbose: bool = False) -> StageResult:
+    from eval.stages.eval_scorer import evaluate
+    return evaluate(verbose=verbose)
+
+
 RUNNERS = {
     "intent": _run_intent,
     "llm_intent": _run_llm_intent,
@@ -73,6 +80,7 @@ RUNNERS = {
     "retrieval": _run_retrieval,
     "must_point": _run_must_point,
     "e2e": _run_e2e,
+    "scorer": _run_scorer,
 }
 
 

@@ -13,6 +13,9 @@ falls back to the hardcoded CUSTOMER_INTENT_PROBES template.
 from __future__ import annotations
 
 import logging
+import os
+import threading
+import time
 from typing import Any
 
 from app.core.intent_labels import INTENT_LABELS
@@ -24,6 +27,66 @@ from app.core.llm_scorer import _call_llm_text, _call_llm_text_stream
 logger = logging.getLogger(__name__)
 
 VALID_INTENTS = set(INTENT_LABELS)
+
+# ---------------------------------------------------------------------------
+# Prefix-cache warmup
+#
+# The first LLM call for a customer profile pays full-price prefill on its
+# ~2k-token static prefix (persona + boundaries + format + scene anchor).
+# /dialog/start gives us a natural idle window — the user is reading the
+# opening question — so we fire a max_tokens=1 request with the same static
+# prefix in a daemon thread. By the time round 1 arrives, DeepSeek's prefix
+# cache is hot and the reply's TTFT drops accordingly.
+# Disable with AI_COACH_PREFIX_WARMUP=0.
+# ---------------------------------------------------------------------------
+_PREFIX_WARMUP_ENABLED = os.getenv("AI_COACH_PREFIX_WARMUP", "1").lower() not in ("0", "false", "off")
+_WARM_TTL_SECONDS = 600.0
+_warmed_at: dict[str, float] = {}
+
+
+def warm_customer_prefix(profile: dict[str, Any] | None, scene_id: str | None) -> None:
+    """Fire-and-forget prefix-cache warmup for one customer profile.
+
+    Never raises and never blocks the caller; all failures are debug-logged.
+    Deduped per profile within a TTL so repeated /dialog/start calls in the
+    same scene don't spend extra tokens.
+    """
+    if not _PREFIX_WARMUP_ENABLED or not is_llm_available():
+        return
+    key = f"{scene_id or 'default'}::{(profile or {}).get('customer_id') or 'default'}"
+    now = time.time()
+    if now - _warmed_at.get(key, 0.0) < _WARM_TTL_SECONDS:
+        return
+    _warmed_at[key] = now
+
+    def _run() -> None:
+        try:
+            from app.core.llm.client import DEFAULT_MODEL, get_sync_client
+
+            client = get_sync_client()
+            if client is None:
+                return
+            builder = get_customer_builder_for_scene(profile, scene_id)
+            # Empty dynamic context: the rendered static layers (and therefore
+            # the cacheable byte prefix) are identical to real reply calls.
+            messages = builder.to_chat_messages({
+                "messages": [],
+                "employee_message": "",
+                "gap_intents": [],
+                "covered_intents": [],
+                "retrieval_items": [],
+                "weakness_prompt": "",
+            })
+            client.chat.completions.create(
+                model=DEFAULT_MODEL, messages=messages, max_tokens=1, temperature=0.0,
+            )
+            logger.debug("prefix warmup done for %s", key)
+        except Exception:
+            # Warmup is best-effort; a failure only means the first real call
+            # pays the cache miss it would have paid anyway.
+            logger.debug("prefix warmup failed for %s", key, exc_info=True)
+
+    threading.Thread(target=_run, name=f"llm-warmup-{key}", daemon=True).start()
 
 
 def _parse_customer_response(raw: str | None) -> dict[str, Any] | None:

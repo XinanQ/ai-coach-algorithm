@@ -83,11 +83,18 @@ async def call_with_retry(
     *,
     label: str = "llm_call",
     on_retry: Callable[[int, BaseException], None] | None = None,
+    retry_timeouts: bool = True,
 ) -> T:
     """Run an async LLM call with rate-limit-aware retry.
 
     `on_retry(attempt, exc)` is a hook (used by metrics to mark rate_limited=True).
     The wrapped function takes no args — capture state in a closure.
+
+    `retry_timeouts=False` fails fast on APITimeoutError instead of retrying.
+    Use it on user-facing paths that have a cheap fallback (e.g. the customer
+    reply falls back to probe templates): a call that just spent its whole
+    timeout budget will likely time out again, and retrying multiplies the
+    user-visible wait.
     """
     last_exc: BaseException | None = None
     for attempt in range(_MAX_ATTEMPTS):
@@ -95,6 +102,9 @@ async def call_with_retry(
             return await fn()
         except Exception as exc:
             last_exc = exc
+            if not retry_timeouts and type(exc).__name__ == "APITimeoutError":
+                logger.info("%s timed out; failing fast (retry_timeouts=False)", label)
+                raise
             if not _is_retryable(exc):
                 # Non-retryable — fail fast so caller can handle / fall back
                 raise

@@ -15,7 +15,11 @@ from app.core.dialog_round_policy import (
     MIN_DIALOG_ROUNDS,
     build_dialog_round_policy,
 )
-from app.core.llm_customer import generate_customer_question_stream, generate_customer_question_with_llm
+from app.core.llm_customer import (
+    generate_customer_question_stream,
+    generate_customer_question_with_llm,
+    warm_customer_prefix,
+)
 from app.core.llm_scorer import score_with_llm_finish
 from app.core.marketing_rag import retrieve_marketing_knowledge
 from app.core.memory_manager import get_memory_manager
@@ -236,6 +240,9 @@ def start_dialogue(
 
     profile = get_customer_profile(scene_id=scene_id, customer_id=customer_id, difficulty=difficulty)
     effective_scene_id = profile.get("scene_id") or scene_id
+    # 用户读开场白的空窗期预热该画像的 prefix cache,降低首轮 reply 的 TTFT。
+    if _CUSTOMER_LLM_PREFERENCE == "llm":
+        warm_customer_prefix(profile, effective_scene_id)
     expected_intents = profile.get("expected_intents", [])
     round_policy = build_dialog_round_policy(
         direction=(task_detail or {}).get("direction"),

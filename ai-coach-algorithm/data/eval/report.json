@@ -1,32 +1,68 @@
 {
-  "run_id": "eval_20260709_191746",
-  "timestamp": "2026-07-09T19:17:46.216169",
+  "run_id": "eval_20260710_010829",
+  "timestamp": "2026-07-10T01:08:29.831277",
   "stages": [
     {
-      "stage": "e2e_dialogue",
-      "primary_metric": "e2e_overall_pass",
-      "value": 0.26,
-      "gold_size": 50,
+      "stage": "scorer_transcript",
+      "primary_metric": "score_band_pass",
+      "value": 0.4,
+      "gold_size": 5,
       "details": {
-        "total_cases": 50,
-        "sample_size": null,
-        "skip_slow": false,
-        "e2e_overall_pass": 0.26,
-        "start_pass": 1.0,
-        "contract_pass": 1.0,
-        "intent_pass": 1.0,
-        "gap_pass": 1.0,
-        "retrieval_hit": 0.94,
-        "followup_pass": 0.88,
-        "finish_score_pass": 0.36,
-        "strict_score_pass": 0.32,
-        "strict_e2e_overall_pass": 0.22,
-        "weak_tag_pass": 0.96
+        "primary_basis": "all_cases_draft",
+        "total_cases": 5,
+        "reviewed_cases": 0,
+        "draft_cases": 5,
+        "band_pass_all": 0.4,
+        "band_pass_reviewed": 0.0,
+        "band_pass_draft": 0.4,
+        "tag_pass": 0.8,
+        "mean_band_distance": 6.6,
+        "scorer_method_distribution": {
+          "llm_scorer_deepseek_finish": 5
+        },
+        "failures": [
+          {
+            "id": "scorer_e2e_007_comprehensive_answer",
+            "quality": "",
+            "band_status": "draft",
+            "expected_range": [
+              70,
+              82
+            ],
+            "actual_score": 54,
+            "band_distance": 16,
+            "scorer_method": "llm_scorer_deepseek_finish"
+          },
+          {
+            "id": "scorer_e2e_010_good_need_confirmation",
+            "quality": "",
+            "band_status": "draft",
+            "expected_range": [
+              70,
+              85
+            ],
+            "actual_score": 60,
+            "band_distance": 10,
+            "scorer_method": "llm_scorer_deepseek_finish"
+          },
+          {
+            "id": "scorer_e2e_005_partial_compliance",
+            "quality": "",
+            "band_status": "draft",
+            "expected_range": [
+              30,
+              45
+            ],
+            "actual_score": 52,
+            "band_distance": 7,
+            "scorer_method": "llm_scorer_deepseek_finish"
+          }
+        ]
       }
     }
   ],
-  "end_to_end_estimate": 0.26,
-  "end_to_end_metric_source": "e2e_dialogue",
-  "component_quality_estimate": null,
-  "bottleneck": "e2e_dialogue"
+  "end_to_end_estimate": 0.4,
+  "end_to_end_metric_source": "component_product",
+  "component_quality_estimate": 0.4,
+  "bottleneck": "scorer_transcript"
 }

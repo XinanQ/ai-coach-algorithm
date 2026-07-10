@@ -123,6 +123,26 @@ def evaluate(
             for f in failures[:5]
         ]
 
+        # Compact transcript of EVERY case (pass or fail) — the raw material
+        # for building scorer_transcript gold via
+        # scripts/build_scorer_gold_from_e2e_verbose.py.
+        details["case_transcripts"] = [
+            {
+                "case_id": r.get("case_id"),
+                "scene_id": r.get("scene_id"),
+                "opening": r.get("start_trace", {}).get("opening", ""),
+                "customer_messages": [
+                    reply.get("ai_customer_message")
+                    for reply in r.get("reply_results", [])
+                    if reply.get("ai_customer_message")
+                ],
+                "actual_score": r.get("finish_trace", {}).get("total_score"),
+                "scorer_method": r.get("scorer_method"),
+                "overall_pass": r.get("overall_pass"),
+            }
+            for r in results
+        ]
+
     return _get_eval_impl()["StageResult"](
         stage="e2e_dialogue",
         primary_metric="e2e_overall_pass",
@@ -181,7 +201,9 @@ def main() -> None:
     )
     print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
 
-    if args.save_trace and result.details.get("failure_samples"):
+    if args.save_trace and (
+        result.details.get("case_transcripts") or result.details.get("failure_samples")
+    ):
         trace_path = Path(f"data/eval/e2e_verbose_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
         save_trace({"result": result.to_dict()}, trace_path)
         print(f"\nVerbose trace saved to {trace_path}")

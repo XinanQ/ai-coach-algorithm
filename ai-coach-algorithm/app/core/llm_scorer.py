@@ -41,6 +41,11 @@ _DIMENSION_WEIGHTS = {key: weight for key, _, weight in DIMENSION_DEFS}
 _SCORER_TEMPERATURE = float(os.getenv("AI_COACH_SCORER_TEMPERATURE", "0.0"))
 _SCORER_MAX_TOKENS = int(os.getenv("AI_COACH_SCORER_MAX_TOKENS", "800"))
 _CUSTOMER_MAX_TOKENS = int(os.getenv("AI_COACH_CUSTOMER_MAX_TOKENS", "300"))
+# Customer replies are user-facing with a template fallback: give them a
+# tighter per-request timeout than the global client default (finish scoring
+# keeps the 20s default — nobody is staring at a spinner during finish).
+# 0 = use the client default.
+_CUSTOMER_TIMEOUT_SECONDS = float(os.getenv("AI_COACH_CUSTOMER_LLM_TIMEOUT", "10"))
 
 # Builders are now per-scene (cached by scene_id inside the prompt module).
 # Each scene gets its own ScorerSceneAnchorLayer containing the scene rubric
@@ -142,10 +147,14 @@ async def _call_llm_text(
             # capping output shortens the per-turn latency tail. 0 disables.
             if _CUSTOMER_MAX_TOKENS > 0:
                 kwargs["max_tokens"] = _CUSTOMER_MAX_TOKENS
+            if _CUSTOMER_TIMEOUT_SECONDS > 0:
+                kwargs["timeout"] = _CUSTOMER_TIMEOUT_SECONDS
             return await client.chat.completions.create(**kwargs)
 
         try:
-            resp = await call_with_retry(do_call, label=f"llm_text/{method}", on_retry=on_retry)
+            resp = await call_with_retry(
+                do_call, label=f"llm_text/{method}", on_retry=on_retry, retry_timeouts=False
+            )
         except Exception as exc:
             logger.warning("LLM text call failed: %s", exc)
             return None
@@ -193,10 +202,14 @@ async def _call_llm_text_stream(
             }
             if _CUSTOMER_MAX_TOKENS > 0:
                 kwargs["max_tokens"] = _CUSTOMER_MAX_TOKENS
+            if _CUSTOMER_TIMEOUT_SECONDS > 0:
+                kwargs["timeout"] = _CUSTOMER_TIMEOUT_SECONDS
             return await client.chat.completions.create(**kwargs)
 
         try:
-            stream = await call_with_retry(do_call, label=f"llm_text_stream/{method}", on_retry=on_retry)
+            stream = await call_with_retry(
+                do_call, label=f"llm_text_stream/{method}", on_retry=on_retry, retry_timeouts=False
+            )
         except Exception as exc:
             logger.warning("LLM stream call failed: %s", exc)
             return
