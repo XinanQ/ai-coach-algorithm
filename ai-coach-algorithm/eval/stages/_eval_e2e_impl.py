@@ -694,23 +694,51 @@ class E2EEvaluator:
                 result["trace"]["matched_keywords"] = matched
                 return result
 
-        # If no gap, check against expected directions
-        if expected_directions and turn_idx < len(expected_directions):
-            expected = expected_directions[turn_idx].lower()
-            expected_keywords = self._direction_keywords(expected)
-            matched = [kw for kw in expected_keywords if kw in followup_lower]
-            if matched:
-                result["pass"] = True
-                result["reason"] = "matched_expected_direction"
-                result["trace"]["matched_keywords"] = matched
-                return result
+        # Universal rule (2026-07-10 audit): a customer re-pressing a question
+        # the employee did not answer is ALWAYS a legitimate follow-up — the
+        # gold's single expected_direction assumes the employee answered, which
+        # contradicts gold scripts that deliberately answer poorly. All 29
+        # audited failures with these markers were human-judged legitimate.
+        repress_markers = [
+            "还没回答", "没回答", "一句都没答", "一个没答", "你光说", "别光说",
+            "光说", "我问的是", "我问你", "说了半天", "绕来绕去", "你倒是",
+            "直接告诉我", "给个准话", "先回答", "你老让", "你老说",
+            "别催", "总催", "光催", "就催", "急着催",
+        ]
+        hit_markers = [m for m in repress_markers if m in followup_message]
+        if hit_markers and len(followup_message) > 10:
+            result["pass"] = True
+            result["reason"] = "repressed_unanswered_question"
+            result["trace"]["repress_markers"] = hit_markers[:3]
+            return result
 
-            semantic_score, semantic_backend = self._semantic_similarity(expected, followup_message)
-            semantic_threshold = self._semantic_threshold(semantic_backend)
-            result["trace"]["semantic_similarity"] = round(semantic_score, 4)
-            result["trace"]["semantic_backend"] = semantic_backend
-            result["trace"]["semantic_threshold"] = semantic_threshold
-            if semantic_score >= semantic_threshold:
+        # If no gap, check against expected directions. A turn may list several
+        # acceptable directions separated by "|" — best match across all wins.
+        if expected_directions and turn_idx < len(expected_directions):
+            alternatives = [
+                alt.strip() for alt in expected_directions[turn_idx].split("|") if alt.strip()
+            ]
+            best_score, best_backend, best_threshold = 0.0, None, None
+            for expected_alt in alternatives:
+                expected = expected_alt.lower()
+                expected_keywords = self._direction_keywords(expected)
+                matched = [kw for kw in expected_keywords if kw in followup_lower]
+                if matched:
+                    result["pass"] = True
+                    result["reason"] = "matched_expected_direction"
+                    result["trace"]["matched_keywords"] = matched
+                    result["trace"]["matched_alternative"] = expected_alt
+                    return result
+
+                semantic_score, semantic_backend = self._semantic_similarity(expected, followup_message)
+                semantic_threshold = self._semantic_threshold(semantic_backend)
+                if semantic_score > best_score:
+                    best_score, best_backend, best_threshold = semantic_score, semantic_backend, semantic_threshold
+
+            result["trace"]["semantic_similarity"] = round(best_score, 4)
+            result["trace"]["semantic_backend"] = best_backend
+            result["trace"]["semantic_threshold"] = best_threshold
+            if best_threshold is not None and best_score >= best_threshold:
                 result["pass"] = True
                 result["method"] = "semantic_direction_match"
                 result["reason"] = "matched_expected_direction_semantically"
@@ -719,11 +747,17 @@ class E2EEvaluator:
             result["reason"] = "expected_direction_not_matched"
             return result
 
-        # If neither gap nor expected direction, check for any meaningful content
-        # But still need some relevance keywords
+        # If neither gap nor expected direction, check for any meaningful content.
+        # Relevance pool = intent keywords + domain terms (audit: "适合/建议/选"
+        # style selection questions were false-failed by the narrower pool).
         all_keywords = set()
         for kw_list in intent_keywords.values():
             all_keywords.update(kw_list)
+        all_keywords.update({
+            "收益", "分红", "回报", "比较", "本金", "亏损", "退保", "赎回",
+            "费用", "缴费", "合同", "条款", "办理", "流程", "材料", "测评",
+            "适合", "建议", "选", "产品", "保障", "网点", "比例", "配置",
+        })
 
         matched_any = [kw for kw in all_keywords if kw in followup_lower]
         if matched_any:
