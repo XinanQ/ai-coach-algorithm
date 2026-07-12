@@ -1,11 +1,12 @@
 {
   "fingerprint": "e3d922163e8201d19b4d131169a545e7d36771a39a9264508130d9cd44683bad",
-  "blessed_at": "2026-07-10T14:50:50.082552+00:00",
+  "blessed_at": "2026-07-12T07:45:44.521172+00:00",
   "baseline_summary": {
-    "score_band_pass": 0.92,
-    "mean_band_distance": 0.3,
+    "score_band_pass": 0.9,
+    "mean_band_distance": 0.32,
     "gold_size": 50,
-    "run_primary_basis": "reviewed"
+    "run_primary_basis": "reviewed",
+    "score_gold_fingerprint": "b9d925e2731ab3ffcefd46c008803aae6120a440d5667257eb5d33d6f926e245"
   },
   "components": {
     "model": "deepseek-chat",

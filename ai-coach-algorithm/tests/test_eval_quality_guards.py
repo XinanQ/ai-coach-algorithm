@@ -11,6 +11,11 @@ from eval.metrics import StageResult
 from eval.report import build_report
 from eval.stages._eval_e2e_impl import E2EEvaluator
 from eval.transcript import transcript_hash
+from eval.audit_provenance import (
+    audit_context_fingerprint,
+    scorer_gold_fingerprints,
+    validate_tag_audit_source,
+)
 
 
 def test_weakness_taxonomy_normalizes_known_aliases_without_fuzzy_overlap() -> None:
@@ -162,14 +167,88 @@ def test_eval_gold_has_route_specific_expectations_and_transcript_hashes() -> No
         for line in (root / "data/eval/scorer_transcript_gold.jsonl").read_text(encoding="utf-8").splitlines()
         if line.strip()
     ]
+    tag_seed_rows = [
+        json.loads(line)
+        for line in (root / "data/eval/scorer_tag_review_seed.jsonl").read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
     assert len(e2e_rows) == len(scorer_rows) == 50
+    assert len(tag_seed_rows) == 50
+    assert {row["id"] for row in tag_seed_rows} == {row["id"] for row in scorer_rows}
     assert all(row.get("evaluation_schema_version") == 2 for row in e2e_rows)
     assert all(row.get("dynamic_score_band_status") == "legacy_unbound" for row in e2e_rows)
-    assert all(row.get("customer_evidence_status") in {"derived_v2", "reviewed"} for row in e2e_rows)
+    assert all(
+        row.get("customer_evidence_status") in {"derived_v2", "reviewed", "audited_v3"}
+        for row in e2e_rows
+    )
     assert all("expected_customer_evidence" in row for row in e2e_rows)
     assert all("expected_customer_evidence_after_each_turn" in row for row in e2e_rows)
     assert all("expected_tutor_evidence" in row for row in e2e_rows)
     assert all(
         row.get("transcript_hash") == transcript_hash(row.get("scene_id"), row.get("dialog_pairs") or [])
         for row in scorer_rows
+    )
+    tag_statuses = {row.get("tag_status") for row in scorer_rows}
+    assert len(tag_statuses) == 1
+    assert tag_statuses.issubset({"pending", "human_reviewed_exhaustive_v1"})
+
+
+def test_score_and_tag_gold_fingerprints_are_independent() -> None:
+    base = [{
+        "id": "case_1",
+        "scene_id": "FUND_GENERAL",
+        "dialog_pairs": [{"customer_question": "风险呢？", "employee_answer": "有风险。"}],
+        "expected_score_range": [50, 70],
+        "strict_score_range": [55, 65],
+        "quality": "partial",
+        "band_status": "reviewed",
+        "transcript_hash": "hash",
+        "expected_weak_tags": ["行动引导不足"],
+        "tag_status": "pending",
+    }]
+    changed_tags = [{**base[0], "expected_weak_tags": ["共情不足"]}]
+    changed_score = [{**base[0], "expected_score_range": [40, 60]}]
+    base_fp = scorer_gold_fingerprints(base)
+    assert scorer_gold_fingerprints(changed_tags)["score_gold_fingerprint"] == base_fp["score_gold_fingerprint"]
+    assert scorer_gold_fingerprints(changed_tags)["tag_gold_fingerprint"] != base_fp["tag_gold_fingerprint"]
+    assert scorer_gold_fingerprints(changed_score)["score_gold_fingerprint"] != base_fp["score_gold_fingerprint"]
+
+
+def test_tag_audit_source_rejects_subset_or_stale_report() -> None:
+    gold = [{"id": "case_1", "expected_weak_tags": [], "tag_status": "pending"}]
+    fps = scorer_gold_fingerprints(gold)
+    report = {
+        "stage": "scorer_transcript",
+        "details": {
+            "selected_case_ids": [],
+            "total_cases": 1,
+            "transcript_integrity_pass": 1.0,
+            "scorer_method_distribution": {"llm_scorer_deepseek_finish": 1},
+            "tag_gold_fingerprint": fps["tag_gold_fingerprint"],
+            "tag_case_results": [{"id": "case_1", "expected_tags": [], "detected_tags": []}],
+        },
+    }
+    assert validate_tag_audit_source(report, gold) == []
+    report["details"]["selected_case_ids"] = ["case_1"]
+    assert "subset scorer reports cannot seed a tag audit" in validate_tag_audit_source(report, gold)
+    report["details"]["selected_case_ids"] = []
+    report["details"]["tag_gold_fingerprint"] = "stale"
+    assert "report tag gold fingerprint is missing or stale" in validate_tag_audit_source(report, gold)
+
+
+def test_tag_audit_context_binds_detected_tags_and_transcript() -> None:
+    base = dict(
+        case_id="case_1",
+        tag="共情不足",
+        kind="fp",
+        expected_tags=[],
+        detected_tags=["共情不足"],
+        seed_tags=[],
+        pending_tags=[],
+        transcript_hash="hash-a",
+        tag_gold_fingerprint="gold-a",
+        tag_seed_fingerprint="seed-a",
+    )
+    assert audit_context_fingerprint(**base) != audit_context_fingerprint(
+        **{**base, "detected_tags": ["共情不足", "行动引导不足"]}
     )

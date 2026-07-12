@@ -41,6 +41,11 @@ from pathlib import Path
 from typing import Any
 
 from eval.metrics import StageResult
+from eval.audit_provenance import (
+    TAG_STATUS_PENDING,
+    TAG_STATUS_HUMAN_EXHAUSTIVE,
+    scorer_gold_fingerprints,
+)
 from app.core.weakness_taxonomy import normalize_weakness_tags, weakness_tag_matches
 from eval.scorer_fingerprint import (
     compute_scorer_config_fingerprint,
@@ -157,7 +162,8 @@ def evaluate(
         if importlib.util.find_spec("openai") is None:
             raise RuntimeError("scorer baseline requires the openai SDK; rule fallback is not citable")
 
-    all_cases = _load_gold(gold_path or GOLD_PATH)
+    resolved_gold_path = gold_path or GOLD_PATH
+    all_cases = _load_gold(resolved_gold_path)
     cases = [case for case in all_cases if case.get("id") in case_ids] if case_ids else all_cases
     if not cases:
         raise ValueError(f"no scorer cases matched case_ids={sorted(case_ids or [])}")
@@ -239,14 +245,44 @@ def evaluate(
     # run (diagnostics stay useful) but it strips citability until the new
     # config is re-baselined and blessed.
     current_fp = compute_scorer_config_fingerprint()
+    gold_fps = scorer_gold_fingerprints(all_cases)
     blessed = load_blessed_fingerprint()
     fingerprint_match = bool(blessed and blessed.get("fingerprint") == current_fp["fingerprint"])
-    if blessed and not fingerprint_match:
+    blessed_score_gold = (blessed or {}).get("baseline_summary", {}).get("score_gold_fingerprint")
+    score_gold_fingerprint_match = bool(
+        blessed_score_gold
+        and blessed_score_gold == gold_fps["score_gold_fingerprint"]
+    )
+    if blessed and (not fingerprint_match or not score_gold_fingerprint_match):
         print(
-            "WARNING: scorer config changed since the blessed baseline "
+            "WARNING: scorer config or score gold changed since the blessed baseline "
             f"(blessed {blessed.get('blessed_at', '?')}). Results are diagnostic only; "
             "rerun the full 50-case suite and re-bless with --bless-fingerprint."
         )
+
+    full_formal_run = bool(
+        require_llm
+        and len(cases) == len(all_cases)
+        and not case_ids
+        and len(reviewed) == len(results)
+        and not drafts
+        and not non_llm
+        and rate(results, "transcript_integrity_pass") == 1.0
+    )
+    citable_full_baseline = bool(
+        full_formal_run
+        and fingerprint_match
+        and score_gold_fingerprint_match
+    )
+    tag_statuses = {case.get("tag_status") for case in all_cases}
+    tags_human_exhaustive = tag_statuses == {TAG_STATUS_HUMAN_EXHAUSTIVE}
+    tags_pending = tag_statuses.issubset({TAG_STATUS_PENDING, "exhaustive_v1"})
+    if tags_human_exhaustive:
+        tag_annotation_contract = "human_reviewed_exhaustive_v1"
+    elif tags_pending:
+        tag_annotation_contract = "pending_review_not_citable"
+    else:
+        tag_annotation_contract = "provisional_required_tags_not_exhaustive"
 
     return StageResult(
         stage="scorer_transcript",
@@ -255,9 +291,13 @@ def evaluate(
         gold_size=len(primary_pool),
         details={
             "primary_basis": primary_basis,
-            "citable_full_baseline": len(cases) == len(all_cases) and (blessed is None or fingerprint_match),
+            "citable_full_baseline": citable_full_baseline,
+            "formal_full_run": full_formal_run,
             "scorer_config_fingerprint": current_fp["fingerprint"],
             "baseline_fingerprint_match": fingerprint_match if blessed else None,
+            "score_gold_fingerprint": gold_fps["score_gold_fingerprint"],
+            "score_gold_fingerprint_match": score_gold_fingerprint_match if blessed else None,
+            "tag_gold_fingerprint": gold_fps["tag_gold_fingerprint"],
             "selected_case_ids": sorted(case_ids) if case_ids else [],
             "total_gold_cases": len(all_cases),
             "total_cases": len(results),
@@ -271,7 +311,8 @@ def evaluate(
             "tag_micro_precision": round(tag_precision, 4),
             "tag_micro_recall": round(tag_recall, 4),
             "tag_micro_f1": round(tag_f1, 4),
-            "tag_annotation_contract": "provisional_required_tags_not_exhaustive",
+            "tag_annotation_contract": tag_annotation_contract,
+            "tag_metrics_citable": citable_full_baseline and tags_human_exhaustive,
             "transcript_integrity_pass": rate(results, "transcript_integrity_pass"),
             "mean_band_distance": round(
                 sum(r["band_distance"] for r in results) / len(results), 2
@@ -316,14 +357,26 @@ def main() -> None:
         action="store_true",
         help="After a full-gold LLM-only run, record the current scorer config as the frozen-baseline config.",
     )
+    parser.add_argument(
+        "--save-report",
+        type=Path,
+        default=None,
+        help="Write the full result JSON (incl. per-case tag_case_results) to this path; implies --verbose data.",
+    )
     args = parser.parse_args()
     result = evaluate(
         gold_path=args.gold_path,
-        verbose=args.verbose,
+        verbose=args.verbose or args.save_report is not None,
         require_llm=not args.allow_rule_fallback,
         case_ids=set(args.case_id) or None,
     )
     print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    if args.save_report is not None:
+        args.save_report.parent.mkdir(parents=True, exist_ok=True)
+        args.save_report.write_text(
+            json.dumps(result.to_dict(), ensure_ascii=False, indent=2), encoding="utf-8"
+        )
+        print(f"Report saved to {args.save_report}")
 
     if args.bless_fingerprint:
         from eval.scorer_fingerprint import bless_fingerprint
@@ -331,6 +384,8 @@ def main() -> None:
         details = result.details
         if args.case_id or args.allow_rule_fallback:
             raise SystemExit("refusing to bless: fingerprint may only be blessed on a full-gold, LLM-only run")
+        if not details.get("formal_full_run"):
+            raise SystemExit("refusing to bless: all scorer cases must be reviewed with intact transcripts")
         bless_fingerprint(
             compute_scorer_config_fingerprint(),
             baseline_summary={
@@ -338,6 +393,7 @@ def main() -> None:
                 "mean_band_distance": details.get("mean_band_distance"),
                 "gold_size": result.gold_size,
                 "run_primary_basis": details.get("primary_basis"),
+                "score_gold_fingerprint": details.get("score_gold_fingerprint"),
             },
         )
         print("Blessed current scorer config as the frozen-baseline fingerprint.")

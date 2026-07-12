@@ -55,7 +55,7 @@ python scripts/build_followup_audit.py                  # 抽取失败轮 → fo
 # 人工/AI辅助填 verdict: generation | gold | checker，重跑 build 脚本看三分类
 ```
 
-**审计结论（29 条失败轮，AI 辅助判定 + 人工抽检）：
+**审计结论（29 条失败轮，候选判定 + 人工抽检）：
 generation 0 条 / gold 18 条 / checker 11 条。**
 
 含义：followup_pass 0.54 基本是测量误差，客户追问生成质量本身良好
@@ -115,15 +115,85 @@ retrieval 1 条 / gold 9 条 / checker 1 条。**
   top-5——真实召回缺陷，进检索改进 backlog（怀疑 keyword_recall 融合权重
   0.1 过低导致精确词面查询吃亏，属生成侧改动，须走门禁+re-baseline）。
 
-**验收结果（2026-07-12，trace e2e_verbose_20260712_012302，零生成侧改动）：**
-customer_retrieval_hit 0.78-0.80 → **0.98（49/50）**，唯一失败即刻意保留的
-e2e_037 真实召回缺陷。修缮后 001 由"不实承诺/保监会"命中 rank-1 合规注意
-事项文档，其余审计轮均由实际方向证据命中。正式口径以 `--runs 3` 区间为准。
+**验收结果（2026-07-12，`--runs 3` 正式口径，零生成侧改动）：**
+
+| 指标 | 修缮前 | 修缮后（3 次运行区间） |
+|---|---|---|
+| customer_retrieval_hit | 0.78–0.80 | **0.96–0.98**（mean 0.973） |
+| dynamic_dialogue_pass | 0.68–0.70 | **0.76–0.86**（mean 0.813，达标 0.80） |
+| followup_pass | 0.82–0.84 | 0.78–0.88（mean 0.833，同区间无回归） |
+
+- 单次 verbose 复核（trace e2e_verbose_20260712_012302）：50 case 中检索仅
+  1 条失败，即刻意保留的 e2e_037 真实召回缺陷（49/50=0.98）；e2e_001 由
+  "不实承诺/保监会"同义词命中 rank-1 合规注意事项文档，其余审计轮均由
+  实际方向证据命中。区间下沿 0.96 来自温度 0.7 下客户偶发走出证据集合的
+  采样噪声，非系统性问题；
+- 至此两把动态尺子（followup、customer_retrieval）修缮完毕，
+  dynamic_dialogue_pass 反映真实链路质量。剩余失败集中在 followup 的
+  结构性残差（见 §5 冻结说明）与 e2e_037。
+
+## 5c. 工单：弱点标签 gold 穷举化（2026-07-12 执行中）
+
+背景：scorer 套件的 `tag_micro_precision 0.21` 长期不可引用。审计确认主因是
+**gold 大面积空标注**——50 case 中 29 条 `expected_weak_tags=[]`（原口径只标
+"必需标签"），检测器报出的每个字面成立的标签都被记为 false positive；
+`tag_pass 0.86` 虚高则因 expected 为空时直接判过。两个口径的矛盾同源。
+
+工作流同 §4/§5/§5b：`eval_scorer --save-report` → `build_tag_audit.py`
+（一行 = case×标签×fp/fn，附 transcript 摘录）→ 判 verdict → 改 gold。
+
+早期初审得到 176 条差异；完成 provenance 和冻结 seed 改造后，当前审核清单为
+**178 条 / 50 case**：fp 169 条暂分为 justified 140 / spurious 29，fn 9 条
+暂分为 detector_miss 8 / gold_wrong 1。该分组是待逐条确认的 proposal，不能
+直接作为正式 Gold。
+
+- 候选判定口径写在 scripts/apply_tag_audit_verdicts.py docstring
+  （共情不足按"客户有无情绪诉求+员工有无共情语"、逻辑结构不足与答非所问
+  区分、红线类严格对照违规原话），供人工逐条审核；脚本只写
+  `proposed_verdict`，不会自动批准 `verdict`；
+- **检测器误报 backlog（36 条 spurious 的四个模式，保留失败不改 gold）**：
+  ① 共情不足在中性问询/员工已共情的对话上滥报（16 条）；
+  ② 行动引导不足在明确有引导（邀约/给资料/催签）时误报（5 条）；
+  ③ 逻辑结构不足与"答非所问"混淆（6 条）；
+  ④ 红线类偶发无据报出（合规问题/强推销/风险揭示不足等 9 条，含
+  017/046 已有风险揭示仍报"风险揭示不足"）；
+- 候选回灌结果当前标记为 `tag_status="pending"`，指标仅用于开发诊断；
+  正式回灌由 scripts/apply_tag_gold_exhaustive.py 执行，要求每行均有
+  `review_status="human_reviewed"`、reviewer 和有效 provenance，完成后才标记
+  `tag_status="human_reviewed_exhaustive_v1"`。回灌只动 `expected_weak_tags`，不碰
+  dialog_pairs/transcript_hash/分数带宽——冻结基线不受影响；
+- 原始必需标签独立冻结在 `data/eval/scorer_tag_review_seed.jsonl`。audit 取
+  “pending 候选与 seed 的差异”及“当前模型与 pending/seed 的新差异”并集，
+  因此已经补入且本轮仍命中的候选也必须接受审核，不会被静默隐藏；
+- 诚实代价预告：expected 变多后 `tag_pass`（全部 expected 须命中）会从
+  0.86 回落，这是把虚高口径换成真实口径，不算回归。
+
+待审核口径最新重跑结果：precision **0.8086**、recall **0.9235**、F1 **0.8622**、
+exact match **0.30**。这组结果揭示了主要残差（尤其“共情不足”过报），但在
+178 行完成复核前 `tag_metrics_citable=false`，不得作为正式基线引用。
+
+审计安全约束：scorer report 必须是完整 LLM-only 运行，case 集合、transcript
+integrity 和 tag Gold fingerprint 均需匹配；旧 report、subset、rule fallback、
+被编辑或上下文变化的 audit 行都会被拒绝。score 基线则同时绑定 scorer config
+fingerprint 和 score Gold fingerprint，任一变化都必须重新跑全量并 bless。
+
+安全执行顺序：
+
+```powershell
+python -m eval.stages.eval_scorer --save-report data/eval/scorer_report_tags.json
+python scripts/build_tag_audit.py
+python scripts/apply_tag_audit_verdicts.py  # 只生成 proposal，不批准
+python scripts/review_tag_audit.py --case-id <id> --tag <标签> --kind fp `
+  --verdict justified --reviewer <姓名> --note <人工判定理由>
+# 178 行全部显式审核后：
+python scripts/apply_tag_gold_exhaustive.py
+python -m eval.stages.eval_scorer --save-report data/eval/scorer_report_tags_v2.json
+```
 
 ## 6. 当前已知边界（维持）
 
 - PHONE_INVITATION 语料映射问题：留到下次 re-baseline 窗口（涉及 4+4 case
   的检索行为与带宽重审，transcript_hash 会随 scene 变更失效，属冻结后变更）；
-- tag_micro_precision（~0.22）不可引用：gold 只标必需标签非穷举；
-  标签去噪是评估修缮完成后的主战场；
+- tag 指标当前仍不可正式引用：候选已补全，但 176 条差异尚待逐条审定；
+  审定完成后的主战场是“共情不足”等过报标签去噪；
 - Docker hash embedding 与 sentence-transformers 指标不可横向比较。

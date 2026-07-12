@@ -1,0 +1,50 @@
+{"id": "scorer_e2e_001_compliance_violation", "expected_weak_tags": ["合规揭示不足", "风险说明缺失", "不当承诺"]}
+{"id": "scorer_e2e_002_compliance_risk", "expected_weak_tags": []}
+{"id": "scorer_e2e_003_good_risk_disclosure", "expected_weak_tags": []}
+{"id": "scorer_e2e_004_liquidity_risk", "expected_weak_tags": []}
+{"id": "scorer_e2e_005_partial_compliance", "expected_weak_tags": []}
+{"id": "scorer_e2e_006_information_insufficient", "expected_weak_tags": ["信息提供不足", "产品说明缺失", "需求确认不足"]}
+{"id": "scorer_e2e_007_comprehensive_answer", "expected_weak_tags": []}
+{"id": "scorer_e2e_008_bad_risk_disclosure", "expected_weak_tags": ["风险揭示不足", "合规问题", "不当承诺"]}
+{"id": "scorer_e2e_009_procedure_missing", "expected_weak_tags": ["办理流程缺失", "行动引导不足"]}
+{"id": "scorer_e2e_010_good_need_confirmation", "expected_weak_tags": []}
+{"id": "scorer_e2e_011_compliance_promise_contract", "expected_weak_tags": ["合规问题", "不当承诺"]}
+{"id": "scorer_e2e_012_phone_invitation_good", "expected_weak_tags": []}
+{"id": "scorer_e2e_013_objection_handling_good", "expected_weak_tags": []}
+{"id": "scorer_e2e_014_liquidity_risk_explained", "expected_weak_tags": []}
+{"id": "scorer_e2e_015_compliance_sensitive_avoided", "expected_weak_tags": []}
+{"id": "scorer_e2e_016_information_overload", "expected_weak_tags": ["信息过载", "重点不突出"]}
+{"id": "scorer_e2e_017_multi_round_correction", "expected_weak_tags": []}
+{"id": "scorer_e2e_018_customer_empathy_good", "expected_weak_tags": []}
+{"id": "scorer_e2e_019_objection_handling_poor", "expected_weak_tags": ["异议处理不当", "客户关系不佳", "强推销"]}
+{"id": "scorer_e2e_020_gap_filling_good", "expected_weak_tags": []}
+{"id": "scorer_e2e_021_family_decision_respected", "expected_weak_tags": []}
+{"id": "scorer_e2e_022_family_decision_pressure", "expected_weak_tags": ["异议处理不当", "客户关系不佳", "强推销"]}
+{"id": "scorer_e2e_023_fee_and_surrender_disclosure", "expected_weak_tags": []}
+{"id": "scorer_e2e_024_soft_yield_misleading", "expected_weak_tags": ["收益说明不规范", "不当承诺", "合规问题"]}
+{"id": "scorer_e2e_025_redeem_and_risk_good", "expected_weak_tags": []}
+{"id": "scorer_e2e_026_elderly_suitability_poor", "expected_weak_tags": ["适当性管理不足", "风险揭示不足", "不当承诺"]}
+{"id": "scorer_e2e_027_phone_invitation_pressure", "expected_weak_tags": ["强推销", "客户关系不佳"]}
+{"id": "scorer_e2e_028_procedure_and_materials_good", "expected_weak_tags": []}
+{"id": "scorer_e2e_029_internal_information_violation", "expected_weak_tags": ["合规问题", "不当承诺", "收益说明不规范"]}
+{"id": "scorer_e2e_030_platform_safety_false", "expected_weak_tags": ["风险揭示不足", "合规问题", "不当承诺"]}
+{"id": "scorer_e2e_031_guarantee_refusal_good", "expected_weak_tags": []}
+{"id": "scorer_e2e_032_max_yield_range_good", "expected_weak_tags": []}
+{"id": "scorer_e2e_033_contract_boundary_good", "expected_weak_tags": []}
+{"id": "scorer_e2e_034_direct_recommend_refusal_good", "expected_weak_tags": []}
+{"id": "scorer_e2e_035_elderly_liquidity_good", "expected_weak_tags": []}
+{"id": "scorer_e2e_036_surrender_loss_sensitive", "expected_weak_tags": []}
+{"id": "scorer_e2e_037_fee_sensitive_good", "expected_weak_tags": []}
+{"id": "scorer_e2e_038_redeem_time_sensitive", "expected_weak_tags": []}
+{"id": "scorer_e2e_039_family_respect_good", "expected_weak_tags": []}
+{"id": "scorer_e2e_040_jargon_overload", "expected_weak_tags": ["信息过载", "重点不突出"]}
+{"id": "scorer_e2e_041_procedure_only_no_risk", "expected_weak_tags": ["风险揭示不足", "收益说明缺失"]}
+{"id": "scorer_e2e_042_yield_only_no_risk", "expected_weak_tags": ["风险揭示不足", "收益说明不规范", "合规风险"]}
+{"id": "scorer_e2e_043_empathy_only_no_product", "expected_weak_tags": ["产品说明缺失", "收益说明缺失", "行动引导不足"]}
+{"id": "scorer_e2e_044_compliant_no_guidance", "expected_weak_tags": ["成交引导不足"]}
+{"id": "scorer_e2e_045_multi_round_fill_good", "expected_weak_tags": []}
+{"id": "scorer_e2e_046_multi_round_backslide", "expected_weak_tags": ["合规问题", "不当承诺", "收益说明不规范"]}
+{"id": "scorer_e2e_047_phone_respect_time_good", "expected_weak_tags": []}
+{"id": "scorer_e2e_048_phone_pressure_poor", "expected_weak_tags": ["异议处理不当", "客户关系不佳", "强推销"]}
+{"id": "scorer_e2e_049_fund_differentiation_good", "expected_weak_tags": []}
+{"id": "scorer_e2e_050_low_risk_mismatch_poor", "expected_weak_tags": ["适当性管理不足", "风险揭示不足", "合规问题"]}
