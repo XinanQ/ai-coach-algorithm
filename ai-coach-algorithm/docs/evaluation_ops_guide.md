@@ -97,6 +97,29 @@ generation 0 条 / gold 18 条 / checker 11 条。**
   （10 个 case 的 gold 证据/路由错配，见 §6）封顶。retrieval gold 修缮
   完成后 dynamic 预期可达 0.80+。
 
+## 5b. 工单：customer_retrieval 尺子修缮（2026-07-11/12）
+
+工作流与 §4/§5 完全相同（build_retrieval_audit → 判 verdict → 修数据/词表）。
+
+**审计结论（11 条失败轮 / 10 case，trace e2e_verbose_20260711_124900）：
+retrieval 1 条 / gold 9 条 / checker 1 条。**
+
+- checker 1（e2e_001）：合规注意事项文档已在 rank-1，但 `合规` 同义词表用
+  "监管/红线"类书面词，语料实际写"不实承诺/夸大/诱导/保监会"→ 词表已锚定语料；
+- gold 9，三个子类：① 证据锚定理想脚本方向（同 followup 根因，5 条，
+  scripts/apply_retrieval_evidence_sets.py 按审计实际方向增补，OR 语义）；
+  ② `清晰说明` 为死类别——教学侧措辞在客户语料中零命中（2 条，已替换）；
+  ③ FUND_GENERAL/INS_GENERAL 语料缺合规类文档（2 条，**语料建设 backlog**）；
+- retrieval 1（e2e_037，**保留失败不修尺子**）：WM_ASSET 语料中 MCH_000154
+  （费用结构：管理费 0.13-0.2%/手续费 0.15%）直接回答客户费用问题但未进
+  top-5——真实召回缺陷，进检索改进 backlog（怀疑 keyword_recall 融合权重
+  0.1 过低导致精确词面查询吃亏，属生成侧改动，须走门禁+re-baseline）。
+
+**验收结果（2026-07-12，trace e2e_verbose_20260712_012302，零生成侧改动）：**
+customer_retrieval_hit 0.78-0.80 → **0.98（49/50）**，唯一失败即刻意保留的
+e2e_037 真实召回缺陷。修缮后 001 由"不实承诺/保监会"命中 rank-1 合规注意
+事项文档，其余审计轮均由实际方向证据命中。正式口径以 `--runs 3` 区间为准。
+
 ## 6. 当前已知边界（维持）
 
 - PHONE_INVITATION 语料映射问题：留到下次 re-baseline 窗口（涉及 4+4 case

@@ -175,6 +175,21 @@ def evaluate(
                         "followup_reason": reply.get("followup_reason"),
                         "expected_direction": (reply.get("followup_trace") or {}).get("expected_direction"),
                         "gap_intents": (reply.get("followup_trace") or {}).get("gap_intents"),
+                        # Per-turn customer-retrieval verdicts — the raw
+                        # material for the retrieval evidence audit
+                        # (scripts/build_retrieval_audit.py).
+                        "retrieval_hit": reply.get("retrieval_hit"),
+                        "retrieval_reason": reply.get("retrieval_reason"),
+                        "expected_retrieval_evidence": reply.get("expected_retrieval_evidence"),
+                        "retrieval_top_titles": [
+                            (item.get("metadata") or {}).get("title", "")[:60]
+                            for item in (reply.get("retrieval_items") or [])[:5]
+                        ],
+                        "retrieval_top_snippets": [
+                            (item.get("content") or "")[:160]
+                            for item in (reply.get("retrieval_items") or [])[:3]
+                        ],
+                        "missing_core_keywords": (reply.get("retrieval_trace") or {}).get("missing_core_keywords"),
                     }
                     for reply in r.get("reply_results", [])
                 ],
